@@ -6,16 +6,21 @@
 
 typedef struct Variable Variable;
 
-typedef enum { VAR, LITERAL } Type;
+typedef enum { NIL, VAR, LITERAL } Type;
 
 typedef struct Variable {
+        uint32_t id;
         char name[10];
+        uint32_t value_no;
+} Variable;
+
+typedef struct Reference {
+        Variable *variable;
         Type index_type;
         union {
                 uint32_t index;
                 Variable *index_var;
         };
-        uint32_t value_no;
-} Variable;
+} Reference;
 
 #endif

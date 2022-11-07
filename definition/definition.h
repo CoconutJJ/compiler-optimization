@@ -9,13 +9,16 @@ typedef enum { PLUS, MINUS, MULT, DIV } Operator;
 
 typedef struct {
         uint32_t def_no;
-        Variable *dest;
+        Reference *dest;
         Operator op;
-        Variable *fst;
-        Variable *snd;
+        Reference *fst;
+        Reference *snd;
 } Definition;
 
-Definition *
-create_definition (Variable *dest, Operator op, Variable *fst, Variable *snd);
+Definition *create_definition (Reference *dest,
+                               Operator op,
+                               Reference *fst,
+                               Reference *snd);
 
+Definition *get_definition_no (uint32_t n);
 #endif

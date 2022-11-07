@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
 
@@ -11,6 +12,11 @@ typedef struct {
     size_t count;
 
 } IntegerSet;
-
+IntegerSet *set_create ();
+void set_add (IntegerSet *set, uint64_t v);
+bool set_iter (IntegerSet *set, int64_t *bit_no);
+IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB);
+IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB);
+IntegerSet *set_subtraction (IntegerSet *setA, IntegerSet *setB);
 #endif
 

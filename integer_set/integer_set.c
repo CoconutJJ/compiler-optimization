@@ -1,8 +1,8 @@
 #include "integer_set.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 void set_init (IntegerSet *set)
 {
         set->count = 0;
@@ -37,10 +37,40 @@ void set_add (IntegerSet *set, uint64_t v)
                 for (size_t i = set->count; i <= index; i++)
                         set->set[i] = 0;
 
-                set->count = (index + 1);
+                set->count = index + 1;
         }
 
         set->set[index] |= (1 << bit);
+}
+
+bool set_iter (IntegerSet *set, int64_t *bit_no)
+{
+        (*bit_no)++;
+
+        uint64_t index = *bit_no / 64;
+        int bit = *bit_no % 64;
+
+        if (index >= set->count)
+                return false;
+
+        if (set->set[index] == 0) {
+                bit = 0;
+
+                while (index < set->count && set->set[index] == 0)
+                        index++;
+
+                if (index == set->count && set->set[index] == 0)
+                        return false;
+        }
+
+        uint64_t chunk = set->set[index];
+
+        while (!(chunk & (1 << bit)))
+                bit++;
+
+        *bit_no = index * 64 + bit;
+
+        return true;
 }
 
 IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
@@ -51,6 +81,12 @@ IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
         IntegerSet *new_set = set_create ();
 
         new_set->set = malloc (new_count * sizeof (uint64_t));
+
+        if (!new_set->set) {
+                perror ("malloc");
+                exit (EXIT_FAILURE);
+        }
+
         new_set->count = new_count;
 
         for (size_t i = 0; i < new_count; i++) {
@@ -75,6 +111,12 @@ IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB)
         IntegerSet *new_set = set_create ();
 
         new_set->set = malloc (new_count * sizeof (uint64_t));
+
+        if (!new_set->set) {
+                perror ("malloc");
+                exit (EXIT_FAILURE);
+        }
+
         new_set->count = new_count;
 
         for (size_t i = 0; i < new_count; i++) {
@@ -92,14 +134,19 @@ IntegerSet *set_subtraction (IntegerSet *setA, IntegerSet *setB)
         IntegerSet *new_set = set_create ();
 
         new_set->set = malloc (setA->count * sizeof (uint64_t));
+
+        if (!new_set->set) {
+                perror ("malloc");
+                exit (EXIT_FAILURE);
+        }
+
         new_set->count = setA->count;
 
         for (size_t i = 0; i < setA->count; i++) {
                 uint64_t similar = 0;
 
-                if (i < setB->count) {
+                if (i < setB->count)
                         similar = setA->set[i] & setB->set[i];
-                }
 
                 new_set->set[i] = setA->set[i] - similar;
         }
