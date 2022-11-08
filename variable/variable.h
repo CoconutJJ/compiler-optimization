@@ -23,4 +23,9 @@ typedef struct Reference {
         };
 } Reference;
 
+
+Variable *create_variable (char name[10]);
+Variable *get_variable_id (uint32_t id);
+Reference *create_reference (Variable *variable);
+
 #endif

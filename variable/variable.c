@@ -38,7 +38,7 @@ Variable *get_variable_id (uint32_t id)
                 return NULL;
         }
 
-        return variables + variable_id;
+        return variables + id;
 }
 
 Reference *create_reference (Variable *variable)
