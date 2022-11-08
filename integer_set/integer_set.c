@@ -30,8 +30,8 @@ void set_destroy (IntegerSet *set)
 
 void set_add (IntegerSet *set, uint64_t v)
 {
-        uint64_t index = v / (uint64_t)64;
-        int bit = v % (uint64_t)64;
+        uint64_t index = v / 64ULL;
+        int bit = v % 64ULL;
 
         if (index >= set->count) {
                 set->set = realloc (set->set, (index + 1) * sizeof (uint64_t));
@@ -66,8 +66,8 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
 {
         (*bit_no)++;
 
-        uint64_t index = *bit_no / 64;
-        int bit = *bit_no % 64;
+        uint64_t index = *bit_no / 64LL;
+        int bit = *bit_no % 64LL;
 
         if (index >= set->count)
                 return false;
@@ -75,10 +75,10 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
         if (set->set[index] == 0) {
                 bit = 0;
 
-                while (index < set->count && set->set[index] == 0)
+                while (index < set->count && set->set[index] == 0ULL)
                         index++;
 
-                if (index == set->count && set->set[index] == 0)
+                if (index == set->count && set->set[index] == 0ULL)
                         return false;
         }
 
@@ -105,7 +105,7 @@ IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
         new_set->count = new_count;
 
         for (size_t i = 0; i < new_count; i++) {
-                uint64_t un = 0;
+                uint64_t un = 0ULL;
 
                 if (i < setA->count)
                         un |= setA->set[i];

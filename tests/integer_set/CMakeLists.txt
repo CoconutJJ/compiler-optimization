@@ -12,3 +12,13 @@ add_executable(test_integer_set_3 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_
 add_test(IntegerSet_test_can_subtract test_integer_set_3)
 target_include_directories(test_integer_set_3 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
 target_link_libraries(test_integer_set_3 PUBLIC intsetlib)
+
+add_executable(test_integer_set_4 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_4.c")
+add_test(IntegerSet_test_can_intersect test_integer_set_4)
+target_include_directories(test_integer_set_4 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
+target_link_libraries(test_integer_set_4 PUBLIC intsetlib)
+
+add_executable(test_integer_set_5 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_5.c")
+add_test(IntegerSet_test_can_union test_integer_set_5)
+target_include_directories(test_integer_set_5 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
+target_link_libraries(test_integer_set_5 PUBLIC intsetlib)
