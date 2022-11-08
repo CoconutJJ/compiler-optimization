@@ -1,24 +1,23 @@
-add_executable(test_integer_set_1 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_1.c")
-add_test(IntegerSet_test_can_store_integer test_integer_set_1)
-target_include_directories(test_integer_set_1 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_link_libraries(test_integer_set_1 PUBLIC intsetlib)
 
-add_executable(test_integer_set_2 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_2.c")
-add_test(IntegerSet_test_can_iterate_integer test_integer_set_2)
-target_include_directories(test_integer_set_2 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_link_libraries(test_integer_set_2 PUBLIC intsetlib)
+list(APPEND TestFiles 
+    test_integer_set_1 
+    test_integer_set_2 
+    test_integer_set_3 
+    test_integer_set_4 
+    test_integer_set_5 
+)
 
-add_executable(test_integer_set_3 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_3.c")
-add_test(IntegerSet_test_can_subtract test_integer_set_3)
-target_include_directories(test_integer_set_3 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_link_libraries(test_integer_set_3 PUBLIC intsetlib)
+list(APPEND TestNames 
+    IntegerSet_test_can_store_integer 
+    IntegerSet_test_can_iterate_integer 
+    IntegerSet_test_can_subtract 
+    IntegerSet_test_can_intersect 
+    IntegerSet_test_can_union
+)
 
-add_executable(test_integer_set_4 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_4.c")
-add_test(IntegerSet_test_can_intersect test_integer_set_4)
-target_include_directories(test_integer_set_4 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_link_libraries(test_integer_set_4 PUBLIC intsetlib)
-
-add_executable(test_integer_set_5 "${CMAKE_CURRENT_SOURCE_DIR}/test_integer_set_5.c")
-add_test(IntegerSet_test_can_union test_integer_set_5)
-target_include_directories(test_integer_set_5 PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_link_libraries(test_integer_set_5 PUBLIC intsetlib)
+foreach(testfile testname IN ZIP_LISTS TestFiles TestNames)
+    add_executable(${testfile} "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}.c")
+    add_test(${testname} ${testfile})
+    target_include_directories(${testfile} PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
+    target_link_libraries(${testfile} PUBLIC integer_setlib)
+endforeach()
