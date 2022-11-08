@@ -20,13 +20,18 @@ Block *create_block ()
         }
         Block *blk = blocks + block_id;
 
-        blk->id = block_id++;
-        blk->count = 0;
-        blk->definitions = NULL;
-        blk->jump = NULL;
-        blk->fallthrough = NULL;
+        *blk = (Block){ .id = block_id++,
+                        .count = 0,
+                        .definitions = NULL,
+                        .jump = NULL,
+                        .fallthrough = NULL };
 
         return blk;
+}
+
+Block *get_block_id (size_t block_id)
+{
+        return blocks + block_id;
 }
 
 IntegerSet *get_killed_definitions (Block *block,

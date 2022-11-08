@@ -22,11 +22,11 @@ create_definition (Reference *dest, Operator op, Reference *fst, Reference *snd)
 
         Definition *def = definitions + definition_no;
 
-        def->def_no = definition_no++;
-        def->dest = dest;
-        def->fst = fst;
-        def->snd = snd;
-        def->op = op;
+        *def = (Definition){ .def_no = definition_no++,
+                             .dest = dest,
+                             .fst = fst,
+                             .snd = snd,
+                             .op = op };
 
         return def;
 }

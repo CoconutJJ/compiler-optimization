@@ -14,6 +14,8 @@ typedef struct {
 } IntegerSet;
 IntegerSet *set_create ();
 void set_add (IntegerSet *set, uint64_t v);
+bool set_has (IntegerSet *set, uint64_t v);
+void set_destroy (IntegerSet *set);
 bool set_iter (IntegerSet *set, int64_t *bit_no);
 IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB);
 IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB);

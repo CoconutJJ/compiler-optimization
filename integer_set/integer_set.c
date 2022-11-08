@@ -19,12 +19,19 @@ IntegerSet *set_create ()
         }
 
         set_init (set);
+        return set;
+}
+
+void set_destroy (IntegerSet *set)
+{
+        free (set->set);
+        free (set);
 }
 
 void set_add (IntegerSet *set, uint64_t v)
 {
-        uint64_t index = v / 64;
-        int bit = v % 64;
+        uint64_t index = v / (uint64_t)64;
+        int bit = v % (uint64_t)64;
 
         if (index >= set->count) {
                 set->set = realloc (set->set, (index + 1) * sizeof (uint64_t));
@@ -34,13 +41,25 @@ void set_add (IntegerSet *set, uint64_t v)
                         exit (EXIT_FAILURE);
                 }
 
-                for (size_t i = set->count; i <= index; i++)
-                        set->set[i] = 0;
+                memset (set->set + set->count,
+                        0,
+                        (index - set->count + 1) * sizeof (uint64_t));
 
                 set->count = index + 1;
         }
 
-        set->set[index] |= (1 << bit);
+        set->set[index] |= (1ULL << bit);
+}
+
+bool set_has (IntegerSet *set, uint64_t v)
+{
+        uint64_t index = v / (uint64_t)64;
+        uint64_t bit = v % (uint64_t)64;
+
+        if (index >= set->count)
+                return false;
+
+        return (set->set[index] & (1ULL << bit)) > 0ULL;
 }
 
 bool set_iter (IntegerSet *set, int64_t *bit_no)
@@ -63,12 +82,8 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
                         return false;
         }
 
-        uint64_t chunk = set->set[index];
-
-        while (!(chunk & (1 << bit)))
-                bit++;
-
-        *bit_no = index * 64 + bit;
+        while (!set_has (set, *bit_no))
+                (*bit_no)++;
 
         return true;
 }
@@ -123,7 +138,7 @@ IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB)
                 if (i < setA->count && i < setB->count)
                         new_set->set[i] = setA->set[i] & setB->set[i];
                 else
-                        new_set->set[i] = 0;
+                        new_set->set[i] = 0ULL;
         }
 
         return new_set;
@@ -140,10 +155,12 @@ IntegerSet *set_subtraction (IntegerSet *setA, IntegerSet *setB)
                 exit (EXIT_FAILURE);
         }
 
+        memset (new_set->set, 0, setA->count * sizeof (uint64_t));
+
         new_set->count = setA->count;
 
         for (size_t i = 0; i < setA->count; i++) {
-                uint64_t similar = 0;
+                uint64_t similar = 0ULL;
 
                 if (i < setB->count)
                         similar = setA->set[i] & setB->set[i];
