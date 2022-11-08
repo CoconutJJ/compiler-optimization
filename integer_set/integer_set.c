@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static IntegerSet UNIVERSAL_SET = { .count = -1,
+                                    .set = (uint64_t *)0xDEADBEEF };
+
 void set_init (IntegerSet *set)
 {
         set->count = 0;
@@ -22,14 +26,30 @@ IntegerSet *set_create ()
         return set;
 }
 
+IntegerSet *universal_set ()
+{
+        return &UNIVERSAL_SET;
+}
+
+bool is_universal_set (IntegerSet *set)
+{
+        return set == &UNIVERSAL_SET;
+}
+
 void set_destroy (IntegerSet *set)
 {
+        if (is_universal_set (set))
+                return;
+
         free (set->set);
         free (set);
 }
 
-void set_add (IntegerSet *set, uint64_t v)
+IntegerSet *set_add (IntegerSet *set, uint64_t v)
 {
+        if (is_universal_set (set))
+                return set;
+
         uint64_t index = v / 64ULL;
         int bit = v % 64ULL;
 
@@ -49,10 +69,15 @@ void set_add (IntegerSet *set, uint64_t v)
         }
 
         set->set[index] |= (1ULL << bit);
+
+        return set;
 }
 
 bool set_has (IntegerSet *set, uint64_t v)
 {
+        if (is_universal_set (set))
+                return true;
+
         uint64_t index = v / (uint64_t)64;
         uint64_t bit = v % (uint64_t)64;
 
@@ -65,6 +90,9 @@ bool set_has (IntegerSet *set, uint64_t v)
 bool set_iter (IntegerSet *set, int64_t *bit_no)
 {
         (*bit_no)++;
+
+        if (is_universal_set (set))
+                return true;
 
         uint64_t index = *bit_no / 64LL;
         int bit = *bit_no % 64LL;
@@ -90,6 +118,11 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
 
 IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
 {
+        if (is_universal_set (setA))
+                return setA;
+        if (is_universal_set (setB))
+                return setB;
+
         size_t new_count =
                 setA->count > setB->count ? setA->count : setB->count;
 
@@ -120,6 +153,12 @@ IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
 
 IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB)
 {
+        if (is_universal_set (setA))
+                return setB;
+
+        if (is_universal_set (setB))
+                return setA;
+
         size_t new_count =
                 setA->count > setB->count ? setA->count : setB->count;
 
@@ -147,6 +186,14 @@ IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB)
 IntegerSet *set_subtraction (IntegerSet *setA, IntegerSet *setB)
 {
         IntegerSet *new_set = set_create ();
+
+        if (is_universal_set (setB))
+                return new_set;
+
+        if (is_universal_set (setA)) {
+                fprintf (stderr, "cannot subtract from universal set!\n");
+                exit (EXIT_FAILURE);
+        }
 
         new_set->set = malloc (setA->count * sizeof (uint64_t));
 

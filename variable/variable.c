@@ -32,16 +32,24 @@ Variable *create_variable (char name[10])
 
         return var;
 }
+Variable *get_variable_id (uint32_t id)
+{
+        if (id >= variable_id) {
+                return NULL;
+        }
+
+        return variables + variable_id;
+}
 
 Reference *create_reference (Variable *variable)
 {
         Reference *ref = malloc (sizeof (Reference));
-        
+
         if (!ref) {
-                perror("malloc");
+                perror ("malloc");
                 exit (EXIT_FAILURE);
         }
-        
+
         ref->variable = variable;
         ref->index_type = NIL;
 
