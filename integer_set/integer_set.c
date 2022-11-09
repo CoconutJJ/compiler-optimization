@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static IntegerSet UNIVERSAL_SET = { .count = -1,
-                                    .set = (uint64_t *)0xDEADBEEF };
+static IntegerSet UNIVERSAL_SET = { .count = -1LL,
+                                    .set = NULL };
 
 void set_init (IntegerSet *set)
 {
-        set->count = 0;
+        set->count = 0LL;
         set->set = NULL;
 }
 
@@ -26,38 +26,53 @@ IntegerSet *set_create ()
         return set;
 }
 
+void make_universal_set (IntegerSet *set)
+{
+        if (set->set)
+                free (set->set);
+
+        *set = UNIVERSAL_SET;
+}
+
 IntegerSet *universal_set ()
 {
-        return &UNIVERSAL_SET;
+        IntegerSet *set = set_create ();
+        
+        make_universal_set(set);
+
+        return set;
 }
 
 bool is_universal_set (IntegerSet *set)
 {
-        return set == &UNIVERSAL_SET;
+        return set->count == UNIVERSAL_SET.count &&
+               set->set == UNIVERSAL_SET.set;
+}
+
+void _set_shallow_free(IntegerSet *set) {
+        if (set->set)
+                free(set->set);
+        
+        set_init(set);
+
 }
 
 void set_destroy (IntegerSet *set)
 {
-        if (is_universal_set (set))
-                return;
-
-        free (set->set);
+        _set_shallow_free(set);
         free (set);
 }
 
 void set_empty (IntegerSet *set)
 {
-        if (is_universal_set (set)) {
-                fprintf (stderr, "cannot empty universal set!\n");
-                exit (EXIT_FAILURE);
-        }
-
-        set_destroy (set);
-        set_init (set);
+        _set_shallow_free(set);
 }
 
 void set_copy (IntegerSet *dest, IntegerSet *src)
 {
+
+        set_empty(dest);
+
         dest->set = malloc (src->count * sizeof (uint64_t));
 
         if (!dest->set) {
@@ -164,8 +179,10 @@ IntegerSet *set_union (IntegerSet *dest, IntegerSet *src)
 {
         if (is_universal_set (dest))
                 return dest;
-        if (is_universal_set (src))
-                return src;
+        if (is_universal_set (src)) {
+                make_universal_set (dest);
+                return dest;
+        }
 
         if (src->count > dest->count) {
                 dest->set =
@@ -189,11 +206,14 @@ IntegerSet *set_union (IntegerSet *dest, IntegerSet *src)
 
 IntegerSet *set_intersection (IntegerSet *dest, IntegerSet *src)
 {
-        if (is_universal_set (dest))
-                return src;
-
-        if (is_universal_set (src))
+        if (is_universal_set (dest)) {
+                set_copy (dest, src);
                 return dest;
+        }
+
+        if (is_universal_set (src)) {
+                return dest;
+        }
 
         size_t new_count = dest->count > src->count ? dest->count : src->count;
 

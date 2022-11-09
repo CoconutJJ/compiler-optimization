@@ -5,6 +5,8 @@ list(APPEND TestFiles
     test_integer_set_3 
     test_integer_set_4 
     test_integer_set_5 
+    test_integer_set_6 
+
 )
 
 list(APPEND TestNames 
@@ -13,6 +15,8 @@ list(APPEND TestNames
     IntegerSet_test_can_subtract 
     IntegerSet_test_can_intersect 
     IntegerSet_test_can_union
+    IntegerSet_test_can_union_universal_set
+
 )
 
 foreach(testfile testname IN ZIP_LISTS TestFiles TestNames)
