@@ -38,7 +38,6 @@ int main ()
 
         set_destroy (setA);
         set_destroy (setB);
-        set_destroy (setC);
 
         return 0;
 }

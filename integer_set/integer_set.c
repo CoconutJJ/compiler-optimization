@@ -45,6 +45,50 @@ void set_destroy (IntegerSet *set)
         free (set);
 }
 
+void set_empty (IntegerSet *set)
+{
+        if (is_universal_set (set)) {
+                fprintf (stderr, "cannot empty universal set!\n");
+                exit (EXIT_FAILURE);
+        }
+
+        set_destroy (set);
+        set_init (set);
+}
+
+void set_copy (IntegerSet *dest, IntegerSet *src)
+{
+        dest->set = malloc (src->count * sizeof (uint64_t));
+
+        if (!dest->set) {
+                perror ("malloc");
+                exit (EXIT_FAILURE);
+        }
+
+        memcpy (dest->set, src->set, src->count * sizeof (uint64_t));
+        dest->count = src->count;
+}
+
+bool set_equal (IntegerSet *a, IntegerSet *b)
+{
+        size_t min = a->count > b->count ? b->count : a->count;
+
+        size_t max = a->count > b->count ? a->count : b->count;
+
+        for (size_t i = 0; i < min; i++) {
+                if (a->set[i] != b->set[i])
+                        return false;
+        }
+        IntegerSet *largest = a->count > b->count ? a : b;
+
+        for (size_t i = min; i < max; i++) {
+                if (largest->set[i] != 0)
+                        return false;
+        }
+
+        return true;
+}
+
 IntegerSet *set_add (IntegerSet *set, uint64_t v)
 {
         if (is_universal_set (set))
@@ -116,104 +160,68 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
         return true;
 }
 
-IntegerSet *set_union (IntegerSet *setA, IntegerSet *setB)
+IntegerSet *set_union (IntegerSet *dest, IntegerSet *src)
 {
-        if (is_universal_set (setA))
-                return setA;
-        if (is_universal_set (setB))
-                return setB;
+        if (is_universal_set (dest))
+                return dest;
+        if (is_universal_set (src))
+                return src;
 
-        size_t new_count =
-                setA->count > setB->count ? setA->count : setB->count;
+        if (src->count > dest->count) {
+                dest->set =
+                        realloc (dest->set, (src->count) * sizeof (uint64_t));
 
-        IntegerSet *new_set = set_create ();
+                if (!dest->set) {
+                        perror ("realloc");
+                        exit (EXIT_FAILURE);
+                }
 
-        new_set->set = malloc (new_count * sizeof (uint64_t));
-
-        if (!new_set->set) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
+                dest->count = src->count;
         }
 
-        new_set->count = new_count;
-
-        for (size_t i = 0; i < new_count; i++) {
-                uint64_t un = 0ULL;
-
-                if (i < setA->count)
-                        un |= setA->set[i];
-
-                if (i < setB->count)
-                        un |= setB->set[i];
-
-                new_set->set[i] = un;
+        for (size_t i = 0; i < src->count; i++) {
+                if (i < src->count)
+                        dest->set[i] |= src->set[i];
         }
-        return new_set;
+
+        return dest;
 }
 
-IntegerSet *set_intersection (IntegerSet *setA, IntegerSet *setB)
+IntegerSet *set_intersection (IntegerSet *dest, IntegerSet *src)
 {
-        if (is_universal_set (setA))
-                return setB;
+        if (is_universal_set (dest))
+                return src;
 
-        if (is_universal_set (setB))
-                return setA;
+        if (is_universal_set (src))
+                return dest;
 
-        size_t new_count =
-                setA->count > setB->count ? setA->count : setB->count;
-
-        IntegerSet *new_set = set_create ();
-
-        new_set->set = malloc (new_count * sizeof (uint64_t));
-
-        if (!new_set->set) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
-
-        new_set->count = new_count;
+        size_t new_count = dest->count > src->count ? dest->count : src->count;
 
         for (size_t i = 0; i < new_count; i++) {
-                if (i < setA->count && i < setB->count)
-                        new_set->set[i] = setA->set[i] & setB->set[i];
+                if (i < dest->count && i < src->count)
+                        dest->set[i] &= src->set[i];
                 else
-                        new_set->set[i] = 0ULL;
+                        dest->set[i] = 0ULL;
         }
 
-        return new_set;
+        return dest;
 }
 
-IntegerSet *set_subtraction (IntegerSet *setA, IntegerSet *setB)
+IntegerSet *set_subtraction (IntegerSet *dest, IntegerSet *src)
 {
-        IntegerSet *new_set = set_create ();
+        if (is_universal_set (src)) {
+                set_empty (dest);
+                return dest;
+        }
 
-        if (is_universal_set (setB))
-                return new_set;
-
-        if (is_universal_set (setA)) {
+        if (is_universal_set (dest)) {
                 fprintf (stderr, "cannot subtract from universal set!\n");
                 exit (EXIT_FAILURE);
         }
 
-        new_set->set = malloc (setA->count * sizeof (uint64_t));
+        for (size_t i = 0; i < dest->count; i++)
+                if (i < src->count)
+                        dest->set[i] -= dest->set[i] & src->set[i];
 
-        if (!new_set->set) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
-
-        memset (new_set->set, 0, setA->count * sizeof (uint64_t));
-
-        new_set->count = setA->count;
-
-        for (size_t i = 0; i < setA->count; i++) {
-                uint64_t similar = 0ULL;
-
-                if (i < setB->count)
-                        similar = setA->set[i] & setB->set[i];
-
-                new_set->set[i] = setA->set[i] - similar;
-        }
-
-        return new_set;
+        return dest;
 }

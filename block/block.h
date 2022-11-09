@@ -13,4 +13,8 @@ typedef struct Block {
         IntegerSet predecessors;
 } Block;
 
+Block *get_block_id (size_t block_id);
+IntegerSet *get_killed_definitions (Block *block, IntegerSet *current_definitions);
+IntegerSet *get_generated_definitions (Block *block);
+
 #endif

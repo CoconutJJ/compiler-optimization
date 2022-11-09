@@ -10,6 +10,7 @@ static size_t variables_size = 0;
 Variable *create_variable (char name[10])
 {
         if (variable_id == variables_size) {
+                
                 if (variables_size == 0)
                         variables_size = 8;
                 else
@@ -34,9 +35,9 @@ Variable *create_variable (char name[10])
 }
 Variable *get_variable_id (uint32_t id)
 {
-        if (id >= variable_id) {
+        if (id >= variable_id) 
                 return NULL;
-        }
+        
 
         return variables + id;
 }
