@@ -11,7 +11,6 @@ typedef enum { NIL, VAR, LITERAL } Type;
 typedef struct Variable {
         uint32_t id;
         char name[10];
-        uint32_t value_no;
 } Variable;
 
 typedef struct Reference {
@@ -21,8 +20,9 @@ typedef struct Reference {
                 uint32_t index;
                 Variable *index_var;
         };
-} Reference;
+        uint32_t value_no;
 
+} Reference;
 
 Variable *create_variable (char name[10]);
 Variable *get_variable_id (uint32_t id);

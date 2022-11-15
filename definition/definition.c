@@ -1,5 +1,6 @@
 #include "definition.h"
 #include "variable.h"
+#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,7 @@ create_definition (Reference *dest, Operator op, Reference *fst, Reference *snd)
                 else
                         definitions_size *= 2;
 
-                definitions = realloc (definitions,
+                definitions = compiler_realloc (definitions,
                                        definitions_size * sizeof (Definition));
         }
 

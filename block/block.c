@@ -1,6 +1,7 @@
 #include "block.h"
 #include "definition.h"
 #include "integer_set.h"
+#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,7 @@ Block *create_block ()
                 else
                         block_size *= 2;
 
-                blocks = realloc (blocks, block_size * sizeof (Block));
+                blocks = compiler_realloc (blocks, block_size * sizeof (Block));
         }
         Block *blk = blocks + block_id;
 

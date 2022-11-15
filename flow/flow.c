@@ -2,6 +2,7 @@
 #include "flow.h"
 #include "block.h"
 #include "integer_set.h"
+#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,7 +14,7 @@ size_t outs_count = 0;
 IntegerSet *get_in_set_of_block (Block *block)
 {
         if (ins_count <= block->id) {
-                ins = realloc (ins, (block->id + 1) * sizeof (IntegerSet));
+                ins = compiler_realloc (ins, (block->id + 1) * sizeof (IntegerSet));
 
                 for (; ins_count < block->id + 1; ins_count++)
                         set_init (ins + block->id);
@@ -25,7 +26,7 @@ IntegerSet *get_in_set_of_block (Block *block)
 IntegerSet *get_out_set_of_block (Block *block)
 {
         if (outs_count <= block->id) {
-                outs = realloc (outs, (block->id + 1) * sizeof (IntegerSet));
+                outs = compiler_realloc (outs, (block->id + 1) * sizeof (IntegerSet));
 
                 for (; outs_count < block->id + 1; outs_count++)
                         set_init (outs + block->id);
@@ -78,6 +79,7 @@ void compute_reaching_definitions ()
                         set_copy (in_set, new_in);
                         set_copy (out_set, new_out);
 
+                        // destroy created set
                         set_destroy (new_in);
                         set_destroy (generated);
                         set_destroy (killed);
