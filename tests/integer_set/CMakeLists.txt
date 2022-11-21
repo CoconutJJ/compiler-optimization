@@ -24,6 +24,6 @@ foreach(testfile testname IN ZIP_LISTS TestFiles TestNames)
     add_test(${testname} ${testfile})
     target_include_directories(${testfile} PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
     target_link_libraries(${testfile} PUBLIC integer_setlib)
-    target_link_libraries(${testfile} PUBLIC memorylib)
+    target_link_libraries(${testfile} PUBLIC memlib)
 
 endforeach()

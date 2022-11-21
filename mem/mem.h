@@ -1,11 +1,10 @@
-#ifndef memory_h
-#define memory_h
+#ifndef mem_h
+#define mem_h
 #include <stdio.h>
 #include <stdlib.h>
 
 #define DYNAMIC_ARRAY_RESIZE(array, elemtype, size, count)                     \
-        dynamic_array_resize (                                                 \
-                array, sizeof(elemtype), &size, count)
+        dynamic_array_resize (array, sizeof (elemtype), &size, count)
 
 void *compiler_malloc (size_t sz);
 void *compiler_realloc (void *ptr, size_t sz);

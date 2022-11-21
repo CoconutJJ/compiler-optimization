@@ -4,6 +4,6 @@ add_library(basicblocklib "${CMAKE_CURRENT_SOURCE_DIR}/basicblock.c" "${CMAKE_CU
 target_include_directories(basicblocklib PUBLIC "${CMAKE_SOURCE_DIR}/definition")
 target_include_directories(basicblocklib PUBLIC "${CMAKE_SOURCE_DIR}/variable")
 target_include_directories(basicblocklib PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
-target_include_directories(basicblocklib PUBLIC "${CMAKE_SOURCE_DIR}/memory")
+target_include_directories(basicblocklib PUBLIC "${CMAKE_SOURCE_DIR}/mem")
 
 

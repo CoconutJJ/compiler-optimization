@@ -1,5 +1,5 @@
 #include "variable.h"
-#include "memory.h"
+#include "mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,8 @@ static size_t variables_size = 0;
 
 Variable *create_variable (char name[10])
 {
-        variables = DYNAMIC_ARRAY_RESIZE(variables, Variable, variables_size, variable_id);
+        variables = DYNAMIC_ARRAY_RESIZE (
+                variables, Variable, variables_size, variable_id);
 
         Variable *var = variables + variable_id;
 

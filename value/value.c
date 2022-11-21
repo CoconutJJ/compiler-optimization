@@ -1,5 +1,5 @@
 #include "value.h"
-#include "memory.h"
+#include "mem.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,8 +24,8 @@ uint32_t allocate_value (ValueMap *map, ValueRecord record)
         uint32_t value = allocate_value_no (map);
 
         if (map->count <= value) {
-                map->map =
-                        compiler_realloc (map->map, (value + 1) * sizeof (ValueRecord));
+                map->map = compiler_realloc (
+                        map->map, (value + 1) * sizeof (ValueRecord));
 
                 if (!map->map) {
                         perror ("realloc");

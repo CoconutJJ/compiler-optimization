@@ -1,7 +1,7 @@
 #include "basicblock.h"
 #include "definition.h"
 #include "integer_set.h"
-#include "memory.h"
+#include "mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 

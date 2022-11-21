@@ -1,5 +1,5 @@
 #include "integer_set.h"
-#include "memory.h"
+#include "mem.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

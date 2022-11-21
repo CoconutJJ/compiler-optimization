@@ -12,7 +12,7 @@ typedef struct {
 
 } IntegerSet;
 IntegerSet *set_create ();
-void set_copy(IntegerSet *dest, IntegerSet *src);
+void set_copy (IntegerSet *dest, IntegerSet *src);
 void set_init (IntegerSet *set);
 bool set_equal (IntegerSet *a, IntegerSet *b);
 IntegerSet *universal_set ();
