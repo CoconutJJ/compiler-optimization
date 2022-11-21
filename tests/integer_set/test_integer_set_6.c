@@ -10,23 +10,22 @@ int main ()
 
         set_add (setA, 1);
         set_add (setA, 7);
-
-        if (!is_universal_set (set_union (setA, setB)))
+        set_union (setA, setB);
+        if (!is_universal_set (setA))
                 return 1;
 
         set_destroy (setA);
         set_destroy (setB);
 
-
         // try switching order of arguments, shouldn't matter.
         setA = set_create ();
         setB = universal_set ();
-
-        if (!is_universal_set (set_union (setB, setA)))
+        set_union (setB, setA);
+        if (!is_universal_set (setB))
                 return 1;
 
-        set_destroy(setA);
-        set_destroy(setB);
+        set_destroy (setA);
+        set_destroy (setB);
 
         return 0;
 }

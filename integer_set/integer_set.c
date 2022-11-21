@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static IntegerSet UNIVERSAL_SET = { .count = -1LL,
-                                    .set = NULL };
+static IntegerSet UNIVERSAL_SET = { .count = -1LL, .set = NULL };
 
 void set_init (IntegerSet *set)
 {
@@ -38,8 +37,8 @@ void make_universal_set (IntegerSet *set)
 IntegerSet *universal_set ()
 {
         IntegerSet *set = set_create ();
-        
-        make_universal_set(set);
+
+        make_universal_set (set);
 
         return set;
 }
@@ -50,29 +49,28 @@ bool is_universal_set (IntegerSet *set)
                set->set == UNIVERSAL_SET.set;
 }
 
-void _set_shallow_free(IntegerSet *set) {
+void _set_shallow_free (IntegerSet *set)
+{
         if (set->set)
-                free(set->set);
-        
-        set_init(set);
+                free (set->set);
 
+        set_init (set);
 }
 
 void set_destroy (IntegerSet *set)
 {
-        _set_shallow_free(set);
+        _set_shallow_free (set);
         free (set);
 }
 
 void set_empty (IntegerSet *set)
 {
-        _set_shallow_free(set);
+        _set_shallow_free (set);
 }
 
 void set_copy (IntegerSet *dest, IntegerSet *src)
 {
-
-        set_empty(dest);
+        set_empty (dest);
 
         dest->set = compiler_malloc (src->count * sizeof (uint64_t));
 
@@ -114,7 +112,8 @@ IntegerSet *set_add (IntegerSet *set, uint64_t v)
         int bit = v % 64ULL;
 
         if (index >= set->count) {
-                set->set = compiler_realloc (set->set, (index + 1) * sizeof (uint64_t));
+                set->set = compiler_realloc (set->set,
+                                             (index + 1) * sizeof (uint64_t));
 
                 if (!set->set) {
                         perror ("realloc");
@@ -176,18 +175,18 @@ bool set_iter (IntegerSet *set, int64_t *bit_no)
         return true;
 }
 
-IntegerSet *set_union (IntegerSet *dest, IntegerSet *src)
+void set_union (IntegerSet *dest, IntegerSet *src)
 {
         if (is_universal_set (dest))
-                return dest;
+                return;
         if (is_universal_set (src)) {
                 make_universal_set (dest);
-                return dest;
+                return;
         }
 
         if (src->count > dest->count) {
-                dest->set =
-                        compiler_realloc (dest->set, (src->count) * sizeof (uint64_t));
+                dest->set = compiler_realloc (dest->set,
+                                              (src->count) * sizeof (uint64_t));
 
                 if (!dest->set) {
                         perror ("realloc");
@@ -202,18 +201,18 @@ IntegerSet *set_union (IntegerSet *dest, IntegerSet *src)
                         dest->set[i] |= src->set[i];
         }
 
-        return dest;
+        return;
 }
 
-IntegerSet *set_intersection (IntegerSet *dest, IntegerSet *src)
+void set_intersection (IntegerSet *dest, IntegerSet *src)
 {
         if (is_universal_set (dest)) {
                 set_copy (dest, src);
-                return dest;
+                return;
         }
 
         if (is_universal_set (src)) {
-                return dest;
+                return;
         }
 
         size_t new_count = dest->count > src->count ? dest->count : src->count;
@@ -225,14 +224,14 @@ IntegerSet *set_intersection (IntegerSet *dest, IntegerSet *src)
                         dest->set[i] = 0ULL;
         }
 
-        return dest;
+        return;
 }
 
-IntegerSet *set_subtraction (IntegerSet *dest, IntegerSet *src)
+void set_subtraction (IntegerSet *dest, IntegerSet *src)
 {
         if (is_universal_set (src)) {
                 set_empty (dest);
-                return dest;
+                return;
         }
 
         if (is_universal_set (dest)) {
@@ -244,5 +243,5 @@ IntegerSet *set_subtraction (IntegerSet *dest, IntegerSet *src)
                 if (i < src->count)
                         dest->set[i] -= dest->set[i] & src->set[i];
 
-        return dest;
+        return;
 }

@@ -18,10 +18,10 @@ int main ()
 
         // find all items in common in setA and setB, this should leave only the
         // even numbers from 1 to 120 in setC
-        IntegerSet *setC = set_union (setA, setB);
+        set_union (setA, setB);
 
         for (int i = 0; i < 140; i++) {
-                if (!set_has (setC, i))
+                if (!set_has (setA, i))
                         return 1;
         }
 

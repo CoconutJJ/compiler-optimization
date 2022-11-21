@@ -14,7 +14,9 @@ typedef struct Block {
 } Block;
 
 Block *get_block_id (size_t block_id);
-IntegerSet *get_killed_definitions (Block *block, IntegerSet *current_definitions);
-IntegerSet *get_generated_definitions (Block *block);
+void get_killed_definitions (IntegerSet *buffer,
+                             Block *block,
+                             IntegerSet *current_definitions);
+void get_generated_definitions (IntegerSet *buffer, Block *block);
 
 #endif

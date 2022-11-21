@@ -21,7 +21,7 @@ IntegerSet *set_add (IntegerSet *set, uint64_t v);
 bool set_has (IntegerSet *set, uint64_t v);
 void set_destroy (IntegerSet *set);
 bool set_iter (IntegerSet *set, int64_t *bit_no);
-IntegerSet *set_union (IntegerSet *dest, IntegerSet *src);
-IntegerSet *set_intersection (IntegerSet *dest, IntegerSet *src);
-IntegerSet *set_subtraction (IntegerSet *dest, IntegerSet *src);
+void set_union (IntegerSet *dest, IntegerSet *src);
+void set_intersection (IntegerSet *dest, IntegerSet *src);
+void set_subtraction (IntegerSet *dest, IntegerSet *src);
 #endif

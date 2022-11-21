@@ -1,4 +1,4 @@
-#include "block.h"
+#include "basicblock.h"
 #include "definition.h"
 #include "integer_set.h"
 #include "memory.h"
@@ -35,11 +35,10 @@ Block *get_block_id (size_t block_id)
         return blocks + block_id;
 }
 
-IntegerSet *get_killed_definitions (Block *block,
-                                    IntegerSet *current_definitions)
+void get_killed_definitions (IntegerSet *buffer,
+                             Block *block,
+                             IntegerSet *current_definitions)
 {
-        IntegerSet *killed_defs = set_create ();
-
         for (size_t i = 0; i < block->count; i++) {
                 Variable *dest = block->definitions[i].dest->variable;
 
@@ -51,19 +50,13 @@ IntegerSet *get_killed_definitions (Block *block,
                         Variable *def_var = def->dest->variable;
 
                         if (def_var == dest)
-                                set_add (killed_defs, def->def_no);
+                                set_add (buffer, def->def_no);
                 }
         }
-
-        return killed_defs;
 }
 
-IntegerSet *get_generated_definitions (Block *block)
+void get_generated_definitions (IntegerSet *buffer, Block *block)
 {
-        IntegerSet *generated_defs = set_create ();
-
         for (size_t i = 0; i < block->count; i++)
-                set_add (generated_defs, block->definitions[i].def_no);
-
-        return generated_defs;
+                set_add (buffer, block->definitions[i].def_no);
 }
