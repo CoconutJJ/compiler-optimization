@@ -45,12 +45,11 @@ void forward_flow (MeetOperator Meet, TransferFunction F)
 {
         bool has_changes = false;
         do {
-                has_changes = false;
+                Block *block;
 
-                for (size_t i = 0;; i++) {
-                        Block *block = get_block_id (i);
-                        IntegerSet pred_union;
-                        set_init (&pred_union);
+                for (size_t i = 0; (block = get_block_id (i)) != NULL; i++) {
+                        IntegerSet pred_meet;
+                        set_init (&pred_meet);
 
                         int64_t pred_block_id = -1LL;
                         while (set_iter (&(block->predecessors),
@@ -61,13 +60,13 @@ void forward_flow (MeetOperator Meet, TransferFunction F)
                                 IntegerSet *out_set =
                                         get_out_set_of_block (pred_block);
 
-                                Meet (&pred_union, out_set);
+                                Meet (&pred_meet, out_set);
                         }
 
                         IntegerSet new_out;
                         set_init (&new_out);
 
-                        F (&new_out, &pred_union, block);
+                        F (&new_out, &pred_meet, block);
 
                         IntegerSet *out_set = get_out_set_of_block (block);
 

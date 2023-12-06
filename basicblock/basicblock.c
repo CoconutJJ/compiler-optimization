@@ -21,11 +21,7 @@ Block *create_block ()
         }
         Block *blk = blocks + block_id;
 
-        *blk = (Block){ .id = block_id++,
-                        .count = 0,
-                        .definitions = NULL,
-                        .jump = NULL,
-                        .fallthrough = NULL };
+        *blk = (Block){ .id = block_id++, .count = 0, .definitions = NULL, .jump = NULL, .fallthrough = NULL };
 
         return blk;
 }
@@ -35,9 +31,7 @@ Block *get_block_id (size_t block_id)
         return blocks + block_id;
 }
 
-void get_killed_definitions (IntegerSet *buffer,
-                             Block *block,
-                             IntegerSet *current_definitions)
+void get_killed_definitions (IntegerSet *buffer, Block *block, IntegerSet *current_definitions)
 {
         for (size_t i = 0; i < block->count; i++) {
                 Variable *dest = block->definitions[i].dest->variable;

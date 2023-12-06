@@ -1,6 +1,7 @@
 #include "integer_set.h"
 #include "mem.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,8 +46,7 @@ IntegerSet *universal_set ()
 
 bool is_universal_set (IntegerSet *set)
 {
-        return set->count == UNIVERSAL_SET.count &&
-               set->set == UNIVERSAL_SET.set;
+        return set->count == UNIVERSAL_SET.count && set->set == UNIVERSAL_SET.set;
 }
 
 void _set_shallow_free (IntegerSet *set)
@@ -112,22 +112,32 @@ IntegerSet *set_add (IntegerSet *set, uint64_t v)
         int bit = v % 64ULL;
 
         if (index >= set->count) {
-                set->set = compiler_realloc (set->set,
-                                             (index + 1) * sizeof (uint64_t));
+                set->set = compiler_realloc (set->set, (index + 1) * sizeof (uint64_t));
 
                 if (!set->set) {
                         perror ("realloc");
                         exit (EXIT_FAILURE);
                 }
 
-                memset (set->set + set->count,
-                        0,
-                        (index - set->count + 1) * sizeof (uint64_t));
+                memset (set->set + set->count, 0, (index - set->count + 1) * sizeof (uint64_t));
 
                 set->count = index + 1;
         }
 
         set->set[index] |= (1ULL << bit);
+
+        return set;
+}
+
+IntegerSet *set_delete (IntegerSet *set, uint64_t v)
+{
+        uint64_t index = v / 64ULL;
+        int bit = v % 64ULL;
+
+        if (index >= set->count) {
+                return set;
+        }
+        set->set[index] &= ~(1ULL << bit);
 
         return set;
 }
@@ -185,8 +195,7 @@ void set_union (IntegerSet *dest, IntegerSet *src)
         }
 
         if (src->count > dest->count) {
-                dest->set = compiler_realloc (dest->set,
-                                              (src->count) * sizeof (uint64_t));
+                dest->set = compiler_realloc (dest->set, (src->count) * sizeof (uint64_t));
 
                 if (!dest->set) {
                         perror ("realloc");

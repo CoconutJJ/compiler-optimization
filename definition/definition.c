@@ -8,26 +8,13 @@ static uint32_t definition_no = 0;
 static Definition *definitions = NULL;
 static size_t definitions_size = 0;
 
-Definition *
-create_definition (Reference *dest, Operator op, Reference *fst, Reference *snd)
+Definition *create_definition (Reference *dest, Expression *expr)
 {
-        if (definition_no == definitions_size) {
-                if (definitions_size == 0)
-                        definitions_size = 8;
-                else
-                        definitions_size *= 2;
-
-                definitions = compiler_realloc (
-                        definitions, definitions_size * sizeof (Definition));
-        }
+        DYNAMIC_ARRAY_RESIZE (definitions, Definition, definitions_size, definition_no);
 
         Definition *def = definitions + definition_no;
 
-        *def = (Definition){ .def_no = definition_no++,
-                             .dest = dest,
-                             .fst = fst,
-                             .snd = snd,
-                             .op = op };
+        *def = (Definition){ .def_no = definition_no++, .dest = dest, .expr = expr };
 
         return def;
 }

@@ -4,7 +4,7 @@ project(compiler C)
 set(CMAKE_CXX_FLAGS "-Werror -Wall -Wextra -Wconversion -Wsign-compare")
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
-list(APPEND Directories variable definition basicblock value integer_set flow mem)
+list(APPEND Directories variable definition basicblock value integer_set flow mem expression)
 
 foreach(dir IN LISTS Directories)
     add_subdirectory(${dir})

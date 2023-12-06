@@ -1,5 +1,6 @@
 #include "variable.h"
 #include "mem.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,8 +10,7 @@ static size_t variables_size = 0;
 
 Variable *create_variable (char name[10])
 {
-        variables = DYNAMIC_ARRAY_RESIZE (
-                variables, Variable, variables_size, variable_id);
+        variables = DYNAMIC_ARRAY_RESIZE (variables, Variable, variables_size, variable_id);
 
         Variable *var = variables + variable_id;
 
@@ -25,6 +25,11 @@ Variable *get_variable_id (uint32_t id)
                 return NULL;
 
         return variables + id;
+}
+
+bool equal_variable (Variable *a, Variable *b)
+{
+        return a->id == b->id;
 }
 
 Reference *create_reference (Variable *variable)
