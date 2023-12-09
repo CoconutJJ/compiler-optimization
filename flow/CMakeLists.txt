@@ -7,4 +7,4 @@ target_include_directories(flowlib PUBLIC "${CMAKE_SOURCE_DIR}/variable")
 target_include_directories(flowlib PUBLIC "${CMAKE_SOURCE_DIR}/integer_set")
 target_include_directories(flowlib PUBLIC "${CMAKE_SOURCE_DIR}/basicblock")
 target_include_directories(flowlib PUBLIC "${CMAKE_SOURCE_DIR}/mem")
-
+target_include_directories(flowlib PUBLIC "${CMAKE_SOURCE_DIR}/linked_list")

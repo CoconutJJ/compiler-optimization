@@ -1,12 +1,8 @@
 
-list(APPEND TestFiles 
-    test_variable_1 
-    test_variable_2 
-)
+list(APPEND TestFiles "test_variable_1")
 
 list(APPEND TestNames 
-    Variable_test_can_create_variable 
-    Variable_test_can_create_reference 
+    "Variable_test_can_create_variable" 
 )
 
 foreach(testfile testname IN ZIP_LISTS TestFiles TestNames)

@@ -1,6 +1,7 @@
 #include "basicblock.h"
 #include "definition.h"
 #include "integer_set.h"
+#include "linked_list.h"
 #include "mem.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,27 +27,19 @@ Block *create_block ()
         return blk;
 }
 
+void block_add_definition (Block *block, Definition *def)
+{
+        struct list_head *end = list_end (block->definitions->cfg_head);
+        list_insert_after (end, def->cfg_head);
+}
+
+Definition *block_defintion_iter (Block *block)
+{
+}
+
 Block *get_block_id (size_t block_id)
 {
         return blocks + block_id;
-}
-
-void get_killed_definitions (IntegerSet *buffer, Block *block, IntegerSet *current_definitions)
-{
-        for (size_t i = 0; i < block->count; i++) {
-                Variable *dest = block->definitions[i].dest->variable;
-
-                int64_t curr_def = -1;
-
-                while (set_iter (current_definitions, &curr_def)) {
-                        Definition *def = get_definition_no (curr_def);
-
-                        Variable *def_var = def->dest->variable;
-
-                        if (def_var == dest)
-                                set_add (buffer, def->def_no);
-                }
-        }
 }
 
 void get_generated_definitions (IntegerSet *buffer, Block *block)

@@ -1,5 +1,6 @@
 #include "value.h"
 #include "expression.h"
+#include "map.h"
 #include "mem.h"
 #include "variable.h"
 #include <stdbool.h>
@@ -9,41 +10,48 @@
 
 void init_ValueMap (ValueMap *map)
 {
+        init_map (&map->expr_to_value_no, 10);
+        init_map (&map->value_no_to_var, 10);
+        init_map (&map->var_to_value_no, 10);
         map->value_no = 1;
-        map->map_size = 0;
-        map->value_to_var_size = 0;
-        map->var_to_value_size = 0;
-
-        map->value_no_to_var = NULL;
-        map->var_to_value_no = NULL;
-        map->map = NULL;
-
         return;
 }
 
-uint32_t allocate_value_no (ValueMap *map)
+uint32_t hash_expr (ValueNoExpr expr)
 {
-        return map->value_no++;
-}
+        uint32_t fst = expr.fst, snd = expr.snd;
+        switch (expr.op) {
+        case PLUS:
+        case MULT:
+                // if operation is commutative, sort based on ascending value number
+                if (fst > snd) {
+                        uint32_t tmp = fst;
+                        fst = snd;
+                        snd = tmp;
+                }
+                break;
+        default: break;
+        }
 
-void label_value (ValueMap *map, Variable *v, uint32_t value_no)
-{
-        // the var_to_value_no mapping is not contiguous since it uses the variable id as the key value
-        DYNAMIC_ARRAY_RESIZE_ZERO (map->var_to_value_no, uint32_t, map->var_to_value_size, v->id);
-        map->var_to_value_no[v->id] = value_no;
-
-        DYNAMIC_ARRAY_RESIZE_ZERO (map->value_no_to_var, Variable *, map->value_to_var_size, value_no);
-        map->value_no_to_var[value_no] = v;
+        return map_hash3 (expr.fst, expr.snd, (uint32_t)expr.op);
 }
 
 uint32_t variable_to_value_no (ValueMap *map, Variable *v)
 {
-        if (v->id >= map->var_to_value_size || map->var_to_value_no[v->id] == 0) {
-                uint32_t value_no = allocate_value_no (map);
-                label_value (map, v, value_no);
+        void *value_ptr = map_find (&map->var_to_value_no, v->id);
+
+        uint32_t value;
+
+        if (!value_ptr) {
+                value = map->value_no++;
+
+                map_insert (&map->var_to_value_no, v->id, (void *)value);
+                map_insert (&map->value_no_to_var, value, v);
+        } else {
+                value = (uint32_t)value_ptr;
         }
 
-        return map->var_to_value_no[v->id];
+        return value;
 }
 
 ValueNoExpr _expr_to_value_no_expr (ValueMap *map, Expression *expr)
@@ -52,27 +60,25 @@ ValueNoExpr _expr_to_value_no_expr (ValueMap *map, Expression *expr)
                               .snd = variable_to_value_no (map, expr->snd),
                               .op = expr->op };
 }
-
 uint32_t expr_to_value_no (ValueMap *map, Expression *expr)
 {
-        uint32_t value = allocate_value_no (map);
+        ValueNoExpr value_expr = _expr_to_value_no_expr (map, expr);
 
-        ValueNoExpr value_no_expr = _expr_to_value_no_expr (map, expr);
+        uint32_t hash = hash_expr (value_expr);
 
-        // TODO: need to find the equivalent expression in the map
+        uint32_t value = (uint32_t)map_find (&map->expr_to_value_no, hash);
 
-        DYNAMIC_ARRAY_RESIZE_ZERO (map->map, ValueNoExpr, map->map_size, value);
-
-        map->map[value] = value_no_expr;
+        if (!value) {
+                value = map->value_no++;
+                map_insert (&map->expr_to_value_no, hash, (void *)value);
+        }
 
         return value;
 }
 
-Variable *find_value (ValueMap *map, uint32_t value_no)
+Variable *value_no_to_variable (ValueMap *map, uint32_t value)
 {
-        if (value_no >= map->value_to_var_size) {
-                return NULL;
-        }
+        Variable *v = (uint32_t)map_find (&map->value_no_to_var, value);
 
-        return map->value_no_to_var[value_no];
+        return v;
 }

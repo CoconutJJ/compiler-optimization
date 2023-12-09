@@ -8,7 +8,7 @@ static uint32_t definition_no = 0;
 static Definition *definitions = NULL;
 static size_t definitions_size = 0;
 
-Definition *create_definition (Reference *dest, Expression *expr)
+Definition *create_definition (Variable *dest, Expression *expr)
 {
         DYNAMIC_ARRAY_RESIZE (definitions, Definition, definitions_size, definition_no);
 

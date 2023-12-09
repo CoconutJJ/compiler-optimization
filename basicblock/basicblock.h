@@ -8,9 +8,10 @@ typedef struct Block {
         uint32_t id;
         Definition *definitions;
         size_t count;
+        size_t size;
         Block *jump;
         Block *fallthrough;
-        IntegerSet predecessors;
+        Block **predecessors;
 } Block;
 
 Block *get_block_id (size_t block_id);
