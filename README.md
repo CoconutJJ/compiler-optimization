@@ -1,30 +1,16 @@
-# Implementing a Compiler Optimization framework
+# Compiler Optimization Algorithms
+
+A bunch of compiler optimization algorithms and different experiments
+
+## Available Expressions
+
+It was confusing why the Universal set initialization was used for computing
+available expressions. I asked on CS StackExchange, this is why: https://cs.stackexchange.com/questions/161114/dataflow-analysis-available-expressions-why-is-outb-initialized-to-universal
 
 
-## TODO
-- [] Write test cases for value numbering
-- [] Currently assuming same variable names will share the same `Variable`
-  struct, however, this does not work once we convert to SSA form. Since
-  each `Variable` reference will require an SSA index (stored inside the `Variable` struct), 
-  we need to make sure they refer to seperate structs in memory.
-    - One way is to construct a copy of the CFG during SSA construction. This 
-    copy will have a seperate `Variable` struct per Variable reference
-- [] Write an IR Parser
-  - Currently planning on limiting IR to
-    - [] set
-    - [] add
-    - [] sub
-    - [] mul
-    - [] div
-    - [] jmpif
-    - [] jmp
-- [] Local Value Numbering
-  - Requires: 
-    - [] Value Numbering Table
-      - Have not yet tested, but code is complete
-    - [] Basic Block methods 
-- [] Super Local Value Numbering 
-- [] Translation into SSA
-  - [] Dataflow for computing dominators
+## Dominators
+
+Algorithm for computing immediate dominators
+https://sbaziotis.com/compilers/visualizing-dominators.html
 
 
