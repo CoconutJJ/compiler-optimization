@@ -15,7 +15,8 @@
 #include <iterator>
 #include <map>
 #include <vector>
-
+#include <set>
+#define MAX_NODES 1000
 struct Node {
         int value;
         bool visited;
@@ -75,6 +76,9 @@ struct Node *intersect (struct Node *a,
         return b;
 }
 
+/**
+        Cooper, Harvey & Kennedy Algorithm
+*/
 std::map<struct Node *, struct Node *> compute_dominator_tree (struct Node *root)
 {
         std::vector<struct Node *> postorder = root->postorder_traversal ();
@@ -119,13 +123,47 @@ std::map<struct Node *, struct Node *> compute_dominator_tree (struct Node *root
         return idoms;
 }
 
-std::map<struct Node *, struct Node *> compute_dominator_DFA(struct Node *root) {
-        
+std::map<struct Node *, std::bitset<MAX_NODES> > compute_dominator_DFA (struct Node *root)
+{
+        std::vector<struct Node *> postorder = root->postorder_traversal ();
+
+        std::map<struct Node *, std::bitset<MAX_NODES> > doms;
+        for (auto n = postorder.rbegin (); n != postorder.rend (); n++) {
+                doms[*n].set ((*n)->value);
+        }
+
+        bool has_changes;
+
+        do {
+                has_changes = false;
+
+                for (auto n = postorder.rbegin (); n != postorder.rend (); n++) {
+                        struct Node *bb = *n;
+
+                        if (bb->preds.size () == 0)
+                                continue;
+
+                        std::bitset<MAX_NODES> curr_doms = doms[bb->preds[0]];
+
+                        for (auto pred: bb->preds) {
+                                curr_doms = curr_doms & doms[pred];
+                        }
+
+                        curr_doms.set (bb->value);
+
+                        if (doms[bb] != curr_doms) {
+                                doms[bb] = curr_doms;
+                                has_changes = true;
+                        }
+                }
+
+        } while (has_changes);
+
+        return doms;
 }
+
 
 int main (int argc, char **argv)
 {
-        struct Node p;
-
         return 0;
 }
