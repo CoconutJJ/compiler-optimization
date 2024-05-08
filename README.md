@@ -4,9 +4,9 @@ A bunch of compiler optimization algorithms and different experiments
 
 ## Resources
 
-Graph Traversals for DFA: https://eli.thegreenplace.net/2015/directed-graph-traversal-orderings-and-applications-to-data-flow-analysis/
-Princeton - Compiling Techniques: https://www.cs.princeton.edu/courses/archive/spring22/cos320/
-University of Cambridge - Optimizing Compilers Course Page: https://www.cl.cam.ac.uk/teaching/1718/OptComp/slides.html
+- Graph Traversals for DFA: https://eli.thegreenplace.net/2015/directed-graph-traversal-orderings-and-applications-to-data-flow-analysis/
+- Princeton - Compiling Techniques: https://www.cs.princeton.edu/courses/archive/spring22/cos320/
+- University of Cambridge - Optimizing Compilers Course Page: https://www.cl.cam.ac.uk/teaching/1718/OptComp/slides.html
 
 
 ## Available Expressions

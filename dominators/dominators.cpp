@@ -16,49 +16,9 @@
 #include <map>
 #include <vector>
 #include <set>
+#include "../utils/node.h"
+
 #define MAX_NODES 1000
-struct Node {
-        int value;
-        bool visited;
-        struct Node *left;
-        struct Node *right;
-        std::vector<struct Node *> preds;
-
-        void make_left_child (struct Node *child)
-        {
-                this->left = child;
-
-                child->preds.push_back (this);
-        }
-
-        void make_right_child (struct Node *child)
-        {
-                this->right = child;
-
-                child->preds.push_back (this);
-        }
-
-        std::vector<struct Node *> postorder_traversal ()
-        {
-                this->visited = true;
-
-                std::vector<struct Node *> left;
-
-                if (this->left && !this->left->visited)
-
-                        left = this->left->postorder_traversal ();
-
-                if (this->right && !this->right->visited) {
-                        std::vector<struct Node *> right = this->right->postorder_traversal ();
-
-                        left.insert (left.end (), right.begin (), right.end ());
-                }
-
-                left.push_back (this);
-
-                return left;
-        }
-};
 
 struct Node *intersect (struct Node *a,
                         struct Node *b,
@@ -104,6 +64,11 @@ std::map<struct Node *, struct Node *> compute_dominator_tree (struct Node *root
                 has_changes = false;
                 for (auto bb = postorder.rbegin (); bb != postorder.rend (); bb++) {
                         struct Node *block = *bb;
+
+                        if (block->preds.size() == 0) {
+                                continue;
+                        }
+
                         struct Node *dom = block->preds[0];
 
                         for (auto pred : block->preds) {
@@ -160,10 +125,4 @@ std::map<struct Node *, std::bitset<MAX_NODES> > compute_dominator_DFA (struct N
         } while (has_changes);
 
         return doms;
-}
-
-
-int main (int argc, char **argv)
-{
-        return 0;
 }
