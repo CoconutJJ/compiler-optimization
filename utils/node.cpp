@@ -90,7 +90,7 @@ std::map<int, struct Node *> build_graph (char *graph_file)
 {
         node_map.clear ();
 
-        create_graph (graph_file, &make_child);
+        create_graph_new (graph_file, &make_child);
 
         return node_map;
 }
