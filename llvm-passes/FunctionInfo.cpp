@@ -18,6 +18,7 @@ class FunctionInfoPass final : public PassInfoMixin<FunctionInfoPass> {
 
                         size_t basic_block_count = 0;
                         size_t instruction_count = 0;
+
                         for (Function::iterator b = F.begin (), b_end = F.end (); b != b_end; b++) {
                                 BasicBlock *bb = &*b;
 
@@ -33,6 +34,7 @@ class FunctionInfoPass final : public PassInfoMixin<FunctionInfoPass> {
                         }
 
                         printf ("Number of Basic Blocks: %lu\n", basic_block_count);
+                        printf ("Number of Instructions: %lu\n", instruction_count);
                 }
 
                 return PreservedAnalyses::all ();
