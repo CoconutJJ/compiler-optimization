@@ -1,0 +1,129 @@
+\documentclass{article}
+\usepackage[]{amsmath}
+\usepackage{amssymb}
+\usepackage[margin=0.5in]{geometry}
+\author{David Yue}
+\title{Compiler Optimization Notes}
+\date{}
+\setlength{\parindent}{0pt}
+\begin{document}
+\maketitle
+\section*{Partial Order of a Semi lattice}
+Definition of \(x \leq y\)
+\begin{equation*}
+    x \leq y \iff x \wedge y = x
+\end{equation*}
+The \(\leq\) operator satisfies 3 properties
+\begin{enumerate}
+    \item Reflexivity: \(x \leq x \) for all \(x\)
+    \item Anti-Symmetry: \(x \leq y\) and \(y \leq x\) implies \(x = y\)
+    \item Transitivity: \(x \leq y\) and \(y \leq z\) implies \(x \leq z\)
+\end{enumerate}
+
+\section*{Greatest Lower Bound}
+
+\(z\) is the greatest lower bound of \(x\) if \(z \leq x\) and for every \(y\),
+\(y \leq z\) implies \(y = z\)
+
+\begin{equation}
+    x \wedge y \text{ is the greatest lower bound of } x \text{ and } y
+\end{equation}
+
+Proof:
+
+Let \(g = x \wedge y\). Suppose by contradiction that there exists some
+element \(z\) such that \(z \leq x\), \(z \leq y\) and \(g \leq z\).
+
+Consider
+\begin{align*}
+    z \wedge g & = z \wedge (x \wedge y)                                       \\
+               & = (z \wedge x) \wedge y \quad (\wedge \text{ is associative}) \\
+               & = z \wedge y \quad (z \leq x \text{ is by hypothesis })       \\
+               & = z  \quad (z \leq y \text{ is by hypothesis})
+\end{align*}
+
+By definition of the partial order operator,
+
+\begin{equation}
+    z \wedge g = z \implies z \leq g
+\end{equation}
+
+This is a contradiction to our hypothesis that \(g \leq z\).
+
+\section*{Transfer Functions}
+
+Let \(F: V \rightarrow V\) be the set of transfer functions in a data flow
+framework. The set \(F\) has the following properties:
+
+\begin{enumerate}
+    \item \(F\) has an identity function \(I\) such that \(I(x) = x\) for all \(x \in V\)
+    \item \(F\) is closed under composition. Let \(f,g \in F\), then \(f(g) \in F\)
+\end{enumerate}
+
+\section*{Monotone Frameworks}
+
+A data flow framework is said to be monotone, if for every \(x,y \in V\) and \(f \in F\)
+
+\begin{equation}
+    x \leq y \text{ implies } f(x) \leq f(y)
+\end{equation}
+
+or equivalently
+
+\begin{equation}
+    f(x \wedge y) \leq f(x) \wedge f(y)
+\end{equation}
+
+\section*{Partial Redundancy Elimination}
+
+\section*{"Potentially Available" expressions}
+An expression \(x + y\) is "potentially available" if two criterion are met
+\begin{enumerate}
+    \item[1] It is available in the usual sense, has already been computed
+    \item[2] It is anticipated. It could be available if we choose to compute it here.
+\end{enumerate}
+\section*{Single Static Assignment}
+
+In SSA, every variable is assigned a value at most once. For every reassignment
+of some variable, we create a fresh version of the variable on in LHS. At a 
+"join point" in the CFG, we use a special function called the Phi function of 
+merge multiple definitions of a variable into a single definition.\\
+
+\subsection*{Placement of \(\Phi\) functions}
+Knowing where to place a \(\Phi\) function and doing it efficiently is not a
+trivial task.
+
+\subsubsection*{Naive SSA}
+At each join point, insert a \(\Phi\) function for all live variables. However
+some variables may not have been redefined at the join point, thus this algorithm
+may produce unnecessary \(\Phi\) functions
+
+\subsubsection*{Minimal SSA}
+At each join point, insert a \(\Phi\) function for all live variables with
+multiple outstanding definitions. The algorithm for this requires computing the
+\textbf{Interated Dominance Frontier} of each definition.
+
+\begin{enumerate}
+    \item \textbf{Dominator} - A node \(n\) dominates another node \(m\) if
+          every path from the entry to \(m\) must go through \(n\)
+    \item \textbf{Strict Dominator} - A node \(n\) strictly dominates another
+          node \(m\) if \(n\) dominates \(m\) and \(n \neq m\)
+    \item \textbf{Dominance Frontier} - The dominance frontier of a node \(n\)
+          is the set of all nodes \(m\) such that \(m\) has a predecessor that
+          is dominated by \(n\) and \(n\) does not strictly dominate \(m\)
+          itself (i.e \(n \neq m\)).
+\end{enumerate}
+
+\fbox{
+    \parbox{\textwidth}{
+        Place a \(\Phi\) function in the dominance frontier of every SSA variable
+        definition
+    }
+
+}
+
+\subsection*{Interated Dominance Frontier Algorithm}
+
+
+
+\end{document}

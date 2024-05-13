@@ -29,15 +29,17 @@ PreservedAnalyses AlgebraicIdentityPass::run([[maybe_unused]] Function &F,
       }
       switch (Inst.getOpcode()) {
       case Instruction::Add:
-        
-        if (Op1Const == 0) {
+        // if both are constants, just compute the constant value
+        if (isa<ConstantInt>(Op1) && isa<ConstantInt>(Op2)) {
+          Inst.replaceAllUsesWith(
+              ConstantInt::getSigned(Inst.getType(), Op1Const + Op2Const));
+        } else if (isa<ConstantInt>(Op1) && Op1Const == 0) {
           Inst.replaceAllUsesWith(Op2);
-        } else if (Op2Const == 0) {
+        } else if (isa<ConstantInt>(Op2) && Op2Const == 0) {
           Inst.replaceAllUsesWith(Op1);
         } else {
-            
+          continue;
         }
-
         break;
       case Instruction::Mul:
         break;
