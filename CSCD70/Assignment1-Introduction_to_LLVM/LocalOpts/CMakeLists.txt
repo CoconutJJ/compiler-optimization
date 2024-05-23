@@ -7,7 +7,7 @@ set(LLVM_VERSION
     CACHE STRING "LLVM Version")
 
 execute_process(
-  COMMAND llvm-config-${LLVM_VERSION} --cxxflags
+  COMMAND llvm-config-${LLVM_VERSION} --cxxflags --ldflags --libs
   OUTPUT_VARIABLE LLVM_CXXFLAGS
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_CXX_FLAGS "${LLVM_CXXFLAGS}")

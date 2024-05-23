@@ -1,10 +1,13 @@
 #pragma once // NOLINT(llvm-header-guard)
 
+#include "llvm/IR/Instruction.h"
 #include <llvm/IR/PassManager.h>
 
 class AlgebraicIdentityPass final
     : public llvm::PassInfoMixin<AlgebraicIdentityPass> {
 public:
+
+  bool algebraicIdentity(llvm::Instruction &I);
   llvm::PreservedAnalyses run(llvm::Function &,
                               llvm::FunctionAnalysisManager &);
 }; // class AlgebraicIdentityPass
@@ -12,6 +15,7 @@ public:
 class StrengthReductionPass final
     : public llvm::PassInfoMixin<StrengthReductionPass> {
 public:
+  bool strengthReduction(llvm::Instruction &I);
   llvm::PreservedAnalyses run(llvm::Function &,
                               llvm::FunctionAnalysisManager &);
 }; // class StrengthReductionPass
