@@ -1,6 +1,7 @@
 #pragma once // NOLINT(llvm-header-guard)
 
 #include "llvm/IR/Instruction.h"
+#include <cstdint>
 #include <llvm/IR/PassManager.h>
 
 class AlgebraicIdentityPass final
@@ -15,6 +16,7 @@ public:
 class StrengthReductionPass final
     : public llvm::PassInfoMixin<StrengthReductionPass> {
 public:
+  int computePowerOfTwo(int64_t value);
   bool strengthReduction(llvm::Instruction &I);
   llvm::PreservedAnalyses run(llvm::Function &,
                               llvm::FunctionAnalysisManager &);

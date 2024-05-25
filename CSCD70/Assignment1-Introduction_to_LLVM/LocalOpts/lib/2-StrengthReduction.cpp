@@ -2,17 +2,31 @@
 #include "llvm/IR/Analysis.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/FMF.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <cassert>
 #include <cstdint>
 #include <vector>
 #define IS_POW_OF_TWO(x) (((x) & (x - 1)) == 0)
 
 using namespace llvm;
+
+int StrengthReductionPass::computePowerOfTwo(int64_t Value) {
+
+  int Exponent = 0;
+
+  while (Value != 1) {
+    Value >>= 1;
+    Exponent++;
+  }
+
+  return Exponent;
+}
 
 bool StrengthReductionPass::strengthReduction(llvm::Instruction &I) {
 
@@ -20,77 +34,51 @@ bool StrengthReductionPass::strengthReduction(llvm::Instruction &I) {
     return false;
   }
 
-  switch (I.getOpcode()) {
-
-  case Instruction::Mul: {
-
-    Value *FstOp = I.getOperand(0);
-    Value *SndOp = I.getOperand(1);
-
-    if (isa<ConstantInt>(SndOp)) {
-      ConstantInt *SndConst = dyn_cast<ConstantInt>(SndOp);
-
-      int64_t Val = SndConst->getSExtValue();
-
-      if (IS_POW_OF_TWO(Val)) {
-
-        int Exponent = 0;
-
-        while (Val != 1) {
-          Val >>= 1;
-          Exponent++;
-        }
-
-        Value *ExponentValue =
-            dyn_cast<Value>(ConstantInt::getSigned(FstOp->getType(), Exponent));
-
-        IRBuilder<> Builder(&I);
-
-        Value *NewInstruction = Builder.CreateShl(FstOp, ExponentValue);
-
-        I.replaceAllUsesWith(NewInstruction);
-
-        return true;
-      }
-    }
-
+  if (I.getOpcode() != Instruction::Mul && I.getOpcode() != Instruction::SDiv) {
     return false;
+  }
+
+  Value *FstOp = I.getOperand(0);
+  Value *SndOp = I.getOperand(1);
+
+  ConstantInt *Scalar;
+
+  if (isa<ConstantInt>(FstOp) && I.getOpcode() == Instruction::Mul) {
+    Scalar = dyn_cast<ConstantInt>(FstOp);
+  } else if (isa<ConstantInt>(SndOp)) {
+    Scalar = dyn_cast<ConstantInt>(SndOp);
+  } else {
+    return false;
+  }
+
+  int64_t Val = Scalar->getSExtValue();
+
+  if (!IS_POW_OF_TWO(Val))
+    return false;
+
+  Value *ExponentValue = dyn_cast<Value>(
+      ConstantInt::getSigned(FstOp->getType(), this->computePowerOfTwo(Val)));
+
+  IRBuilder<> Builder(&I);
+
+  Value *NewInst;
+
+  switch (I.getOpcode()) {
+  case Instruction::Mul: {
+    NewInst = Builder.CreateShl(FstOp, ExponentValue);
+    break;
   }
   case Instruction::SDiv: {
-
-    Value *FstOp = I.getOperand(0);
-    Value *SndOp = I.getOperand(1);
-    if (isa<ConstantInt>(SndOp)) {
-      ConstantInt *SndConst = dyn_cast<ConstantInt>(SndOp);
-
-      int64_t Val = SndConst->getSExtValue();
-
-      if (IS_POW_OF_TWO(Val)) {
-
-        int Exponent = 0;
-
-        while (Val != 1) {
-          Val >>= 1;
-          Exponent++;
-        }
-
-        Value *ExponentValue =
-            dyn_cast<Value>(ConstantInt::getSigned(FstOp->getType(), Exponent));
-
-        IRBuilder<> Builder(&I);
-
-        Value *NewInstruction = Builder.CreateLShr(FstOp, ExponentValue);
-
-        I.replaceAllUsesWith(NewInstruction);
-
-        return true;
-      }
-    }
-    return false;
+    NewInst = Builder.CreateLShr(FstOp, ExponentValue);
+    break;
   }
   default:
+    assert(0 && "unreachable");
     return false;
   }
+
+  I.replaceAllUsesWith(NewInst);
+  return true;
 }
 
 PreservedAnalyses StrengthReductionPass::run([[maybe_unused]] Function &F,
