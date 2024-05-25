@@ -21,3 +21,17 @@ Algorithm for computing immediate dominators
 https://sbaziotis.com/compilers/visualizing-dominators.html
 
 
+## CSCD70 Assignment
+
+### Assignment 1
+
+The following command can be used to run the passes
+
+```
+opt -load-pass-plugin=libLocalOpts.dylib \                                       
+    -p=algebraic-identity,strength-reduction \
+    -S ../test/TestCase1.ll -o TestCase1-out.ll
+```
+
+- [ ] Need to figure out why `setOperand()` does not replace all uses when in `.uses()` iterator 
+

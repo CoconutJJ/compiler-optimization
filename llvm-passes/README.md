@@ -18,5 +18,4 @@ I installed with `brew`)
 The following command is used to 
 
 ```sh
-opt -load-pass-plugin libFunctionInfoPass.dylib -passes=function-info -disable-output loop.ll
 ```

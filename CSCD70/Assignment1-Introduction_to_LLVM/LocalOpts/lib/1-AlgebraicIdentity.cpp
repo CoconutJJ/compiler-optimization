@@ -1,3 +1,4 @@
+#include <vector>
 #include "LocalOpts.h"
 #include "llvm/IR/Analysis.h"
 #include "llvm/IR/Constant.h"
@@ -10,6 +11,11 @@
 using namespace llvm;
 
 bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
+  
+  if (I.getNumOperands() < 2) {
+    return false;
+  }
+  
   Value *Op1 = I.getOperand(0);
   Value *Op2 = I.getOperand(1);
 
@@ -27,10 +33,13 @@ bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
     if (isa<ConstantInt>(Op1) && isa<ConstantInt>(Op2)) {
       I.replaceAllUsesWith(
           ConstantInt::getSigned(I.getType(), Op1Const + Op2Const));
+
     } else if (isa<ConstantInt>(Op1) && Op1Const == 0) {
       I.replaceAllUsesWith(Op2);
+
     } else if (isa<ConstantInt>(Op2) && Op2Const == 0) {
       I.replaceAllUsesWith(Op1);
+
     } else {
       return false;
     }
@@ -40,20 +49,25 @@ bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
     if (isa<ConstantInt>(Op1) && isa<ConstantInt>(Op2)) {
       I.replaceAllUsesWith(
           ConstantInt::getSigned(I.getType(), Op1Const * Op2Const));
+
     } else if (isa<ConstantInt>(Op1)) {
 
       if (Op1Const == 0) {
         I.replaceAllUsesWith(ConstantInt::getSigned(I.getType(), 0));
+
       } else if (Op1Const == 1) {
         I.replaceAllUsesWith(ConstantInt::getSigned(I.getType(), Op2Const));
+
       } else {
         return false;
       }
     } else if (isa<ConstantInt>(Op2) && Op2Const == 1) {
       if (Op2Const == 0) {
         I.replaceAllUsesWith(ConstantInt::getSigned(I.getType(), 0));
+
       } else if (Op2Const == 1) {
         I.replaceAllUsesWith(ConstantInt::getSigned(I.getType(), Op1Const));
+
       } else {
         return false;
       }
@@ -66,8 +80,10 @@ bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
     if (isa<ConstantInt>(Op1) && isa<ConstantInt>(Op2)) {
       I.replaceAllUsesWith(
           ConstantInt::getSigned(I.getType(), Op1Const - Op2Const));
+
     } else if (isa<ConstantInt>(Op2) && Op2Const == 0) {
       I.replaceAllUsesWith(Op1);
+
     } else {
       return false;
     }
@@ -77,6 +93,7 @@ bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
 
     if (isa<ConstantInt>(Op2) && Op2Const == 1) {
       I.replaceAllUsesWith(Op1);
+
     } else {
       return false;
     }
@@ -85,17 +102,26 @@ bool AlgebraicIdentityPass::algebraicIdentity(llvm::Instruction &I) {
   default:
     return false;
   }
-
   return true;
 }
 
 PreservedAnalyses AlgebraicIdentityPass::run([[maybe_unused]] Function &F,
                                              FunctionAnalysisManager &) {
   bool Transformed = false;
+  
+  std::vector<Instruction *> RemovedInstructions;
+  
   for (auto &BB : F) {
     for (auto &I : BB) {
-      Transformed = Transformed || algebraicIdentity(I);
+      if (algebraicIdentity(I)) {
+        Transformed = true;
+        RemovedInstructions.push_back(&I);
+      }
     }
+  }
+
+  for (auto *I : RemovedInstructions) {
+    I->eraseFromParent();
   }
 
   return Transformed ? PreservedAnalyses::none() : PreservedAnalyses::all();
