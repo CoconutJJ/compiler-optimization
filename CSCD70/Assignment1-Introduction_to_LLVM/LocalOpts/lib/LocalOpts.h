@@ -24,6 +24,9 @@ public:
 
 class MultiInstOptPass final : public llvm::PassInfoMixin<MultiInstOptPass> {
 public:
+  bool hasNegOperand(llvm::Instruction *inst, llvm::Value *op);
+  bool hasPosOperand(llvm::Instruction *inst, llvm::Value *op);
+  bool multiInstOpt(llvm::Instruction &I);
   llvm::PreservedAnalyses run(llvm::Function &,
                               llvm::FunctionAnalysisManager &);
 }; // class MultiInstOptPass
