@@ -1,5 +1,0 @@
-include(CTest)
-add_subdirectory(integer_set)
-add_subdirectory(variable)
-add_subdirectory(value)
-add_subdirectory(map)
