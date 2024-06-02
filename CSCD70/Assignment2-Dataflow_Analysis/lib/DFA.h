@@ -8,11 +8,11 @@
 
 #include <llvm/IR/PassManager.h>
 
-class AvailExprs final : public dfa::ForwardAnalysis<dfa::Expression, dfa::Bool,
+class AvailExprs final : public dfa::BackwardAnalysis<dfa::Expression, dfa::Bool,
                                                      dfa::Intersect<dfa::Bool>>,
                          public llvm::AnalysisInfoMixin<AvailExprs> {
 private:
-  using ForwardAnalysis_t = dfa::ForwardAnalysis<dfa::Expression, dfa::Bool,
+  using ForwardAnalysis_t = dfa::BackwardAnalysis<dfa::Expression, dfa::Bool,
                                                  dfa::Intersect<dfa::Bool>>;
 
   friend llvm::AnalysisInfoMixin<AvailExprs>;

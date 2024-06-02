@@ -1,10 +1,10 @@
 #pragma once // NOLINT(llvm-header-guard)
 
 #include "Framework.h"
+#include "Utility.h"
+#include "llvm/IR/CFG.h"
 
 namespace dfa {
-
-/// @todo(CSCD70) Please modify the traversal ranges.
 
 typedef llvm::iterator_range<llvm::const_pred_iterator>
     ForwardMeetBBConstRange_t;
@@ -14,7 +14,7 @@ typedef llvm::iterator_range<llvm::BasicBlock::const_iterator>
     ForwardInstConstRange_t;
 
 template <typename TDomainElem, typename TValue, typename TMeetOp>
-class ForwardAnalysis
+class BackwardAnalysis
     : public Framework<TDomainElem, TValue, TMeetOp, ForwardMeetBBConstRange_t,
                        ForwardBBConstRange_t, ForwardInstConstRange_t> {
 protected:

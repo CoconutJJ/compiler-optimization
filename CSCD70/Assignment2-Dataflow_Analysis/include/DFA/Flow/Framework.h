@@ -72,6 +72,7 @@ protected:
     MeetOperands_t MeetOperands = getMeetOperands(BB);
 
     /// @todo(CSCD70) Please complete this method.
+    
 
     return meet(MeetOperands);
   }
@@ -89,7 +90,7 @@ protected:
   virtual MeetOperands_t getMeetOperands(const llvm::BasicBlock &BB) const {
     MeetOperands_t Operands;
 
-    /// @todo(CSCD70) Please complete this method.
+  
 
     return Operands;
   }
@@ -98,12 +99,12 @@ protected:
 
     /// @todo(CSCD70) Please complete this method.
 
+    
+
     return DomainVal_t(DomainIdMap.size());
   }
 
-  /// @}
   /// @name CFG traversal
-  /// @{
 
   /// @brief Get the list of basic blocks from the function.
   /// @param F
@@ -124,6 +125,7 @@ protected:
 
     /// @todo(CSCD70) Please complete this method.
 
+    
     return Changed;
   }
 
