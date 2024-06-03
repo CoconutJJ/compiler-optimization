@@ -8,7 +8,7 @@
 #include <string.h>
 
 static size_t CURRENT_VALUE_NO = 0;
-
+static size_t CURRENT_BASIC_BLOCK_NO = 0;
 void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size)
 {
         *buffer = malloc (item_size * DYNARR_INIT_SIZE_CNT);
@@ -150,6 +150,7 @@ void Instruction_init (struct Instruction *instruction)
 
 void BasicBlock_init (struct BasicBlock *basic_block)
 {
+        basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
         basic_block->values = NULL;
         basic_block->values_count = 0;
         basic_block->values_size = 0;

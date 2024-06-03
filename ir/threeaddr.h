@@ -28,6 +28,7 @@ struct Use {
 };
 
 struct BasicBlock {
+        size_t block_no;
         struct Value *values;
         size_t values_count;
         size_t values_size;

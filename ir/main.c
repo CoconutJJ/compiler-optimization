@@ -13,8 +13,10 @@ int main (int argc, char **argv)
                 (struct option){ .name = "ir_file", .has_arg = 1, .val = 'f', .flag = NULL },
                  (struct option){ 0 }
         };
+        
         char *ir_file_name = NULL;
         int opt_index = 0, c;
+
         while ((c = getopt_long (argc, argv, "f:", long_opts, &opt_index)) != EOF) {
                 switch (c) {
                 case 'f': ir_file_name = optarg; break;
