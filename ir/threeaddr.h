@@ -6,10 +6,9 @@
 #include <stdlib.h>
 #define DYNARR_INIT_SIZE_CNT 10
 #define MAX_FN_ARG_COUNT     10
+
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
-
 enum InstType { INST_UNARY, INST_BINARY, INST_NIL };
-
 enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_NIL };
 
 struct Value {
@@ -41,7 +40,7 @@ struct BasicBlock {
 
 struct Argument {
         struct Value value;
-        struct Function * parent;
+        struct Function *parent;
 };
 
 struct Function {
@@ -61,7 +60,6 @@ struct Instruction {
                 struct Value *first;
                 struct Value *second;
         } operands;
-
 };
 
 struct Constant {
@@ -79,17 +77,23 @@ struct Constant {
         dynarr_push ((void **)&(buffer), (void *)&(count), (void *)&(size), item, sizeof (item))
 #define DYNARR_ALLOC(buffer, count, size, item_size)                                                                   \
         dynarr_push ((void **)&(buffer), (void *)&(count), (void *)&(size), NULL, item_size)
-#define DYNARR_POP(buffer, count, size, item)                                                                          \
-        dynarr_pop ((void **)&(buffer), (void *)&(count), (void *)&(size), sizeof (item))
+#define DYNARR_POP(buffer, count, retaddr, item_size)                                                                  \
+        dynarr_pop ((void **)&(buffer), (void *)&(count), retaddr, item_size)
 #define DYNARR_INSERT(buffer, count, size, item, item_size, index)                                                     \
         dynarr_insert ((void **)&(buffer), (void *)&(count), (void *)&(size), item, sizeof (item), (index));
+
+#define DYNARR_ITEM_OFFSET(item_size, index)       ((index) * (item_size))
+#define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER(buffer) + DYNARR_ITEM_OFFSET (item_size, index))
+
 #define VALUE_IS_INST(value)    ((value)->value_type == VALUE_INST)
 #define INST_IS_BINARY_OP(inst) ((inst)->inst_type == INST_BINARY)
 
 void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size);
 void *dynarr_insert (void **buffer, size_t *count, size_t *size, void *item, size_t item_size, size_t insert_index);
 void *dynarr_push (void **buffer, size_t *count, size_t *size, void *item, size_t item_size);
-void dynarr_pop (void **buffer, size_t *count, size_t *size, void *pop_addr, size_t item_size);
+void dynarr_pop (void **buffer, size_t *count, size_t *size, void *ret, size_t item_size);
+void dynarr_delete (void **buffer, size_t *count, size_t *size, size_t item_size, size_t delete_index);
+
 void Value_init (struct Value *value);
 void Use_init (struct Use *use);
 void Instruction_init (struct Instruction *instruction);

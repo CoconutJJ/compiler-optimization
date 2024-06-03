@@ -22,29 +22,38 @@ void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size)
         *size = item_size * DYNARR_INIT_SIZE_CNT;
 }
 
-void *dynarr_insert (void **buffer, size_t *count, size_t *size, void *item, size_t item_size, size_t insert_index)
+void _dynarr_auto_alloc (void **buffer, size_t *count, size_t *size, size_t item_size)
 {
-        // check if there is enough available space in buffer, otherwise allocate more.
         if (*size - *count <= item_size) {
                 while (*size - *count <= item_size) {
                         *size *= 2;
                 }
-
-                *buffer = realloc (*buffer, *size);
-
-                if (!*buffer) {
-                        perror ("realloc");
-                        exit (EXIT_FAILURE);
-                }
+        } else if (*count < *size / 4) {
+                *size /= 2;
+        } else {
+                return;
         }
+
+        *buffer = realloc (*buffer, *size);
+        if (!*buffer) {
+                perror ("realloc");
+                exit (EXIT_FAILURE);
+        }
+}
+
+void *dynarr_insert (void **buffer, size_t *count, size_t *size, void *item, size_t item_size, size_t insert_index)
+{
+        // ensure the insert address is within buffer bounds
+        assert (DYNARR_ITEM_OFFSET (item_size, insert_index) <= *count);
+
+        // check if there is enough available space in buffer, otherwise allocate more.
+        _dynarr_auto_alloc (buffer, count, size, item_size);
+
         // starting address in buffer to insert item
-        void *insert_addr = AS_BYTE_BUFFER (*buffer) + insert_index * item_size;
+        void *insert_addr = DYNARR_ITEM_ADDR (*buffer, item_size, insert_index);
 
         // number of bytes we have to shift in order to insert item
         size_t shift_size = AS_BYTE_BUFFER (*buffer) + *count - AS_BYTE_BUFFER (insert_addr);
-
-        // ensure the insert address is within buffer bounds
-        assert ((insert_index * item_size) <= *count);
 
         // shift
         if (shift_size > 0)
@@ -64,29 +73,30 @@ void *dynarr_push (void **buffer, size_t *count, size_t *size, void *item, size_
         return dynarr_insert (buffer, count, size, item, item_size, *count / item_size);
 }
 
-void dynarr_pop (void **buffer, size_t *count, size_t *size, void *pop_addr, size_t item_size)
+void dynarr_delete (void **buffer, size_t *count, size_t *size, size_t item_size, size_t delete_index)
 {
-        assert (*buffer + *count > pop_addr);
-        assert (pop_addr >= *buffer);
+        size_t last_item_idx = *count / item_size - 1;
+        assert (last_item_idx >= delete_index);
 
-        size_t shift_size = AS_BYTE_BUFFER (*buffer) + *count - (AS_BYTE_BUFFER (pop_addr) + item_size);
+        size_t shift_size = AS_BYTE_BUFFER (*buffer) + *count - DYNARR_ITEM_ADDR (*buffer, item_size, delete_index + 1);
 
-        void *shift_start_addr = AS_BYTE_BUFFER (pop_addr) + item_size;
+        void *shift_start_addr = DYNARR_ITEM_ADDR (*buffer, item_size, delete_index + 1);
 
         if (shift_size > 0)
-                memmove (pop_addr, shift_start_addr, shift_size);
+                memmove (DYNARR_ITEM_ADDR (*buffer, item_size, delete_index), shift_start_addr, shift_size);
 
         *count -= item_size;
 
-        if (*count < *size / 4) {
-                *size /= 2;
+        _dynarr_auto_alloc (buffer, count, size, item_size);
+}
 
-                *buffer = realloc (*buffer, *size);
-                if (!*buffer) {
-                        perror ("realloc");
-                        exit (EXIT_FAILURE);
-                }
-        }
+void dynarr_pop (void **buffer, size_t *count, size_t *size, void *ret, size_t item_size)
+{
+        size_t last_item_idx = *count / item_size - 1;
+
+        memcpy (ret, DYNARR_ITEM_ADDR (buffer, item_size, last_item_idx), item_size);
+
+        dynarr_delete (buffer, count, size, item_size, last_item_idx);
 }
 
 char *Token_to_str (struct Token t)
@@ -98,6 +108,8 @@ char *Token_to_str (struct Token t)
         case INSTRUCTION_MUL: return "Instruction::Mul";
         case INSTRUCTION_DIV: return "Instruction::Div";
         case INSTRUCTION_STORE: return "Instruction::Store";
+        case INSTRUCTION_JUMP: return "Instruction::Jump";
+        case INSTRUCTION_JUMPIF: return "Instruction::JUMPIF"; break;
         case COMMA: return ",";
         case FN: return "fn";
         case LPAREN: return "(";
@@ -198,11 +210,9 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
         default: fprintf (stderr, "Invalid operand index!\n"); exit (EXIT_FAILURE);
         }
 
-        
         struct Use *use = Value_create_use (operand);
         use->operand_no = operand_index;
         use->user = AS_VALUE (instruction);
-        
 }
 
 bool Instruction_contains (struct Instruction *instruction, struct Value *value)

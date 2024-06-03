@@ -79,7 +79,9 @@ struct BasicBlock *reverse_postorder_iter (struct BasicBlock *entry, uint64_t vi
 
         DYNARR_PUSH (stack, stack_count, stack_size, &entry);
 
-        // while (stack_count > 0) {
-        //         struct BasicBlock *node = stack[stack_count / sizeof (struct BasicBlock *) - 1];
-        // }
+        while (stack_count > 0) {
+                struct BasicBlock *node = stack[stack_count / sizeof (struct BasicBlock *) - 1];
+                
+
+        }
 }
