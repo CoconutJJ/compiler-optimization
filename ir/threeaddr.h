@@ -4,9 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#define DYNARR_INIT_SIZE_CNT 10
-#define MAX_FN_ARG_COUNT     10
-
+#define MAX_FN_ARG_COUNT 10
+#define MAX_BASIC_BLOCK_COUNT 1024
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
 enum InstType { INST_UNARY, INST_BINARY, INST_NIL };
 enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_NIL };
@@ -67,23 +66,8 @@ struct Constant {
         int constant;
 };
 
-#define AS_BYTE_BUFFER(buf) ((uint8_t *)(buf))
-#define AS_INST(inst)       ((struct Instruction *)(inst))
-#define AS_VALUE(val)       ((struct Value *)(val))
-
-#define DYNARR_INIT(buffer, count, size, item_size)                                                                    \
-        dynarr_init ((void **)&(buffer), (void *)&(count), (void *)&(size), (item_size))
-#define DYNARR_PUSH(buffer, count, size, item)                                                                         \
-        dynarr_push ((void **)&(buffer), (void *)&(count), (void *)&(size), item, sizeof (item))
-#define DYNARR_ALLOC(buffer, count, size, item_size)                                                                   \
-        dynarr_push ((void **)&(buffer), (void *)&(count), (void *)&(size), NULL, item_size)
-#define DYNARR_POP(buffer, count, retaddr, item_size)                                                                  \
-        dynarr_pop ((void **)&(buffer), (void *)&(count), retaddr, item_size)
-#define DYNARR_INSERT(buffer, count, size, item, item_size, index)                                                     \
-        dynarr_insert ((void **)&(buffer), (void *)&(count), (void *)&(size), item, sizeof (item), (index));
-
-#define DYNARR_ITEM_OFFSET(item_size, index)       ((index) * (item_size))
-#define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER(buffer) + DYNARR_ITEM_OFFSET (item_size, index))
+#define AS_INST(inst) ((struct Instruction *)(inst))
+#define AS_VALUE(val) ((struct Value *)(val))
 
 #define VALUE_IS_INST(value)    ((value)->value_type == VALUE_INST)
 #define INST_IS_BINARY_OP(inst) ((inst)->inst_type == INST_BINARY)
@@ -102,6 +86,7 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
 void Function_init (struct Function *function);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
 struct Instruction *BasicBlock_create_Instruction (struct BasicBlock *basic_block);
+size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block);
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
 struct Argument *Function_create_argument (struct Function *function);

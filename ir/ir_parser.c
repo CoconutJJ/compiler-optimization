@@ -64,6 +64,21 @@ void Value_table_clear ()
         memset (value_table, 0, VALUE_TABLE_SIZE * sizeof (struct Value *));
 }
 
+void Label_table_init ()
+{
+        label_table = calloc (LABEL_TABLE_SIZE, sizeof (struct BasicBlock *));
+
+        if (!label_table) {
+                perror ("calloc");
+                exit (EXIT_FAILURE);
+        }
+}
+
+void Label_table_clear ()
+{
+        memset (label_table, 0, VALUE_TABLE_SIZE * sizeof (struct Value *));
+}
+
 void value_table_insert (struct Value *value, size_t index)
 {
         if (value_table[index]) {
@@ -149,6 +164,7 @@ void parse_instruction (struct BasicBlock *basic_block)
 struct Function *parse_function ()
 {
         Value_table_clear ();
+        Label_table_clear ();
         consume_token (FN, "Expected `fn` keyword for function.\n");
 
         struct Function *function = Function_create ();
@@ -210,11 +226,33 @@ struct Function *parse_function ()
         return function;
 }
 
+void display_basic_block (struct BasicBlock *basic_block)
+{
+        size_t instruction_count = BasicBlock_get_Instruction_count(basic_block);
+
+        printf ("Basic Block\n"
+                "-----------\n"
+                "Instructions: %ld\n",
+                instruction_count);
+
+        if (basic_block->left)
+                display_basic_block (basic_block->left);
+
+        if (basic_block->right)
+                display_basic_block (basic_block->right);
+}
+
+void display_function (struct Function *function)
+{
+        display_basic_block (function->entry_basic_block);
+}
+
 struct Function *parse_ir (char *ir_source)
 {
         threeaddr_init_parser (ir_source);
 
         Value_table_init ();
+        Label_table_init ();
 
-        return parse_function();
+        return parse_function ();
 }

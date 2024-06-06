@@ -40,5 +40,7 @@ int main (int argc, char **argv)
         fread (ir_source, ir_file_size, 1, ir_fp);
         ir_source[ir_file_size] = '\0';
 
-        parse_ir (ir_source);
+        struct Function * function = parse_ir (ir_source);
+
+        display_function(function);
 }
