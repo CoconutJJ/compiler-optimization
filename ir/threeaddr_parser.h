@@ -21,6 +21,7 @@ enum TokenType {
         LPAREN,
         RPAREN,
         INTEGER,
+        LABEL,
         STR,
         COLON,
         AT,

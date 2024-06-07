@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#define MAX_FN_ARG_COUNT 10
+#define MAX_FN_ARG_COUNT      10
 #define MAX_BASIC_BLOCK_COUNT 1024
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
-enum InstType { INST_UNARY, INST_BINARY, INST_NIL };
-enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_NIL };
+enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH };
+enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_JMP, OPCODE_JMPIF, OPCODE_NIL };
 
 struct Value {
         enum ValueType value_type;
@@ -66,11 +66,12 @@ struct Constant {
         int constant;
 };
 
-#define AS_INST(inst) ((struct Instruction *)(inst))
-#define AS_VALUE(val) ((struct Value *)(val))
-
+#define AS_INST(inst)           ((struct Instruction *)(inst))
+#define AS_VALUE(val)           ((struct Value *)(val))
+#define AS_CONST(constant)      ((struct Constant *)(constant))
 #define VALUE_IS_INST(value)    ((value)->value_type == VALUE_INST)
 #define INST_IS_BINARY_OP(inst) ((inst)->inst_type == INST_BINARY)
+#define INST_IS_BRANCH(inst)    ((inst)->inst_type == INST_BRANCH)
 
 void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size);
 void *dynarr_insert (void **buffer, size_t *count, size_t *size, void *item, size_t item_size, size_t insert_index);

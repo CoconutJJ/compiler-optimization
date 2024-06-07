@@ -15,6 +15,6 @@ struct Value *value_table_find (size_t index);
 void parse_operand (struct Instruction *instruction, int operand_index);
 void parse_binary_operator_operands (struct Instruction *instruction);
 void display_function (struct Function *function);
-void parse_instruction (struct BasicBlock *basic_block);
+struct Instruction * parse_instruction (struct BasicBlock *basic_block);
 struct Function *parse_function ();
 struct Function *parse_ir (char *ir_source);

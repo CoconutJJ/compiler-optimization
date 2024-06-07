@@ -79,6 +79,15 @@ void Label_table_clear ()
         memset (label_table, 0, VALUE_TABLE_SIZE * sizeof (struct Value *));
 }
 
+struct BasicBlock *Label_table_find (size_t basic_block_no)
+{
+        if (label_table[basic_block_no] == NULL) {
+                label_table[basic_block_no] = BasicBlock_create ();
+        }
+
+        return label_table[basic_block_no];
+}
+
 void value_table_insert (struct Value *value, size_t index)
 {
         if (value_table[index]) {
@@ -130,7 +139,19 @@ void parse_binary_operator_operands (struct Instruction *instruction)
         parse_operand (instruction, 1);
 }
 
-void parse_instruction (struct BasicBlock *basic_block)
+void parse_branch_operand (struct Instruction *instruction)
+{
+        struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
+
+        Instruction_set_operand (instruction, AS_VALUE (Constant_create (token.value)), 0);
+
+        if (instruction->op_code == OPCODE_JMPIF) {
+                consume_token (COMMA, "Expected `,` after jmpif condition\n");
+                parse_operand (instruction, 1);
+        }
+}
+
+struct Instruction *parse_instruction (struct BasicBlock *basic_block)
 {
         struct Instruction *new_instruction = BasicBlock_create_Instruction (basic_block);
 
@@ -155,10 +176,50 @@ void parse_instruction (struct BasicBlock *basic_block)
                 new_instruction->op_code = OPCODE_DIV;
                 break;
         }
-        default: fprintf (stderr, "Expected instruction! Found %s instead", Token_to_str (peek_token ())); break;
+        case INSTRUCTION_JUMP: {
+                new_instruction->inst_type = INST_BRANCH;
+                new_instruction->op_code = OPCODE_JMP;
+                break;
+        }
+        case INSTRUCTION_JUMPIF: {
+                new_instruction->inst_type = INST_BRANCH;
+                new_instruction->op_code = OPCODE_JMPIF;
+                break;
+        }
+        default:
+                fprintf (stderr, "Expected instruction! Found %s instead", Token_to_str (peek_token ()));
+                exit (EXIT_FAILURE);
+                break;
         }
         advance_token ();
-        parse_binary_operator_operands (new_instruction);
+
+        if (INST_IS_BINARY_OP (new_instruction))
+                parse_binary_operator_operands (new_instruction);
+        else if (INST_IS_BRANCH (new_instruction))
+                parse_branch_operand (new_instruction);
+
+        return new_instruction;
+}
+
+bool parse_basic_block (struct BasicBlock *basic_block)
+{
+        while (1) {
+                switch (TOKEN_TYPE (peek_token ())) {
+                case LABEL: return true;
+                case FN:
+                case END: return false;
+                default: {
+                        struct Instruction *inst = parse_instruction (basic_block);
+
+                        if (INST_IS_BRANCH (inst)) {
+                                struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
+                                basic_block->right = Label_table_find (jump_location->constant);
+
+                                return true;
+                        }
+                }
+                }
+        }
 }
 
 struct Function *parse_function ()
@@ -199,28 +260,27 @@ struct Function *parse_function ()
         struct BasicBlock *current_basic_block = NULL;
         while (1) {
                 struct Token label = peek_token ();
-                if (match_token (INTEGER)) {
-                        consume_token (COLON, "Expected `:` after label\n");
 
+                if (match_token (LABEL)) {
                         if (current_basic_block) {
-                                current_basic_block->left = BasicBlock_create ();
-                                label_table[label.value] = current_basic_block->left;
+                                current_basic_block->left = Label_table_find (label.value);
                                 current_basic_block = current_basic_block->left;
                         } else {
-                                current_basic_block = BasicBlock_create ();
+                                current_basic_block = Label_table_find (label.value);
                                 function->entry_basic_block = current_basic_block;
                         }
 
-                } else if (TOKEN_TYPE (peek_token ()) == END || TOKEN_TYPE (peek_token ()) == FN) {
-                        break;
                 } else {
-                        if (!current_basic_block) {
-                                current_basic_block = BasicBlock_create ();
-                                function->entry_basic_block = current_basic_block;
+                        if (current_basic_block) {
+                                current_basic_block->left = BasicBlock_create ();
+                                current_basic_block = current_basic_block->left;
+                        } else {
+                                function->entry_basic_block = BasicBlock_create ();
+                                current_basic_block = function->entry_basic_block;
                         }
-
-                        parse_instruction (current_basic_block);
                 }
+                if (!parse_basic_block (current_basic_block))
+                        break;
         }
 
         return function;
@@ -228,11 +288,14 @@ struct Function *parse_function ()
 
 void display_basic_block (struct BasicBlock *basic_block)
 {
-        size_t instruction_count = BasicBlock_get_Instruction_count(basic_block);
+        size_t instruction_count = BasicBlock_get_Instruction_count (basic_block);
 
-        printf ("Basic Block\n"
-                "-----------\n"
-                "Instructions: %ld\n",
+        printf ("+-----------------+\n"
+                "| Basic Block %ld |\n"
+                "+-----------------+\n"
+                "| Inst: %ld       |\n"
+                "+-----------------+\n",
+                basic_block->block_no,
                 instruction_count);
 
         if (basic_block->left)

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 static char *ir_source = NULL;
 static size_t ir_source_index = 0;
 
@@ -80,7 +79,7 @@ void parse_str (char lead_char, char *buffer)
 
         char c;
         while (is_alpha (c = peek_char ()) || is_numeric (c)) {
-                buffer[i++] = advance_char();
+                buffer[i++] = advance_char ();
 
                 if (i >= MAX_IDENTIFIER_LEN) {
                         fprintf (stderr, "Identifier exceeds maximum identifier length of %d", MAX_IDENTIFIER_LEN);
@@ -111,7 +110,9 @@ struct Token next_token ()
                 case '\n': continue;
                 default:
                         if (is_numeric (c)) {
-                                return Token (INTEGER, parse_int (c - '0'));
+                                int value = parse_int (c - '0');
+
+                                return Token (match_char (':') ? LABEL : INTEGER, value);
                         } else if (c == 'f' && match_str ("n")) {
                                 return Token (FN, -1);
                         } else if (c == 'a' && match_str ("dd")) {
@@ -124,10 +125,10 @@ struct Token next_token ()
                                 return Token (INSTRUCTION_DIV, -1);
                         } else if (c == 's' && match_str ("tore")) {
                                 return Token (INSTRUCTION_STORE, -1);
-                        } else if (c == 'j' && match_str("ump")) {
-                                return Token(INSTRUCTION_JUMP, -1);
-                        } else if (c == 'j' && match_str("umpif")) {
-                                return Token(INSTRUCTION_JUMPIF, -1);
+                        } else if (c == 'j' && match_str ("ump")) {
+                                return Token (INSTRUCTION_JUMP, -1);
+                        } else if (c == 'j' && match_str ("umpif")) {
+                                return Token (INSTRUCTION_JUMPIF, -1);
                         } else {
                                 struct Token str = Token (STR, 0);
 
@@ -183,5 +184,5 @@ void threeaddr_init_parser (char *ir)
 {
         ir_source = ir;
         ir_source_index = 0;
-        curr_token = next_token();
+        curr_token = next_token ();
 }
