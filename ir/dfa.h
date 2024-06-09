@@ -9,7 +9,6 @@ struct DFABitMap {
         size_t size;
 };
 
-typedef void (*MeetOp) (struct DFABitMap *, struct DFABitMap *, struct DFABitMap *);
 
 void DFABitMap_init (struct DFABitMap *map, size_t num_bits);
 struct DFABitMap *DFABitMap_Complement (struct DFABitMap *a, struct DFABitMap *dest);

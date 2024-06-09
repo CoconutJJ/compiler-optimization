@@ -1,4 +1,5 @@
 #include "array.h"
+#include "mem.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -8,12 +9,7 @@
 
 void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size)
 {
-        *buffer = malloc (item_size * DYNARR_INIT_SIZE_CNT);
-
-        if (!*buffer) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        *buffer = ir_malloc (item_size * DYNARR_INIT_SIZE_CNT);
 
         *count = 0;
         *size = item_size * DYNARR_INIT_SIZE_CNT;
@@ -26,7 +22,6 @@ void _dynarr_auto_alloc (void **buffer, size_t *count, size_t *size, size_t item
                         *size *= 2;
                 }
         } else if (*count < *size / 4) {
-                
                 // never shrink beyond initialized size
                 if (*size == item_size * DYNARR_INIT_SIZE_CNT)
                         return;
@@ -103,6 +98,15 @@ void dynarr_pop (void **buffer, size_t *count, size_t *size, void *ret, size_t i
         dynarr_delete (buffer, count, size, item_size, last_item_idx);
 }
 
+void dynarr_set (void **buffer, size_t *count, size_t *size, size_t index, void *item, size_t item_size)
+{
+        assert (index * item_size < *count);
+
+        void *set_addr = DYNARR_ITEM_ADDR (*buffer, item_size, index);
+
+        memcpy (set_addr, item, item_size);
+}
+
 void Array_init (struct Array *array, size_t item_size)
 {
         array->item_size = item_size;
@@ -117,16 +121,22 @@ void Array_push (struct Array *array, void *item)
 
 void *Array_pop (struct Array *array, bool return_item)
 {
-        void *item = return_item ? malloc (array->item_size) : NULL;
-
-        if (!item && return_item) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        void *item = return_item ? ir_malloc (array->item_size) : NULL;
 
         dynarr_pop ((void **)&(array->array), &(array->array_count), &(array->array_size), item, array->item_size);
 
         return item;
+}
+
+void Array_insert (struct Array *array, size_t index, void *item)
+{
+        dynarr_insert ((void **)&array->array, &array->array_count, &array->array_size, item, array->item_size, index);
+}
+
+void Array_set_index (struct Array *array, size_t index, void *item)
+{
+        dynarr_set (
+                (void **)&(array->array), &(array->array_count), &(array->array_size), index, item, array->item_size);
 }
 
 void *Array_get_index (struct Array *array, size_t index)
@@ -148,12 +158,7 @@ void Array_swap_items (struct Array *array, size_t i, size_t j)
 {
         struct Array *a = Array_get_index (array, i), *b = Array_get_index (array, j);
 
-        void *item = malloc (array->item_size);
-
-        if (!item) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        void *item = ir_malloc (array->item_size);
 
         memcpy (item, a, array->item_size);
         memcpy (a, b, array->item_size);

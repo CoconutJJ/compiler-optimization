@@ -1,6 +1,8 @@
 #include "threeaddr.h"
-#include "threeaddr_parser.h"
 #include "array.h"
+#include "constants.h"
+#include "mem.h"
+#include "threeaddr_parser.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,24 +13,41 @@
 static size_t CURRENT_VALUE_NO = 0;
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
+static char Token_buffer[MAX_IDENTIFIER_LEN + 1];
 
 char *Token_to_str (struct Token t)
 {
         switch (TOKEN_TYPE (t)) {
-        case VARIABLE: return "Variable";
-        case INSTRUCTION_ADD: return "Instruction::Add";
-        case INSTRUCTION_SUB: return "Instruction::Sub";
-        case INSTRUCTION_MUL: return "Instruction::Mul";
-        case INSTRUCTION_DIV: return "Instruction::Div";
-        case INSTRUCTION_STORE: return "Instruction::Store";
-        case INSTRUCTION_JUMP: return "Instruction::Jump";
-        case INSTRUCTION_JUMPIF: return "Instruction::JUMPIF"; break;
+        case VARIABLE: {
+                strcpy (Token_buffer, t.fn_name);
+                return Token_buffer;
+        };
+        case INSTRUCTION_ALLOCA: return "alloca";
+        case INSTRUCTION_ADD: return "add";
+        case INSTRUCTION_SUB: return "sub";
+        case INSTRUCTION_MUL: return "mul";
+        case INSTRUCTION_DIV: return "div";
+        case INSTRUCTION_STORE: return "store";
+        case INSTRUCTION_LOAD: return "load";
+        case INSTRUCTION_JUMP: return "jump";
+        case INSTRUCTION_JUMPIF: return "jumpif"; break;
+        case INSTRUCTION_PHI: return "phi";
         case COMMA: return ",";
         case FN: return "fn";
         case LPAREN: return "(";
         case RPAREN: return ")";
-        case INTEGER: return "Integer";
-        case STR: return "Str";
+        case INTEGER: {
+                sprintf (Token_buffer, "%d", t.value);
+                return Token_buffer;
+        }
+        case LABEL: {
+                sprintf (Token_buffer, "%d:", t.value);
+                return Token_buffer;
+        }
+        case STR: {
+                strcpy (Token_buffer, t.fn_name);
+                return Token_buffer;
+        }
         case COLON: return ":";
         case AT: return "@";
         case LCURLY: return "{";
@@ -41,6 +60,8 @@ char *Token_to_str (struct Token t)
 
 void Value_init (struct Value *value)
 {
+        assert (CURRENT_VALUE_NO < VALUE_TABLE_SIZE);
+
         value->value_no = CURRENT_VALUE_NO++;
         value->uses = NULL;
         value->uses_count = 0;
@@ -75,18 +96,39 @@ void Instruction_init (struct Instruction *instruction)
 
 void BasicBlock_init (struct BasicBlock *basic_block)
 {
+        assert (CURRENT_BASIC_BLOCK_NO < MAX_BASIC_BLOCK_COUNT);
         basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
-        basic_block->values = NULL;
-        basic_block->values_count = 0;
-        basic_block->values_size = 0;
+        basic_block->left = NULL;
+        basic_block->right = NULL;
 
-        DYNARR_INIT (
-                basic_block->values, basic_block->values_count, basic_block->values_size, sizeof (struct Instruction));
+        Array_init (&basic_block->values, sizeof (struct Instruction *));
+
+        Array_init (&basic_block->preds, sizeof (struct BasicBlock *));
 }
 
-size_t BasicBlock_get_Instruction_count(struct BasicBlock *basic_block)
+size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block)
 {
-        return basic_block->values_count / sizeof(struct Instruction);
+        return Array_length (&basic_block->values);
+}
+
+void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBlock *left_child)
+{
+        basic_block->left = left_child;
+
+        Array_push (&left_child->preds, &basic_block);
+}
+
+void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child)
+{
+        basic_block->right = right_child;
+
+        Array_push (&right_child->preds, &right_child);
+}
+
+void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)
+{
+        Array_push (&basic_block->values, &instruction);
+        instruction->parent = basic_block;
 }
 
 struct Use *Value_create_use (struct Value *value)
@@ -116,15 +158,7 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
 {
         switch (operand_index) {
         case 0: instruction->operands.first = operand; break;
-        case 1:
-                if (INST_IS_BINARY_OP (instruction)) {
-                        instruction->operands.second = operand;
-                } else {
-                        fprintf (stderr, "Invalid operand index! Cannot set operand 1 for non-binary operator!\n");
-                        exit (EXIT_FAILURE);
-                }
-
-                break;
+        case 1: instruction->operands.second = operand; break;
         default: fprintf (stderr, "Invalid operand index!\n"); exit (EXIT_FAILURE);
         }
 
@@ -150,8 +184,10 @@ bool Instruction_contains (struct Instruction *instruction, struct Value *value)
 
 struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count)
 {
-        struct Instruction *instruction =
-                AS_INST (AS_BYTE_BUFFER (basic_block->values) + *iter_count * sizeof (struct Instruction));
+        if (Array_length (&basic_block->values) == *iter_count)
+                return NULL;
+
+        struct Instruction *instruction = *(struct Instruction **)Array_get_index (&basic_block->values, *iter_count);
 
         (*iter_count)++;
 
@@ -162,7 +198,7 @@ struct Instruction *Instruction_InsertBefore (struct BasicBlock *basic_block, st
 {
         size_t index = 0;
 
-        struct Instruction *curr;
+        struct Instruction *curr = NULL;
 
         while ((curr = BasicBlock_Instruction_iter (basic_block, &index)) != NULL) {
                 if (curr == before)
@@ -171,22 +207,27 @@ struct Instruction *Instruction_InsertBefore (struct BasicBlock *basic_block, st
 
         assert (curr != NULL && "Instruction_InsertBefore: instruction not found!\n");
 
-        return DYNARR_INSERT (basic_block->values,
-                              basic_block->values_count,
-                              basic_block->values_size,
-                              NULL,
-                              sizeof (struct Instruction),
-                              index);
+        before->parent = basic_block;
+
+        Array_insert (&basic_block->values, index, &before);
 }
 
-struct Instruction *BasicBlock_create_Instruction (struct BasicBlock *basic_block)
+struct Instruction *Instruction_create (enum OpCode op)
 {
-        struct Instruction *instruction = DYNARR_ALLOC (
-                basic_block->values, basic_block->values_count, basic_block->values_size, sizeof (struct Instruction));
+        struct Instruction *instruction = ir_malloc (sizeof (struct Instruction));
 
         Instruction_init (instruction);
+        instruction->op_code = op;
 
-        instruction->parent = basic_block;
+        switch (op) {
+        case OPCODE_ADD:
+        case OPCODE_SUB:
+        case OPCODE_MUL:
+        case OPCODE_DIV: instruction->inst_type = INST_BINARY; break;
+        case OPCODE_JMP:
+        case OPCODE_JMPIF: instruction->inst_type = INST_BRANCH; break;
+        default: fprintf (stderr, "Invalid instruction!\n"); break;
+        }
 
         return instruction;
 }

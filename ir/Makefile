@@ -4,7 +4,9 @@ OBJECTS =   ir_parser.o \
  			main.o \
  			threeaddr_parser.o \
  			threeaddr.o \
-			array.o
+			array.o \
+			mem.o \
+			map.o
 
 
 ifeq ($(DEBUG), 1)

@@ -4,18 +4,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define MAX_IDENTIFIER_LEN 80
+#include "constants.h"
 #define TOKEN_TYPE(t) (t.type)
 enum TokenType {
         VARIABLE,
+        INSTRUCTION_ALLOCA,
         INSTRUCTION_ADD,
         INSTRUCTION_SUB,
         INSTRUCTION_MUL,
         INSTRUCTION_DIV,
         INSTRUCTION_STORE,
+        INSTRUCTION_LOAD,
         INSTRUCTION_JUMP,
         INSTRUCTION_JUMPIF,
+        INSTRUCTION_PHI,
         COMMA,
         FN,
         LPAREN,

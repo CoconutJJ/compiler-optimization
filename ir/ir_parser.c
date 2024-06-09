@@ -1,20 +1,19 @@
 #include "ir_parser.h"
+#include "constants.h"
+#include "map.h"
+#include "mem.h"
 #include "threeaddr.h"
 #include "threeaddr_parser.h"
+#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-static struct Value **value_table = NULL;
-static struct BasicBlock **label_table = NULL;
+static struct HashTable value_table;
+static struct HashTable label_table;
 
 struct BasicBlock *BasicBlock_create ()
 {
-        struct BasicBlock *basic_block = malloc (sizeof (struct BasicBlock));
-
-        if (!basic_block) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        struct BasicBlock *basic_block = ir_malloc (sizeof (struct BasicBlock));
 
         BasicBlock_init (basic_block);
 
@@ -23,12 +22,7 @@ struct BasicBlock *BasicBlock_create ()
 
 struct Function *Function_create ()
 {
-        struct Function *function = malloc (sizeof (struct Function));
-
-        if (!function) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        struct Function *function = ir_malloc (sizeof (struct Function));
 
         Function_init (function);
 
@@ -37,75 +31,21 @@ struct Function *Function_create ()
 
 struct Constant *Constant_create (int constant_value)
 {
-        struct Constant *constant = malloc (sizeof (struct Constant));
-
-        if (!constant) {
-                perror ("malloc");
-                exit (EXIT_FAILURE);
-        }
+        struct Constant *constant = ir_malloc (sizeof (struct Constant));
 
         Constant_init (constant, constant_value);
 
         return constant;
 }
 
-void Value_table_init ()
-{
-        value_table = calloc (VALUE_TABLE_SIZE, sizeof (struct Value *));
+struct Value *find_Value(uint64_t value_no) {
 
-        if (!value_table) {
-                perror ("calloc");
-                exit (EXIT_FAILURE);
-        }
-}
+        struct Value *value = hash_table_search (&value_table, value_no);
 
-void Value_table_clear ()
-{
-        memset (value_table, 0, VALUE_TABLE_SIZE * sizeof (struct Value *));
-}
+        assert(value != NULL);
 
-void Label_table_init ()
-{
-        label_table = calloc (LABEL_TABLE_SIZE, sizeof (struct BasicBlock *));
+        return value;
 
-        if (!label_table) {
-                perror ("calloc");
-                exit (EXIT_FAILURE);
-        }
-}
-
-void Label_table_clear ()
-{
-        memset (label_table, 0, VALUE_TABLE_SIZE * sizeof (struct Value *));
-}
-
-struct BasicBlock *Label_table_find (size_t basic_block_no)
-{
-        if (label_table[basic_block_no] == NULL) {
-                label_table[basic_block_no] = BasicBlock_create ();
-        }
-
-        return label_table[basic_block_no];
-}
-
-void value_table_insert (struct Value *value, size_t index)
-{
-        if (value_table[index]) {
-                fprintf (stderr, "Value table already has entry for index %ld\n", index);
-                exit (EXIT_FAILURE);
-        }
-
-        value_table[index] = value;
-}
-
-struct Value *value_table_find (size_t index)
-{
-        if (!value_table[index]) {
-                fprintf (stderr, "Value table does not have an entry for index %ld\n", index);
-                exit (EXIT_FAILURE);
-        }
-
-        return value_table[index];
 }
 
 void parse_operand (struct Instruction *instruction, int operand_index)
@@ -118,7 +58,7 @@ void parse_operand (struct Instruction *instruction, int operand_index)
                 struct Token fst_op =
                         consume_token (VARIABLE, "Expected variable or constant as %d operand!", operand_index + 1);
 
-                struct Value *op = value_table_find (fst_op.value);
+                struct Value *op = find_Value (fst_op.value);
 
                 Instruction_set_operand (instruction, op, operand_index);
         }
@@ -128,7 +68,7 @@ void parse_binary_operator_operands (struct Instruction *instruction)
 {
         struct Token token = consume_token (VARIABLE, "Expected destination operand to be a variable!\n");
 
-        value_table_insert (AS_VALUE (instruction), token.value);
+        hash_table_insert (&value_table, token.value, AS_VALUE (instruction));
 
         consume_token (COMMA, "Expected ',' after destination operand\n");
 
@@ -146,44 +86,50 @@ void parse_branch_operand (struct Instruction *instruction)
         Instruction_set_operand (instruction, AS_VALUE (Constant_create (token.value)), 0);
 
         if (instruction->op_code == OPCODE_JMPIF) {
-                consume_token (COMMA, "Expected `,` after jmpif condition\n");
+                consume_token (COMMA, "Expected `, <condition>` after jumpif target label\n");
                 parse_operand (instruction, 1);
         }
 }
 
-struct Instruction *parse_instruction (struct BasicBlock *basic_block)
+struct BasicBlock *find_BasicBlock (uint64_t label_no)
 {
-        struct Instruction *new_instruction = BasicBlock_create_Instruction (basic_block);
+        struct BasicBlock *basic_block = hash_table_search (&label_table, label_no);
+
+        if (!basic_block) {
+                basic_block = BasicBlock_create ();
+                hash_table_insert (&label_table, label_no, basic_block);
+        }
+
+        return basic_block;
+}
+
+struct Instruction *parse_instruction ()
+{
+        enum OpCode op;
 
         switch (TOKEN_TYPE (peek_token ())) {
         case INSTRUCTION_ADD: {
-                new_instruction->inst_type = INST_BINARY;
-                new_instruction->op_code = OPCODE_ADD;
+                op = OPCODE_ADD;
                 break;
         }
         case INSTRUCTION_SUB: {
-                new_instruction->inst_type = INST_BINARY;
-                new_instruction->op_code = OPCODE_SUB;
+                op = OPCODE_SUB;
                 break;
         }
         case INSTRUCTION_MUL: {
-                new_instruction->inst_type = INST_BINARY;
-                new_instruction->op_code = OPCODE_MUL;
+                op = OPCODE_MUL;
                 break;
         }
         case INSTRUCTION_DIV: {
-                new_instruction->inst_type = INST_BINARY;
-                new_instruction->op_code = OPCODE_DIV;
+                op = OPCODE_DIV;
                 break;
         }
         case INSTRUCTION_JUMP: {
-                new_instruction->inst_type = INST_BRANCH;
-                new_instruction->op_code = OPCODE_JMP;
+                op = OPCODE_JMP;
                 break;
         }
         case INSTRUCTION_JUMPIF: {
-                new_instruction->inst_type = INST_BRANCH;
-                new_instruction->op_code = OPCODE_JMPIF;
+                op = OPCODE_JMPIF;
                 break;
         }
         default:
@@ -191,7 +137,10 @@ struct Instruction *parse_instruction (struct BasicBlock *basic_block)
                 exit (EXIT_FAILURE);
                 break;
         }
+
         advance_token ();
+
+        struct Instruction *new_instruction = Instruction_create (op);
 
         if (INST_IS_BINARY_OP (new_instruction))
                 parse_binary_operator_operands (new_instruction);
@@ -209,11 +158,14 @@ bool parse_basic_block (struct BasicBlock *basic_block)
                 case FN:
                 case END: return false;
                 default: {
-                        struct Instruction *inst = parse_instruction (basic_block);
+                        struct Instruction *inst = parse_instruction ();
+
+                        BasicBlock_add_Instruction (basic_block, inst);
 
                         if (INST_IS_BRANCH (inst)) {
                                 struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
-                                basic_block->right = Label_table_find (jump_location->constant);
+
+                                BasicBlock_set_right_child (basic_block, find_BasicBlock (jump_location->constant));
 
                                 return true;
                         }
@@ -224,8 +176,10 @@ bool parse_basic_block (struct BasicBlock *basic_block)
 
 struct Function *parse_function ()
 {
-        Value_table_clear ();
-        Label_table_clear ();
+        hash_table_empty (&value_table);
+
+        hash_table_empty (&label_table);
+
         consume_token (FN, "Expected `fn` keyword for function.\n");
 
         struct Function *function = Function_create ();
@@ -242,7 +196,7 @@ struct Function *parse_function ()
 
                         struct Argument *arg = Function_create_argument (function);
 
-                        value_table_insert (AS_VALUE (arg), var.value);
+                        hash_table_insert (&value_table, var.value, arg);
 
                         if (match_token (COMMA)) {
                                 continue;
@@ -263,16 +217,16 @@ struct Function *parse_function ()
 
                 if (match_token (LABEL)) {
                         if (current_basic_block) {
-                                current_basic_block->left = Label_table_find (label.value);
+                                BasicBlock_set_left_child (current_basic_block, find_BasicBlock (label.value));
                                 current_basic_block = current_basic_block->left;
                         } else {
-                                current_basic_block = Label_table_find (label.value);
+                                current_basic_block = find_BasicBlock (label.value);
                                 function->entry_basic_block = current_basic_block;
                         }
 
                 } else {
                         if (current_basic_block) {
-                                current_basic_block->left = BasicBlock_create ();
+                                BasicBlock_set_left_child (current_basic_block, BasicBlock_create ());
                                 current_basic_block = current_basic_block->left;
                         } else {
                                 function->entry_basic_block = BasicBlock_create ();
@@ -314,8 +268,8 @@ struct Function *parse_ir (char *ir_source)
 {
         threeaddr_init_parser (ir_source);
 
-        Value_table_init ();
-        Label_table_init ();
+        hash_table_init (&value_table, MAX_BASIC_BLOCK_COUNT * 5);
+        hash_table_init (&label_table, MAX_BASIC_BLOCK_COUNT);
 
         return parse_function ();
 }

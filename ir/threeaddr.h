@@ -1,11 +1,12 @@
 #pragma once
+#include "array.h"
 #include "threeaddr_parser.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#define MAX_FN_ARG_COUNT      10
-#define MAX_BASIC_BLOCK_COUNT 1024
+#include "constants.h"
+
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
 enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH };
 enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_JMP, OPCODE_JMPIF, OPCODE_NIL };
@@ -27,12 +28,16 @@ struct Use {
 
 struct BasicBlock {
         size_t block_no;
-        struct Value *values;
-        size_t values_count;
-        size_t values_size;
+
+        struct Array values;
+
+        // struct Value *values;
+        // size_t values_count;
+        // size_t values_size;
 
         struct Function *parent;
 
+        struct Array preds;
         struct BasicBlock *left;
         struct BasicBlock *right;
 };
@@ -83,11 +88,15 @@ void Value_init (struct Value *value);
 void Use_init (struct Use *use);
 void Instruction_init (struct Instruction *instruction);
 void BasicBlock_init (struct BasicBlock *basic_block);
+void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBlock *left_child);
+void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child);
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
 void Function_init (struct Function *function);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
-struct Instruction *BasicBlock_create_Instruction (struct BasicBlock *basic_block);
+struct Instruction *Instruction_create (enum OpCode op);
+void BasicBlock_add_Instruction(struct BasicBlock *basic_block, struct Instruction *instruction);
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block);
+struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count);
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
 struct Argument *Function_create_argument (struct Function *function);

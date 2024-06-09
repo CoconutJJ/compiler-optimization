@@ -117,6 +117,10 @@ struct Token next_token ()
                                 return Token (FN, -1);
                         } else if (c == 'a' && match_str ("dd")) {
                                 return Token (INSTRUCTION_ADD, -1);
+                        } else if (c == 'a' && match_str ("lloca")) {
+                                return Token (INSTRUCTION_ALLOCA, -1);
+                        } else if (c == 'l' && match_str ("oad")) {
+                                return Token (INSTRUCTION_LOAD, -1);
                         } else if (c == 's' && match_str ("ub")) {
                                 return Token (INSTRUCTION_SUB, -1);
                         } else if (c == 'm' && match_str ("ul")) {
@@ -125,17 +129,17 @@ struct Token next_token ()
                                 return Token (INSTRUCTION_DIV, -1);
                         } else if (c == 's' && match_str ("tore")) {
                                 return Token (INSTRUCTION_STORE, -1);
-                        } else if (c == 'j' && match_str ("ump")) {
-                                return Token (INSTRUCTION_JUMP, -1);
-                        } else if (c == 'j' && match_str ("umpif")) {
-                                return Token (INSTRUCTION_JUMPIF, -1);
-                        } else {
-                                struct Token str = Token (STR, 0);
-
-                                parse_str (c, str.fn_name);
-
-                                return str;
+                        } else if (c == 'j') {
+                                if (match_str ("umpif"))
+                                        return Token (INSTRUCTION_JUMPIF, -1);
+                                else if (match_str ("ump"))
+                                        return Token (INSTRUCTION_JUMP, -1);
                         }
+                        struct Token str = Token (STR, 0);
+
+                        parse_str (c, str.fn_name);
+
+                        return str;
                 }
         }
 }

@@ -5,15 +5,12 @@
 
 int main (int argc, char **argv)
 {
-        if (argc < 2) {
-                fprintf (stderr, "Expected IR file.\n");
-                exit (EXIT_FAILURE);
-        }
+
         struct option long_opts[] = {
                 (struct option){ .name = "ir_file", .has_arg = 1, .val = 'f', .flag = NULL },
                  (struct option){ 0 }
         };
-        
+
         char *ir_file_name = NULL;
         int opt_index = 0, c;
 
@@ -21,8 +18,13 @@ int main (int argc, char **argv)
                 switch (c) {
                 case 'f': ir_file_name = optarg; break;
                 case '?': exit (EXIT_FAILURE); break;
-                default: fprintf (stderr, "error: unknown argument %c", c); exit(EXIT_FAILURE);
+                default: fprintf (stderr, "error: unknown argument %c", c); exit (EXIT_FAILURE);
                 }
+        }
+
+        if (!ir_file_name) {
+                fprintf (stderr, "Must specify IR file with -f or --ir_file flag\n");
+                exit (EXIT_FAILURE);
         }
 
         FILE *ir_fp = fopen (ir_file_name, "r");
@@ -40,7 +42,7 @@ int main (int argc, char **argv)
         fread (ir_source, ir_file_size, 1, ir_fp);
         ir_source[ir_file_size] = '\0';
 
-        struct Function * function = parse_ir (ir_source);
+        struct Function *function = parse_ir (ir_source);
 
-        display_function(function);
+        display_function (function);
 }
