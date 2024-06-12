@@ -1,9 +1,11 @@
 #include "dfa.h"
 #include "array.h"
-#include "constants.h"
+#include "basicblock.h"
+#include "function.h"
+#include "global_constants.h"
+#include "instruction.h"
 #include "map.h"
 #include "mem.h"
-#include "threeaddr.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -149,7 +151,6 @@ struct HashTable *run_Forward_DFA (MeetOp meet_op, TransferFunction transfer, st
                 size_t iter_count = 0;
                 struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
 
-
                 struct DFABitMap *curr_in_set = NULL;
                 struct BasicBlock *pred = NULL;
                 while ((pred = BasicBlock_preds_iter (curr_basic_block, &iter_count)) != NULL) {
@@ -171,7 +172,7 @@ struct HashTable *run_Forward_DFA (MeetOp meet_op, TransferFunction transfer, st
                 struct Instruction *instruction;
                 while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
                         transfer (curr_out_set, instruction);
-                
+
                 // free the old in and out set
                 DFABitMap_free (Array_get_index (&in_sets, curr_basic_block->block_no));
                 DFABitMap_free (Array_get_index (&out_sets, curr_basic_block->block_no));

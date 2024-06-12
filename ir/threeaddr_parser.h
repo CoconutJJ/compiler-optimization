@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "constants.h"
+#include "global_constants.h"
 #define TOKEN_TYPE(t) (t.type)
 enum TokenType {
         VARIABLE,

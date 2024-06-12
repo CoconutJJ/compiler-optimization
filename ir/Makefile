@@ -4,7 +4,12 @@ CC = gcc
 OBJECTS =   ir_parser.o \
  			main.o \
  			threeaddr_parser.o \
- 			threeaddr.o \
+ 			instruction.o \
+			function.o \
+			basicblock.o \
+			constant.o \
+			utils.o \
+			value.o \
 			array.o \
 			mem.o \
 			map.o \
@@ -21,11 +26,9 @@ all: $(OBJECTS)
 	$(CC) $(OPT) $(FLAGS) $^ -o ir
 
 
-%.o: %.c %.h
+%.o: %.c *.h
 	$(CC) $(OPT) $(FLAGS) -c $< -o $@
 
-%.o: %.c
-	$(CC) $(OPT) $(FLAGS) -c $^ -o $@
 
 clean:
 	rm *.o

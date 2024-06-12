@@ -1,7 +1,0 @@
-#pragma once
-
-#define DYNARR_INIT_SIZE_CNT  10
-#define VALUE_TABLE_SIZE      1024
-#define MAX_IDENTIFIER_LEN    80
-#define MAX_FN_ARG_COUNT      10
-#define MAX_BASIC_BLOCK_COUNT 1024

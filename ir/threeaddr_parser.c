@@ -1,5 +1,4 @@
 #include "threeaddr_parser.h"
-#include "threeaddr.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -30,9 +29,10 @@ char peek_char ()
 char advance_char ()
 {
         char old = ir_source[ir_source_index];
-        if (peek_char () != '\0')
+        if (peek_char () != '\0') {
                 ir_source_index++;
-
+                current_column_number++;
+        }
         return old;
 }
 
@@ -99,7 +99,6 @@ void parse_str (char lead_char, char *buffer)
 
 struct Token next_token ()
 {
-        current_column_number++;
         for (;;) {
                 char c = advance_char ();
 
@@ -114,8 +113,7 @@ struct Token next_token ()
                 case '%': return Token (VARIABLE, parse_int (0));
                 case ' ':
                 case '\t':
-                case '\r':
-                        continue;
+                case '\r': continue;
                 case '\n': {
                         current_line_number++;
                         current_column_number = 1;
@@ -190,7 +188,6 @@ bool match_token (enum TokenType t)
 
 void _va_error (struct Token target, char *message, va_list args)
 {
-
         fprintf (stderr, "Error on line %ld:%ld\n\n", target.line_number, target.column_number);
 
         char *c = target.line;
@@ -199,10 +196,24 @@ void _va_error (struct Token target, char *message, va_list args)
                 c++;
         }
         fputc ('\n', stderr);
+        size_t ncols = target.column_number;
+
+        while (ncols-- > 1) {
+                fputc (' ', stderr);
+        }
+        fprintf (stderr, "^_____");
+
         vfprintf (stderr, message, args);
         fputc ('\n', stderr);
 }
 
+void error (struct Token target, char *message, ...)
+{
+        va_list args;
+        va_start (args, message);
+        _va_error (target, message, args);
+        va_end (args);
+}
 
 struct Token consume_token (enum TokenType t, char *error_message, ...)
 {
@@ -213,8 +224,8 @@ struct Token consume_token (enum TokenType t, char *error_message, ...)
         }
 
         va_list args;
-        va_start(args, error_message);
-        _va_error(curr, error_message, args);
+        va_start (args, error_message);
+        _va_error (curr, error_message, args);
         va_end (args);
         exit (EXIT_FAILURE);
 }

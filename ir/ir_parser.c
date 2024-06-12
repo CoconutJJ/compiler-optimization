@@ -1,9 +1,13 @@
 #include "ir_parser.h"
-#include "constants.h"
+#include "global_constants.h"
 #include "map.h"
 #include "mem.h"
-#include "threeaddr.h"
 #include "threeaddr_parser.h"
+#include "basicblock.h"
+#include "function.h"
+#include "instruction.h"
+#include "utils.h"
+#include "constant.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>

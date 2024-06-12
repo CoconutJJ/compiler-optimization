@@ -1,8 +1,8 @@
 #pragma once
 
-#include "constants.h"
-#include "threeaddr.h"
+#include "global_constants.h"
 #include "threeaddr_parser.h"
+#include "instruction.h"
 #include <stdio.h>
 #include <stdlib.h>
 
