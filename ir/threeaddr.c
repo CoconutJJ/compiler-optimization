@@ -4,12 +4,12 @@
 #include "mem.h"
 #include "threeaddr_parser.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 static size_t CURRENT_VALUE_NO = 0;
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
@@ -19,7 +19,7 @@ char *Token_to_str (struct Token t)
 {
         switch (TOKEN_TYPE (t)) {
         case VARIABLE: {
-                strcpy (Token_buffer, t.fn_name);
+                strcpy (Token_buffer, t.str_value);
                 return Token_buffer;
         };
         case INSTRUCTION_ALLOCA: return "alloca";
@@ -45,7 +45,7 @@ char *Token_to_str (struct Token t)
                 return Token_buffer;
         }
         case STR: {
-                strcpy (Token_buffer, t.fn_name);
+                strcpy (Token_buffer, t.str_value);
                 return Token_buffer;
         }
         case COLON: return ":";
@@ -131,6 +131,14 @@ void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruct
         instruction->parent = basic_block;
 }
 
+struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count)
+{
+        if (*iter_count >= Array_length (&basic_block->preds))
+                return NULL;
+
+        return Array_get_index (&basic_block->preds, (*iter_count)++);
+}
+
 struct Use *Value_create_use (struct Value *value)
 {
         struct Use *new_use = DYNARR_ALLOC (value->uses, value->uses_count, value->uses_size, sizeof (struct Use));
@@ -167,6 +175,15 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
         use->user = AS_VALUE (instruction);
 }
 
+void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand)
+{
+        Array_push (&instruction->operand_list, operand);
+
+        struct Use *use = Value_create_use (operand);
+        use->operand_no = Array_length (&instruction->operand_list) - 1;
+        use->user = AS_VALUE (instruction);
+}
+
 bool Instruction_contains (struct Instruction *instruction, struct Value *value)
 {
         struct Value *op = Instruction_get_operand (instruction, 0);
@@ -194,7 +211,7 @@ struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block,
         return instruction;
 }
 
-struct Instruction *Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instruction *before)
+void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instruction *before)
 {
         size_t index = 0;
 
@@ -224,8 +241,12 @@ struct Instruction *Instruction_create (enum OpCode op)
         case OPCODE_SUB:
         case OPCODE_MUL:
         case OPCODE_DIV: instruction->inst_type = INST_BINARY; break;
-        case OPCODE_JMP:
-        case OPCODE_JMPIF: instruction->inst_type = INST_BRANCH; break;
+        case OPCODE_JUMP:
+        case OPCODE_JUMPIF: instruction->inst_type = INST_BRANCH; break;
+        case OPCODE_LOAD:
+        case OPCODE_STORE:
+        case OPCODE_ALLOCA: instruction->inst_type = INST_MEM; break;
+        case OPCODE_PHI: Array_init (&instruction->operand_list, sizeof (struct Value *)); break;
         default: fprintf (stderr, "Invalid instruction!\n"); break;
         }
 

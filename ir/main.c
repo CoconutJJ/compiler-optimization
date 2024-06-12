@@ -1,4 +1,5 @@
 #include "ir_parser.h"
+#include "mem.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +39,10 @@ int main (int argc, char **argv)
         size_t ir_file_size = ftell (ir_fp);
         fseek (ir_fp, 0, SEEK_SET);
 
-        char *ir_source = malloc (ir_file_size + 1);
+        char *ir_source = ir_malloc (ir_file_size + 1);
+
         fread (ir_source, ir_file_size, 1, ir_fp);
+        
         ir_source[ir_file_size] = '\0';
 
         struct Function *function = parse_ir (ir_source);

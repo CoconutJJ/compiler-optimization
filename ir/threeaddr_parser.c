@@ -1,4 +1,5 @@
 #include "threeaddr_parser.h"
+#include "threeaddr.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -7,12 +8,18 @@
 #include <string.h>
 static char *ir_source = NULL;
 static size_t ir_source_index = 0;
-
+static size_t current_line_number = 1;
+static size_t current_column_number = 1;
+static char *current_line = NULL;
 static struct Token curr_token;
 
 struct Token Token (enum TokenType type, int value)
 {
-        return (struct Token){ .type = type, .value = value };
+        return (struct Token){ .type = type,
+                               .value = value,
+                               .line = current_line,
+                               .line_number = current_line_number,
+                               .column_number = current_column_number };
 }
 
 char peek_char ()
@@ -92,6 +99,7 @@ void parse_str (char lead_char, char *buffer)
 
 struct Token next_token ()
 {
+        current_column_number++;
         for (;;) {
                 char c = advance_char ();
 
@@ -107,7 +115,13 @@ struct Token next_token ()
                 case ' ':
                 case '\t':
                 case '\r':
-                case '\n': continue;
+                        continue;
+                case '\n': {
+                        current_line_number++;
+                        current_column_number = 1;
+                        current_line = ir_source + ir_source_index;
+                        continue;
+                }
                 default:
                         if (is_numeric (c)) {
                                 int value = parse_int (c - '0');
@@ -115,29 +129,34 @@ struct Token next_token ()
                                 return Token (match_char (':') ? LABEL : INTEGER, value);
                         } else if (c == 'f' && match_str ("n")) {
                                 return Token (FN, -1);
-                        } else if (c == 'a' && match_str ("dd")) {
-                                return Token (INSTRUCTION_ADD, -1);
-                        } else if (c == 'a' && match_str ("lloca")) {
-                                return Token (INSTRUCTION_ALLOCA, -1);
+                        } else if (c == 'a') {
+                                if (match_str ("lloca"))
+                                        return Token (INSTRUCTION_ALLOCA, -1);
+                                else if (match_str ("dd"))
+                                        return Token (INSTRUCTION_ADD, -1);
+
                         } else if (c == 'l' && match_str ("oad")) {
                                 return Token (INSTRUCTION_LOAD, -1);
-                        } else if (c == 's' && match_str ("ub")) {
-                                return Token (INSTRUCTION_SUB, -1);
+                        } else if (c == 's') {
+                                if (match_str ("ub"))
+                                        return Token (INSTRUCTION_SUB, -1);
+                                else if (match_str ("tore"))
+                                        return Token (INSTRUCTION_STORE, -1);
                         } else if (c == 'm' && match_str ("ul")) {
                                 return Token (INSTRUCTION_MUL, -1);
                         } else if (c == 'd' && match_str ("iv")) {
                                 return Token (INSTRUCTION_DIV, -1);
-                        } else if (c == 's' && match_str ("tore")) {
-                                return Token (INSTRUCTION_STORE, -1);
                         } else if (c == 'j') {
                                 if (match_str ("umpif"))
                                         return Token (INSTRUCTION_JUMPIF, -1);
                                 else if (match_str ("ump"))
                                         return Token (INSTRUCTION_JUMP, -1);
+                        } else if (c == 'p' && match_str ("hi")) {
+                                return Token (INSTRUCTION_PHI, -1);
                         }
                         struct Token str = Token (STR, 0);
 
-                        parse_str (c, str.fn_name);
+                        parse_str (c, str.str_value);
 
                         return str;
                 }
@@ -169,6 +188,22 @@ bool match_token (enum TokenType t)
         return false;
 }
 
+void _va_error (struct Token target, char *message, va_list args)
+{
+
+        fprintf (stderr, "Error on line %ld:%ld\n\n", target.line_number, target.column_number);
+
+        char *c = target.line;
+        while (*c != '\n' && *c != '\0') {
+                fputc (*c, stderr);
+                c++;
+        }
+        fputc ('\n', stderr);
+        vfprintf (stderr, message, args);
+        fputc ('\n', stderr);
+}
+
+
 struct Token consume_token (enum TokenType t, char *error_message, ...)
 {
         struct Token curr = peek_token ();
@@ -178,8 +213,8 @@ struct Token consume_token (enum TokenType t, char *error_message, ...)
         }
 
         va_list args;
-        va_start (args, error_message);
-        vfprintf (stderr, error_message, args);
+        va_start(args, error_message);
+        _va_error(curr, error_message, args);
         va_end (args);
         exit (EXIT_FAILURE);
 }

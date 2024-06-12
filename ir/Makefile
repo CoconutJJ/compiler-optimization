@@ -1,4 +1,5 @@
 OPT = -O3
+FLAGS = -Wall
 CC = gcc
 OBJECTS =   ir_parser.o \
  			main.o \
@@ -6,7 +7,8 @@ OBJECTS =   ir_parser.o \
  			threeaddr.o \
 			array.o \
 			mem.o \
-			map.o
+			map.o \
+			dfa.o
 
 
 ifeq ($(DEBUG), 1)
@@ -16,14 +18,14 @@ else
 endif
 
 all: $(OBJECTS)
-	$(CC) $(OPT) $^ -o ir
+	$(CC) $(OPT) $(FLAGS) $^ -o ir
 
 
 %.o: %.c %.h
-	$(CC) $(OPT) -c $< -o $@
+	$(CC) $(OPT) $(FLAGS) -c $< -o $@
 
 %.o: %.c
-	$(CC) $(OPT) -c $^ -o $@
+	$(CC) $(OPT) $(FLAGS) -c $^ -o $@
 
 clean:
 	rm *.o

@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 static struct HashTable value_table;
 static struct HashTable label_table;
 
@@ -29,6 +30,13 @@ struct Function *Function_create ()
         return function;
 }
 
+void Function_set_name (struct Function *function, char *name)
+{
+        assert (strlen (name) <= MAX_IDENTIFIER_LEN);
+
+        strcpy (function->fn_name, name);
+}
+
 struct Constant *Constant_create (int constant_value)
 {
         struct Constant *constant = ir_malloc (sizeof (struct Constant));
@@ -38,14 +46,13 @@ struct Constant *Constant_create (int constant_value)
         return constant;
 }
 
-struct Value *find_Value(uint64_t value_no) {
-
+struct Value *find_Value (uint64_t value_no)
+{
         struct Value *value = hash_table_search (&value_table, value_no);
 
-        assert(value != NULL);
+        assert (value != NULL);
 
         return value;
-
 }
 
 void parse_operand (struct Instruction *instruction, int operand_index)
@@ -85,7 +92,7 @@ void parse_branch_operand (struct Instruction *instruction)
 
         Instruction_set_operand (instruction, AS_VALUE (Constant_create (token.value)), 0);
 
-        if (instruction->op_code == OPCODE_JMPIF) {
+        if (instruction->op_code == OPCODE_JUMPIF) {
                 consume_token (COMMA, "Expected `, <condition>` after jumpif target label\n");
                 parse_operand (instruction, 1);
         }
@@ -103,33 +110,95 @@ struct BasicBlock *find_BasicBlock (uint64_t label_no)
         return basic_block;
 }
 
+void parse_phi_argument_list (struct Instruction *phi_instruction)
+{
+        struct Token dest_token =
+                consume_token (VARIABLE,
+                               "Expected destination operand as first argument for PHI instruction, got %s instead\n",
+                               Token_to_str (peek_token ()));
+
+        hash_table_insert (&value_table, dest_token.value, phi_instruction);
+
+        do {
+                struct Token token = peek_token ();
+
+                if (match_token (VARIABLE)) {
+                        Instruction_push_phi_operand_list (phi_instruction, find_Value (token.value));
+                } else if (match_token (INTEGER)) {
+                        Instruction_push_phi_operand_list (phi_instruction, AS_VALUE (Constant_create (token.value)));
+                } else {
+                        fprintf (
+                                stderr,
+                                "Expected either a variable or integer constant as PHI instruction operand, got %s instead\n",
+                                Token_to_str (peek_token ()));
+                }
+        } while (match_token (COMMA));
+}
+
+void parse_memory_operands (struct Instruction *instruction)
+{
+        struct Token dest = consume_token (VARIABLE,
+                                           "Expected location variable for memory instruction, got %s instead",
+                                           Token_to_str (peek_token ()));
+        // TODO
+}
+
 struct Instruction *parse_instruction ()
 {
-        enum OpCode op;
+        struct Instruction *new_instruction;
 
-        switch (TOKEN_TYPE (peek_token ())) {
+        switch (TOKEN_TYPE (advance_token ())) {
         case INSTRUCTION_ADD: {
-                op = OPCODE_ADD;
+                new_instruction = Instruction_create (OPCODE_ADD);
+                parse_binary_operator_operands (new_instruction);
+
                 break;
         }
         case INSTRUCTION_SUB: {
-                op = OPCODE_SUB;
+                new_instruction = Instruction_create (OPCODE_SUB);
+                parse_binary_operator_operands (new_instruction);
+
                 break;
         }
         case INSTRUCTION_MUL: {
-                op = OPCODE_MUL;
+                new_instruction = Instruction_create (OPCODE_MUL);
+                parse_binary_operator_operands (new_instruction);
+
                 break;
         }
         case INSTRUCTION_DIV: {
-                op = OPCODE_DIV;
+                new_instruction = Instruction_create (OPCODE_DIV);
+                parse_binary_operator_operands (new_instruction);
+
                 break;
         }
         case INSTRUCTION_JUMP: {
-                op = OPCODE_JMP;
+                new_instruction = Instruction_create (OPCODE_JUMP);
+                parse_branch_operand (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMPIF: {
-                op = OPCODE_JMPIF;
+                new_instruction = Instruction_create (OPCODE_JUMPIF);
+                parse_branch_operand (new_instruction);
+                break;
+        }
+        case INSTRUCTION_ALLOCA: {
+                new_instruction = Instruction_create (OPCODE_ALLOCA);
+
+                break;
+        }
+        case INSTRUCTION_PHI: {
+                new_instruction = Instruction_create (OPCODE_PHI);
+                parse_phi_argument_list (new_instruction);
+                break;
+        }
+        case INSTRUCTION_LOAD: {
+                new_instruction = Instruction_create (OPCODE_LOAD);
+
+                break;
+        }
+        case INSTRUCTION_STORE: {
+                new_instruction = Instruction_create (OPCODE_STORE);
                 break;
         }
         default:
@@ -137,15 +206,6 @@ struct Instruction *parse_instruction ()
                 exit (EXIT_FAILURE);
                 break;
         }
-
-        advance_token ();
-
-        struct Instruction *new_instruction = Instruction_create (op);
-
-        if (INST_IS_BINARY_OP (new_instruction))
-                parse_binary_operator_operands (new_instruction);
-        else if (INST_IS_BRANCH (new_instruction))
-                parse_branch_operand (new_instruction);
 
         return new_instruction;
 }
@@ -177,7 +237,6 @@ bool parse_basic_block (struct BasicBlock *basic_block)
 struct Function *parse_function ()
 {
         hash_table_empty (&value_table);
-
         hash_table_empty (&label_table);
 
         consume_token (FN, "Expected `fn` keyword for function.\n");
@@ -185,6 +244,8 @@ struct Function *parse_function ()
         struct Function *function = Function_create ();
 
         struct Token fn_name = consume_token (STR, "Expected function name after `fn` keyword.\n");
+
+        Function_set_name (function, fn_name.str_value);
 
         consume_token (LPAREN, "Expected opening '(' after function name declaration.\n");
 
@@ -240,28 +301,47 @@ struct Function *parse_function ()
         return function;
 }
 
-void display_basic_block (struct BasicBlock *basic_block)
+void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visited)
 {
+        if (hash_table_search (visited, basic_block->block_no) != NULL)
+                return;
+        else
+                hash_table_insert (visited, basic_block->block_no, basic_block);
+
         size_t instruction_count = BasicBlock_get_Instruction_count (basic_block);
 
-        printf ("+-----------------+\n"
-                "| Basic Block %ld |\n"
-                "+-----------------+\n"
-                "| Inst: %ld       |\n"
-                "+-----------------+\n",
-                basic_block->block_no,
-                instruction_count);
+        int left_child_no = -1, right_child_no = -1;
 
         if (basic_block->left)
-                display_basic_block (basic_block->left);
+                left_child_no = basic_block->left->block_no;
 
         if (basic_block->right)
-                display_basic_block (basic_block->right);
+                right_child_no = basic_block->right->block_no;
+
+        printf ("+------------------+\n"
+                "| Basic Block: %4ld|\n"
+                "+------------------+\n"
+                "| Inst. Count: %4ld|\n"
+                "| Left Child:  %4d|\n"
+                "| Right Child: %4d|\n"
+                "+------------------+\n\n",
+                basic_block->block_no,
+                instruction_count,
+                left_child_no,
+                right_child_no);
+
+        if (basic_block->left)
+                display_basic_block (basic_block->left, visited);
+
+        if (basic_block->right)
+                display_basic_block (basic_block->right, visited);
 }
 
 void display_function (struct Function *function)
 {
-        display_basic_block (function->entry_basic_block);
+        struct HashTable visited;
+        hash_table_init (&visited, MAX_BASIC_BLOCK_COUNT);
+        display_basic_block (function->entry_basic_block, &visited);
 }
 
 struct Function *parse_ir (char *ir_source)

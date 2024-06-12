@@ -34,9 +34,12 @@ enum TokenType {
 
 struct Token {
         enum TokenType type;
+        size_t line_number;
+        size_t column_number;
+        char *line;
         union {
                 int value;
-                char fn_name[MAX_IDENTIFIER_LEN + 1];
+                char str_value[MAX_IDENTIFIER_LEN + 1];
         };
 };
 

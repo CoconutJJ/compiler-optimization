@@ -1,3 +1,5 @@
+#pragma once
+
 #include "constants.h"
 #include "threeaddr.h"
 #include "threeaddr_parser.h"

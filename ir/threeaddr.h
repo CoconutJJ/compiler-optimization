@@ -1,15 +1,27 @@
 #pragma once
 #include "array.h"
+#include "constants.h"
 #include "threeaddr_parser.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "constants.h"
 
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
-enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH };
-enum OpCode { OPCODE_ADD, OPCODE_SUB, OPCODE_MUL, OPCODE_DIV, OPCODE_JMP, OPCODE_JMPIF, OPCODE_NIL };
+enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH, INST_MEM };
+enum OpCode {
+        OPCODE_ADD,
+        OPCODE_SUB,
+        OPCODE_MUL,
+        OPCODE_DIV,
+        OPCODE_JUMP,
+        OPCODE_JUMPIF,
+        OPCODE_NIL,
+        OPCODE_PHI,
+        OPCODE_STORE,
+        OPCODE_LOAD,
+        OPCODE_ALLOCA
+};
 
 struct Value {
         enum ValueType value_type;
@@ -30,10 +42,6 @@ struct BasicBlock {
         size_t block_no;
 
         struct Array values;
-
-        // struct Value *values;
-        // size_t values_count;
-        // size_t values_size;
 
         struct Function *parent;
 
@@ -60,10 +68,18 @@ struct Instruction {
         enum InstType inst_type;
         enum OpCode op_code;
 
-        struct {
-                struct Value *first;
-                struct Value *second;
-        } operands;
+        union {
+                struct {
+                        struct Value *first;
+                        struct Value *second;
+                } operands;
+                struct Array operand_list;
+        };
+};
+
+struct PhiInstruction {
+        struct Value value;
+        struct Array operands;
 };
 
 struct Constant {
@@ -90,11 +106,12 @@ void Instruction_init (struct Instruction *instruction);
 void BasicBlock_init (struct BasicBlock *basic_block);
 void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBlock *left_child);
 void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child);
+struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count);
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
 void Function_init (struct Function *function);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
 struct Instruction *Instruction_create (enum OpCode op);
-void BasicBlock_add_Instruction(struct BasicBlock *basic_block, struct Instruction *instruction);
+void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction);
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block);
 struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count);
 struct Use *Instruction_create_use (struct Instruction *instruction);
@@ -102,3 +119,4 @@ struct Value *Instruction_get_operand (struct Instruction *instruction, int oper
 struct Argument *Function_create_argument (struct Function *function);
 char *Token_to_str (struct Token t);
 void Constant_init (struct Constant *constant, int constant_value);
+void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand);
