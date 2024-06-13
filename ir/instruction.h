@@ -2,12 +2,15 @@
 
 #include "array.h"
 #include "value.h"
+#include "threeaddr_parser.h"
+
 enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH, INST_MEM };
 enum OpCode {
         OPCODE_ADD,
         OPCODE_SUB,
         OPCODE_MUL,
         OPCODE_DIV,
+        OPCODE_CMP,
         OPCODE_JUMP,
         OPCODE_JUMPIF,
         OPCODE_NIL,
@@ -38,7 +41,7 @@ struct Instruction {
 void Instruction_init (struct Instruction *instruction);
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
-struct Instruction *Instruction_create (enum OpCode op);
+struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token);
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
 void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand);

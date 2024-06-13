@@ -133,7 +133,9 @@ struct Token next_token ()
                                 else if (match_str ("dd"))
                                         return Token (INSTRUCTION_ADD, -1);
 
-                        } else if (c == 'l' && match_str ("oad")) {
+                        } else if (c == 'c' && match_str("mp")) {
+                                return Token(INSTRUCTION_CMP, -1);
+                        }else if (c == 'l' && match_str ("oad")) {
                                 return Token (INSTRUCTION_LOAD, -1);
                         } else if (c == 's') {
                                 if (match_str ("ub"))

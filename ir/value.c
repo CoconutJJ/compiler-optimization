@@ -1,5 +1,6 @@
 #include "global_constants.h"
 #include "array.h"
+#include "threeaddr_parser.h"
 #include "value.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -14,7 +15,13 @@ void Value_init (struct Value *value)
         value->uses = NULL;
         value->uses_count = 0;
         value->uses_size = 0;
+        value->token = Token(NIL, -1);
         DYNARR_INIT (value->uses, value->uses_count, value->uses_size, sizeof (struct Use));
+}
+
+
+void Value_set_token(struct Value *value, struct Token token) {
+        value->token = token;
 }
 
 void Use_init (struct Use *use)

@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "global_constants.h"
-#define TOKEN_TYPE(t) (t.type)
+#define TOKEN_TYPE(t) ((t).type)
 enum TokenType {
         VARIABLE,
         INSTRUCTION_ALLOCA,
         INSTRUCTION_ADD,
+        INSTRUCTION_CMP,
         INSTRUCTION_SUB,
         INSTRUCTION_MUL,
         INSTRUCTION_DIV,
@@ -29,7 +30,8 @@ enum TokenType {
         AT,
         LCURLY,
         RCURLY,
-        END
+        END,
+        NIL
 };
 
 struct Token {
@@ -58,3 +60,5 @@ bool match_token (enum TokenType t);
 struct Token peek_token ();
 struct Token consume_token (enum TokenType t, char *error_message, ...);
 void threeaddr_init_parser (char *ir);
+void error (struct Token target, char *message, ...);
+void _va_error (struct Token target, char *message, va_list args);

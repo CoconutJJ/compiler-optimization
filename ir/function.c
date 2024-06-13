@@ -1,4 +1,5 @@
 #include "function.h"
+#include "array.h"
 #include <assert.h>
 void Argument_init (struct Argument *argument)
 {
@@ -8,19 +9,15 @@ void Argument_init (struct Argument *argument)
 
 void Function_init (struct Function *function)
 {
-        function->arguments_count = 0;
         function->entry_basic_block = NULL;
+
+        Array_init(&function->arguments, sizeof (struct Argument *));
 }
 
-struct Argument *Function_create_argument (struct Function *function)
-{
-        assert (function->arguments_count < MAX_FN_ARG_COUNT);
+void Function_add_argument(struct Function *function, struct Argument * argument) {
+        
+        argument->parent = function;
 
-        struct Argument *new_argument = function->arguments + function->arguments_count;
+        Array_push(&function->arguments, &argument);
 
-        Argument_init (new_argument);
-
-        function->arguments_count++;
-
-        return new_argument;
 }

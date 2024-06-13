@@ -8,10 +8,7 @@
 
 struct BasicBlock *BasicBlock_create ();
 struct Function *Function_create ();
-struct Constant *Constant_create (int constant_value);
-void Value_table_init ();
-void Value_table_clear ();
-void value_table_insert (struct Value *value, size_t index);
+struct Constant *Constant_create (struct Token constant_token);
 struct Value *value_table_find (size_t index);
 void parse_operand (struct Instruction *instruction, int operand_index);
 void parse_binary_operator_operands (struct Instruction *instruction);

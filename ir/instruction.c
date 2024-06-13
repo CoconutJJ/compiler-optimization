@@ -1,11 +1,13 @@
 #include "instruction.h"
-#include "global_constants.h"
 #include "basicblock.h"
+#include "global_constants.h"
 #include "mem.h"
+#include "threeaddr_parser.h"
+#include "utils.h"
 #include "value.h"
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 void Instruction_init (struct Instruction *instruction)
 {
         Value_init (&instruction->value);
@@ -67,7 +69,6 @@ bool Instruction_contains (struct Instruction *instruction, struct Value *value)
         return op == value;
 }
 
-
 void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instruction *before)
 {
         size_t index = 0;
@@ -86,14 +87,17 @@ void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instructio
         Array_insert (&basic_block->values, index, &before);
 }
 
-struct Instruction *Instruction_create (enum OpCode op)
+struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
 {
         struct Instruction *instruction = ir_malloc (sizeof (struct Instruction));
 
         Instruction_init (instruction);
         instruction->op_code = op;
 
+        Value_set_token (AS_VALUE (instruction), dest_token);
+
         switch (op) {
+        case OPCODE_CMP:
         case OPCODE_ADD:
         case OPCODE_SUB:
         case OPCODE_MUL:
@@ -104,7 +108,11 @@ struct Instruction *Instruction_create (enum OpCode op)
         case OPCODE_STORE:
         case OPCODE_ALLOCA: instruction->inst_type = INST_MEM; break;
         case OPCODE_PHI: Array_init (&instruction->operand_list, sizeof (struct Value *)); break;
-        default: fprintf (stderr, "Invalid instruction!\n"); break;
+
+        default:
+                error(dest_token, "Invalid instruction: %s", Token_to_str(dest_token));
+                exit (EXIT_FAILURE);
+                break;
         }
 
         return instruction;

@@ -1,20 +1,41 @@
 #include "ir_parser.h"
+#include "basicblock.h"
+#include "constant.h"
+#include "function.h"
 #include "global_constants.h"
+#include "instruction.h"
 #include "map.h"
 #include "mem.h"
 #include "threeaddr_parser.h"
-#include "basicblock.h"
-#include "function.h"
-#include "instruction.h"
 #include "utils.h"
-#include "constant.h"
+#include "value.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 static struct HashTable value_table;
 static struct HashTable label_table;
+
+void check_valid_assignment_target (struct Token dest_token, char *error_message, ...)
+{
+        struct Value *value = hash_table_search (&value_table, dest_token.value);
+
+        if (!value)
+                return;
+
+        va_list args;
+        va_start (args, error_message);
+        _va_error (dest_token, error_message, args);
+        va_end (args);
+
+        if (VALUE_IS_INST (value)) {
+                error (value->token, "%%%d is already defined here", value->token.value);
+        }
+
+        exit (EXIT_FAILURE);
+}
 
 struct BasicBlock *BasicBlock_create ()
 {
@@ -34,6 +55,15 @@ struct Function *Function_create ()
         return function;
 }
 
+struct Argument *Argument_create ()
+{
+        struct Argument *argument = ir_malloc (sizeof (struct Argument));
+
+        Argument_init (argument);
+
+        return argument;
+}
+
 void Function_set_name (struct Function *function, char *name)
 {
         assert (strlen (name) <= MAX_IDENTIFIER_LEN);
@@ -41,11 +71,15 @@ void Function_set_name (struct Function *function, char *name)
         strcpy (function->fn_name, name);
 }
 
-struct Constant *Constant_create (int constant_value)
+struct Constant *Constant_create (struct Token constant_token)
 {
+
+
         struct Constant *constant = ir_malloc (sizeof (struct Constant));
 
-        Constant_init (constant, constant_value);
+        Constant_init (constant, constant_token.value);
+        
+        Value_set_token(AS_VALUE(constant), constant_token);
 
         return constant;
 }
@@ -63,7 +97,7 @@ void parse_operand (struct Instruction *instruction, int operand_index)
 {
         struct Token token = peek_token ();
         if (match_token (INTEGER)) {
-                struct Constant *op = Constant_create (token.value);
+                struct Constant *op = Constant_create (token);
                 Instruction_set_operand (instruction, AS_VALUE (op), operand_index);
         } else {
                 struct Token fst_op =
@@ -78,6 +112,8 @@ void parse_operand (struct Instruction *instruction, int operand_index)
 void parse_binary_operator_operands (struct Instruction *instruction)
 {
         struct Token token = consume_token (VARIABLE, "Expected destination operand to be a variable!\n");
+
+        check_valid_assignment_target (token, "Invalid assignment target %s", Token_to_str (token));
 
         hash_table_insert (&value_table, token.value, AS_VALUE (instruction));
 
@@ -94,7 +130,7 @@ void parse_branch_operand (struct Instruction *instruction)
 {
         struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
 
-        Instruction_set_operand (instruction, AS_VALUE (Constant_create (token.value)), 0);
+        Instruction_set_operand (instruction, AS_VALUE (Constant_create (token)), 0);
 
         if (instruction->op_code == OPCODE_JUMPIF) {
                 consume_token (COMMA, "Expected `, <condition>` after jumpif target label\n");
@@ -114,12 +150,12 @@ struct BasicBlock *find_BasicBlock (uint64_t label_no)
         return basic_block;
 }
 
-void parse_phi_argument_list (struct Instruction *phi_instruction)
+void parse_phi_instruction (struct Instruction *phi_instruction)
 {
-        struct Token dest_token =
-                consume_token (VARIABLE,
-                               "Expected destination operand as first argument for PHI instruction, got %s instead\n",
-                               Token_to_str (peek_token ()));
+        struct Token dest_token = consume_token (VARIABLE,
+                                                 "Expected destination operand as first argument for PHI "
+                                                 "instruction, got %s instead\n",
+                                                 Token_to_str (peek_token ()));
 
         hash_table_insert (&value_table, dest_token.value, phi_instruction);
 
@@ -129,84 +165,104 @@ void parse_phi_argument_list (struct Instruction *phi_instruction)
                 if (match_token (VARIABLE)) {
                         Instruction_push_phi_operand_list (phi_instruction, find_Value (token.value));
                 } else if (match_token (INTEGER)) {
-                        Instruction_push_phi_operand_list (phi_instruction, AS_VALUE (Constant_create (token.value)));
+                        Instruction_push_phi_operand_list (phi_instruction, AS_VALUE (Constant_create (token)));
                 } else {
-                        fprintf (
-                                stderr,
-                                "Expected either a variable or integer constant as PHI instruction operand, got %s instead\n",
-                                Token_to_str (peek_token ()));
+                        error (peek_token (),
+                               "Expected either a variable or integer constant as PHI instruction operand, got %s instead\n",
+                               Token_to_str (peek_token ()));
+                        exit (EXIT_FAILURE);
                 }
         } while (match_token (COMMA));
 }
 
-void parse_memory_operands (struct Instruction *instruction)
+void parse_alloca_instruction (struct Instruction *instruction)
 {
         struct Token dest = consume_token (VARIABLE,
-                                           "Expected location variable for memory instruction, got %s instead",
+                                           "Expected target variable after `alloca` instruction, found %s instead",
                                            Token_to_str (peek_token ()));
-        // TODO
+
+        consume_token (COMMA,
+                       "Expected `,` after destination operand %s, found %s instead",
+                       Token_to_str (dest),
+                       Token_to_str (peek_token ()));
+
+        struct Token size = consume_token (
+                INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
+
+        hash_table_insert (&value_table, dest.value, &instruction);
+
+        Instruction_set_operand (instruction, AS_VALUE (instruction), 0);
+
+        Instruction_set_operand (instruction, AS_VALUE (Constant_create (size)), 1);
 }
 
 struct Instruction *parse_instruction ()
 {
         struct Instruction *new_instruction;
 
-        switch (TOKEN_TYPE (advance_token ())) {
+        struct Token inst_token = advance_token ();
+
+        switch (TOKEN_TYPE (inst_token)) {
         case INSTRUCTION_ADD: {
-                new_instruction = Instruction_create (OPCODE_ADD);
+                new_instruction = Instruction_create (OPCODE_ADD, inst_token);
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_SUB: {
-                new_instruction = Instruction_create (OPCODE_SUB);
+                new_instruction = Instruction_create (OPCODE_SUB, inst_token);
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_MUL: {
-                new_instruction = Instruction_create (OPCODE_MUL);
+                new_instruction = Instruction_create (OPCODE_MUL, inst_token);
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_DIV: {
-                new_instruction = Instruction_create (OPCODE_DIV);
+                new_instruction = Instruction_create (OPCODE_DIV, inst_token);
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
+        case INSTRUCTION_CMP: {
+                new_instruction = Instruction_create(OPCODE_CMP, inst_token);
+                parse_binary_operator_operands(new_instruction);
+                break;
+        }
         case INSTRUCTION_JUMP: {
-                new_instruction = Instruction_create (OPCODE_JUMP);
+                new_instruction = Instruction_create (OPCODE_JUMP, inst_token);
                 parse_branch_operand (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMPIF: {
-                new_instruction = Instruction_create (OPCODE_JUMPIF);
+                new_instruction = Instruction_create (OPCODE_JUMPIF, inst_token);
                 parse_branch_operand (new_instruction);
                 break;
         }
         case INSTRUCTION_ALLOCA: {
-                new_instruction = Instruction_create (OPCODE_ALLOCA);
-
+                new_instruction = Instruction_create (OPCODE_ALLOCA, inst_token);
+                parse_alloca_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_PHI: {
-                new_instruction = Instruction_create (OPCODE_PHI);
-                parse_phi_argument_list (new_instruction);
+                new_instruction = Instruction_create (OPCODE_PHI, inst_token);
+                parse_phi_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_LOAD: {
-                new_instruction = Instruction_create (OPCODE_LOAD);
+                new_instruction = Instruction_create (OPCODE_LOAD, inst_token);
 
                 break;
         }
         case INSTRUCTION_STORE: {
-                new_instruction = Instruction_create (OPCODE_STORE);
+                new_instruction = Instruction_create (OPCODE_STORE, inst_token);
                 break;
         }
         default:
-                fprintf (stderr, "Expected instruction! Found %s instead", Token_to_str (peek_token ()));
+                error (peek_token (), "Expected instruction! Found %s instead", Token_to_str (peek_token ()));
                 exit (EXIT_FAILURE);
                 break;
         }
@@ -259,7 +315,9 @@ struct Function *parse_function ()
                                                           "Expected argument in function argument list, got %s instead",
                                                           Token_to_str (peek_token ()));
 
-                        struct Argument *arg = Function_create_argument (function);
+                        struct Argument *arg = Argument_create ();
+
+                        Function_add_argument (function, arg);
 
                         hash_table_insert (&value_table, var.value, arg);
 
