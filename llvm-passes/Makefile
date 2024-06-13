@@ -3,4 +3,4 @@ LLVM_FLAGS := $(shell llvm-config --cxxflags --ldflags --libs --system-libs)
 ZSTD_FLAGS := -I/opt/homebrew/Cellar/zstd/1.5.6/include -L/opt/homebrew/Cellar/zstd/1.5.6/lib
 
 all:
-	g++ -dynamiclib $(ZSTD_FLAGS) $(LLVM_FLAGS) FunctionInfo.cpp -o libFunctionInfoPass.dylib
+	g++ -g -dynamiclib $(ZSTD_FLAGS) $(LLVM_FLAGS) HelloWorld.cpp -o libHelloWorldPass.dylib

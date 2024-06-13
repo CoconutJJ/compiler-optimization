@@ -1,9 +1,0 @@
--I/Users/david/Documents/Programming/research/compilers/llvm-project/llvm/include 
--I/Users/david/Documents/Programming/research/compilers/llvm-project/build/include 
--std=c++17   
--fno-exceptions 
--funwind-tables 
--fno-rtti 
--D__STDC_CONSTANT_MACROS 
--D__STDC_FORMAT_MACROS 
--D__STDC_LIMIT_MACROS
