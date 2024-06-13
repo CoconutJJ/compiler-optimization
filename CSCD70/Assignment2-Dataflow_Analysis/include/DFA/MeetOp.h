@@ -27,7 +27,6 @@ struct Intersect final : MeetOpBase<TValue> {
 
         DomainVal_t operator() (const DomainVal_t &LHS, const DomainVal_t &RHS) const final
         {
-
                 DomainVal_t intersection (LHS.size ());
 
                 for (size_t i = 0; i < LHS.size (); i++) {
@@ -38,7 +37,6 @@ struct Intersect final : MeetOpBase<TValue> {
         }
         DomainVal_t top (const std::size_t DomainSize) const final
         {
-
                 return DomainVal_t (DomainSize, true);
         }
 };
@@ -49,7 +47,6 @@ struct Union final : MeetOpBase<TValue> {
 
         DomainVal_t operator() (const DomainVal_t &LHS, const DomainVal_t &RHS) const final
         {
-
                 DomainVal_t intersection (LHS.size ());
 
                 for (size_t i = 0; i < LHS.size (); i++) {
@@ -60,12 +57,8 @@ struct Union final : MeetOpBase<TValue> {
         }
         DomainVal_t top (const std::size_t DomainSize) const final
         {
-
-                return DomainVal_t (DomainSize, Bool{.Value =false});
+                return DomainVal_t (DomainSize, Bool{ .Value = false });
         }
 };
-
-
-
 
 } // namespace dfa
