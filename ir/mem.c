@@ -1,7 +1,17 @@
-#include "array.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+void *ir_realloc (void *mem, size_t size)
+{
+        mem = realloc (mem, size);
+
+        if (!mem) {
+                perror ("malloc");
+                exit (EXIT_FAILURE);
+        }
+
+        return mem;
+}
 
 void *ir_malloc (size_t size)
 {
@@ -11,8 +21,6 @@ void *ir_malloc (size_t size)
                 perror ("malloc");
                 exit (EXIT_FAILURE);
         }
-
-        
 
         return mem;
 }
@@ -28,4 +36,3 @@ void *ir_calloc (size_t nmemb, size_t size)
 
         return mem;
 }
-

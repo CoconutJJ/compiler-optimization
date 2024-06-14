@@ -41,3 +41,5 @@ void hash_table_free (HashTable *table);
 void hash_table_empty (HashTable *table);
 
 void hash_table_init (HashTable *table, size_t size);
+
+void *hash_table_find_and_delete (HashTable *table, uint64_t key);

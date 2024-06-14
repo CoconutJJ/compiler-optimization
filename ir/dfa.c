@@ -10,15 +10,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX(a, b) ((a < b) ? (b) : (a))
-
-#define UINT64_BITMAP_SET_BIT(map, bit_no)    map[(bit_no + 1) / 64] |= (1 << ((bit_no) % 64))
-#define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no + 1) / 64] &= ~(1 << ((bit_no) % 64))
-#define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no + 1) / 64] & (1 << ((bit_no) % 64))) > 0)
-
-typedef void (*MeetOp) (struct DFABitMap *accum, struct DFABitMap *item);
-
-typedef void (*TransferFunction) (struct DFABitMap *in, struct Instruction *instruction);
 
 void DFABitMap_init (struct DFABitMap *map, size_t num_bits)
 {
@@ -42,7 +33,10 @@ void DFABitMap_free (struct DFABitMap *map)
 
 void DFABitMap_copy (struct DFABitMap *src, struct DFABitMap *dest)
 {
-        dest->map = ir_calloc (src->size, sizeof (uint64_t));
+        if (dest->map)
+                dest->map = ir_realloc (dest->map, src->size);
+        else
+                dest->map = ir_calloc (src->size, sizeof (uint64_t));
 
         dest->size = src->size;
 
@@ -138,14 +132,13 @@ struct Array reverse_postorder_iter (struct BasicBlock *entry)
 
         return basic_block_order;
 }
-struct HashTable *run_Forward_DFA (MeetOp meet_op, TransferFunction transfer, struct Function *function)
+struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function)
 {
         struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
+        struct DFAResult analysis_result;
 
-        struct Array in_sets, out_sets;
-
-        Array_init (&in_sets, sizeof (struct DFABitMap *));
-        Array_init (&out_sets, sizeof (struct DFABitMap *));
+        hash_table_init (&analysis_result.in_sets, MAX_BASIC_BLOCK_COUNT);
+        hash_table_init (&analysis_result.out_sets, MAX_BASIC_BLOCK_COUNT);
 
         for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                 size_t iter_count = 0;
@@ -154,7 +147,7 @@ struct HashTable *run_Forward_DFA (MeetOp meet_op, TransferFunction transfer, st
                 struct DFABitMap *curr_in_set = NULL;
                 struct BasicBlock *pred = NULL;
                 while ((pred = BasicBlock_preds_iter (curr_basic_block, &iter_count)) != NULL) {
-                        struct DFABitMap *pred_out_set = Array_get_index (&out_sets, pred->block_no);
+                        struct DFABitMap *pred_out_set = hash_table_search (&analysis_result.out_sets, pred->block_no);
 
                         if (!curr_in_set) {
                                 curr_in_set = ir_malloc (sizeof (struct DFABitMap));
@@ -162,24 +155,24 @@ struct HashTable *run_Forward_DFA (MeetOp meet_op, TransferFunction transfer, st
                                 continue;
                         }
 
-                        meet_op (curr_in_set, pred_out_set);
+                        config->meet (curr_in_set, pred_out_set);
                 }
-
+                iter_count = 0;
                 struct DFABitMap *curr_out_set = ir_malloc (sizeof (struct DFABitMap));
 
                 DFABitMap_copy (curr_in_set, curr_out_set);
 
                 struct Instruction *instruction;
                 while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
-                        transfer (curr_out_set, instruction);
+                        config->transfer (curr_out_set, instruction);
 
                 // free the old in and out set
-                DFABitMap_free (Array_get_index (&in_sets, curr_basic_block->block_no));
-                DFABitMap_free (Array_get_index (&out_sets, curr_basic_block->block_no));
+                DFABitMap_free (hash_table_find_and_delete (&analysis_result.in_sets, curr_basic_block->block_no));
+                DFABitMap_free (hash_table_find_and_delete (&analysis_result.out_sets, curr_basic_block->block_no));
 
-                Array_set_index (&in_sets, curr_basic_block->block_no, &curr_in_set);
-                Array_set_index (&out_sets, curr_basic_block->block_no, &curr_out_set);
+                hash_table_insert (&analysis_result.in_sets, curr_basic_block->block_no, curr_in_set);
+                hash_table_insert (&analysis_result.out_sets, curr_basic_block->block_no, curr_out_set);
         }
 
-        return hash_table_create (MAX_BASIC_BLOCK_COUNT);
+        return analysis_result;
 }

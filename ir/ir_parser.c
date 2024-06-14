@@ -73,13 +73,11 @@ void Function_set_name (struct Function *function, char *name)
 
 struct Constant *Constant_create (struct Token constant_token)
 {
-
-
         struct Constant *constant = ir_malloc (sizeof (struct Constant));
 
         Constant_init (constant, constant_token.value);
-        
-        Value_set_token(AS_VALUE(constant), constant_token);
+
+        Value_set_token (AS_VALUE (constant), constant_token);
 
         return constant;
 }
@@ -189,7 +187,7 @@ void parse_alloca_instruction (struct Instruction *instruction)
         struct Token size = consume_token (
                 INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
 
-        hash_table_insert (&value_table, dest.value, &instruction);
+        hash_table_insert (&value_table, dest.value, instruction);
 
         Instruction_set_operand (instruction, AS_VALUE (instruction), 0);
 
@@ -228,8 +226,8 @@ struct Instruction *parse_instruction ()
                 break;
         }
         case INSTRUCTION_CMP: {
-                new_instruction = Instruction_create(OPCODE_CMP, inst_token);
-                parse_binary_operator_operands(new_instruction);
+                new_instruction = Instruction_create (OPCODE_CMP, inst_token);
+                parse_binary_operator_operands (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMP: {

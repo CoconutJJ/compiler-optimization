@@ -80,6 +80,30 @@ void *hash_table_search (HashTable *table, uint64_t key)
         return NULL;
 }
 
+void *hash_table_find_and_delete (HashTable *table, uint64_t key)
+{
+        unsigned long hash = uint64_t_hash_function (key);
+        size_t index = hash % table->size;
+
+        HashTableEntry *entry = table->buckets[index];
+        HashTableEntry *prev = NULL;
+
+        while (entry != NULL) {
+                if (entry->key == key) {
+                        if (prev)
+                                prev->next = entry->next;
+
+                        void *value = entry->value;
+                        free (entry);
+                        return value;
+                }
+                prev = entry;
+                entry = entry->next;
+        }
+
+        return NULL;
+}
+
 // Free the hash table
 void hash_table_free (HashTable *table)
 {
