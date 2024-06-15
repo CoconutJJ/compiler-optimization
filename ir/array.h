@@ -26,6 +26,8 @@ struct Array {
 #define DYNARR_ITEM_OFFSET(item_size, index)       ((index) * (item_size))
 #define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER (buffer) + DYNARR_ITEM_OFFSET (item_size, index))
 
+#define ARRAY_AS(type, item_ptr) (*((type *)(item_ptr)))
+
 void dynarr_init (void **buffer, size_t *count, size_t *size, size_t item_size);
 void _dynarr_auto_alloc (void **buffer, size_t *count, size_t *size, size_t item_size);
 void *dynarr_insert (void **buffer, size_t *count, size_t *size, void *item, size_t item_size, size_t insert_index);

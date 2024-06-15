@@ -19,7 +19,7 @@ void DFABitMap_init (struct DFABitMap *map, size_t num_bits)
                 map_size++;
 
         map->map = calloc (map_size, sizeof (uint64_t));
-
+        map->size = map_size;
         if (!map->map) {
                 perror ("calloc");
                 exit (EXIT_FAILURE);
@@ -51,6 +51,16 @@ void DFABitMap_SetBit (struct DFABitMap *a, size_t bit_no)
 void DFABitMap_UnsetBit (struct DFABitMap *a, size_t bit_no)
 {
         UINT64_BITMAP_UNSET_BIT (a->map, bit_no);
+}
+
+void DFABitMap_empty (struct DFABitMap *a)
+{
+        memset (a->map, 0, sizeof (uint64_t) * a->size);
+}
+
+void DFABitMap_fill (struct DFABitMap *a)
+{
+        memset (a->map, 0xFF, sizeof (uint64_t) * a->size);
 }
 
 struct DFABitMap *DFABitMap_Complement (struct DFABitMap *a, struct DFABitMap *dest)
@@ -102,6 +112,8 @@ struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABit
 struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no)
 {
         UINT64_BITMAP_SET_BIT (map->map, bit_no);
+
+        return map;
 }
 
 struct Array reverse_postorder_iter (struct BasicBlock *entry)
@@ -110,20 +122,20 @@ struct Array reverse_postorder_iter (struct BasicBlock *entry)
         Array_init (&basic_block_order, sizeof (struct BasicBlock *));
         Array_init (&stack, sizeof (struct BasicBlock *));
 
-        Array_push (&stack, entry);
-
-        uint64_t visited[MAX_BASIC_BLOCK_COUNT / 64 + 1];
+        uint64_t visited[MAX_BASIC_BLOCK_COUNT / 64 + 1] = { 0 };
+        Array_push (&stack, &entry);
+        UINT64_BITMAP_SET_BIT (visited, entry->block_no);
 
         while (Array_length (&stack) > 0) {
-                struct BasicBlock *curr = Array_top (&stack);
+                struct BasicBlock *curr = *(struct BasicBlock **)Array_top (&stack);
 
                 if (curr->left && !UINT64_BITMAP_BIT_IS_SET (visited, curr->left->block_no)) {
-                        Array_push (&stack, curr->left);
+                        Array_push (&stack, &curr->left);
                         UINT64_BITMAP_SET_BIT (visited, curr->left->block_no);
                         continue;
                 }
                 if (curr->right && !UINT64_BITMAP_BIT_IS_SET (visited, curr->right->block_no)) {
-                        Array_push (&stack, curr->right);
+                        Array_push (&stack, &curr->right);
                         UINT64_BITMAP_SET_BIT (visited, curr->right->block_no);
                         continue;
                 }
@@ -150,20 +162,17 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                 struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
 
                 struct DFABitMap *curr_in_set = NULL;
+
                 struct BasicBlock *pred = NULL;
                 while ((pred = BasicBlock_preds_iter (curr_basic_block, &iter_count)) != NULL) {
                         struct DFABitMap *pred_out_set = hash_table_search (&analysis_result.out_sets, pred->block_no);
 
-                        if (!curr_in_set) {
-                                curr_in_set = ir_malloc (sizeof (struct DFABitMap));
-                                DFABitMap_copy (pred_out_set, curr_in_set);
-                                continue;
-                        }
-
                         config->meet (curr_in_set, pred_out_set);
                 }
                 iter_count = 0;
+
                 struct DFABitMap *curr_out_set = ir_malloc (sizeof (struct DFABitMap));
+                DFABitMap_init (curr_out_set, MAX_BASIC_BLOCK_COUNT);
 
                 DFABitMap_copy (curr_in_set, curr_out_set);
 

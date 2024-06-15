@@ -7,16 +7,18 @@
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
 
-void BasicBlock_init (struct BasicBlock *basic_block)
+void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
 {
+        basic_block->type = type;
+
         assert (CURRENT_BASIC_BLOCK_NO < MAX_BASIC_BLOCK_COUNT);
         basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
         basic_block->left = NULL;
         basic_block->right = NULL;
 
-        Array_init (&basic_block->values, sizeof (struct Instruction *));
-
         Array_init (&basic_block->preds, sizeof (struct BasicBlock *));
+        
+        Array_init (&basic_block->values, sizeof (struct Instruction *));
 }
 
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block)
@@ -34,7 +36,6 @@ void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBloc
 void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child)
 {
         basic_block->right = right_child;
-
         Array_push (&right_child->preds, &right_child);
 }
 

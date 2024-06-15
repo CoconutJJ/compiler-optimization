@@ -13,7 +13,8 @@ OBJECTS =   ir_parser.o \
 			array.o \
 			mem.o \
 			map.o \
-			dfa.o
+			dfa.o \
+			dominators.o
 
 
 ifeq ($(DEBUG), 1)

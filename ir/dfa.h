@@ -43,3 +43,6 @@ struct DFABitMap *DFABitMap_inplace_Complement (struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Intersect (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no);
+void DFABitMap_fill (struct DFABitMap *a);
+void DFABitMap_empty (struct DFABitMap *a);
+struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function);

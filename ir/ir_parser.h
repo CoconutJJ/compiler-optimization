@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct BasicBlock *BasicBlock_create ();
+struct BasicBlock *BasicBlock_create (enum BasicBlockType type);
 struct Function *Function_create ();
 struct Constant *Constant_create (struct Token constant_token);
 struct Value *value_table_find (size_t index);

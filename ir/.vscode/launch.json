@@ -1,0 +1,18 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug IR",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/ir", // Path to the executable
+            "args": ["-f", "test/02.txt"], // Arguments passed to the program
+            "cwd": "${workspaceFolder}", // Working directory
+            "preLaunchTask": "build", // Assuming you have a task named "build" to compile your program
+        }
+    ]
+
+}

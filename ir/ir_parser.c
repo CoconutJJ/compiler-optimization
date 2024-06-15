@@ -1,4 +1,5 @@
 #include "ir_parser.h"
+#include "array.h"
 #include "basicblock.h"
 #include "constant.h"
 #include "function.h"
@@ -37,11 +38,11 @@ void check_valid_assignment_target (struct Token dest_token, char *error_message
         exit (EXIT_FAILURE);
 }
 
-struct BasicBlock *BasicBlock_create ()
+struct BasicBlock *BasicBlock_create (enum BasicBlockType type)
 {
         struct BasicBlock *basic_block = ir_malloc (sizeof (struct BasicBlock));
 
-        BasicBlock_init (basic_block);
+        BasicBlock_init (basic_block, type);
 
         return basic_block;
 }
@@ -141,7 +142,7 @@ struct BasicBlock *find_BasicBlock (uint64_t label_no)
         struct BasicBlock *basic_block = hash_table_search (&label_table, label_no);
 
         if (!basic_block) {
-                basic_block = BasicBlock_create ();
+                basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
                 hash_table_insert (&label_table, label_no, basic_block);
         }
 
@@ -187,7 +188,7 @@ void parse_alloca_instruction (struct Instruction *instruction)
         struct Token size = consume_token (
                 INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
 
-        hash_table_insert (&value_table, dest.value, instruction);
+        hash_table_insert (&value_table, dest.value, &instruction);
 
         Instruction_set_operand (instruction, AS_VALUE (instruction), 0);
 
@@ -292,6 +293,43 @@ bool parse_basic_block (struct BasicBlock *basic_block)
         }
 }
 
+struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
+{
+        struct BasicBlock *entry = BasicBlock_create (BASICBLOCK_ENTRY);
+        struct BasicBlock *exit = BasicBlock_create (BASICBLOCK_EXIT);
+
+        struct Array stack;
+        Array_init (&stack, sizeof (struct BasicBlock *));
+        Array_push (&stack, &root);
+
+        while (Array_length (&stack) > 0) {
+                struct BasicBlock *curr = ARRAY_AS (struct BasicBlock *, Array_pop (&stack, true));
+
+                // we use whether the left and right child have been set to indicate
+                // whether we have already visited the node or not.
+                if (curr->left && curr->right)
+                        continue;
+                
+                // add the left and right child
+                if (!curr->left) {
+                        BasicBlock_set_left_child (curr, exit);
+
+                        Array_push (&stack, &curr->right);
+                } else if (!curr->right) {
+                        BasicBlock_set_right_child (curr, exit);
+
+                        Array_push (&stack, &curr->left);
+                }
+        }
+
+        BasicBlock_set_left_child (entry, root);
+        BasicBlock_set_right_child (entry, root);
+
+        Array_free (&stack);
+
+        return entry;
+}
+
 struct Function *parse_function ()
 {
         hash_table_empty (&value_table);
@@ -335,28 +373,33 @@ struct Function *parse_function ()
         struct BasicBlock *current_basic_block = NULL;
         while (1) {
                 struct Token label = peek_token ();
-
                 if (match_token (LABEL)) {
                         if (current_basic_block) {
                                 BasicBlock_set_left_child (current_basic_block, find_BasicBlock (label.value));
                                 current_basic_block = current_basic_block->left;
+                                current_basic_block->parent = function;
                         } else {
                                 current_basic_block = find_BasicBlock (label.value);
                                 function->entry_basic_block = current_basic_block;
+                                current_basic_block->parent = function;
                         }
 
                 } else {
                         if (current_basic_block) {
-                                BasicBlock_set_left_child (current_basic_block, BasicBlock_create ());
+                                BasicBlock_set_left_child (current_basic_block, BasicBlock_create (BASICBLOCK_NORMAL));
                                 current_basic_block = current_basic_block->left;
+                                current_basic_block->parent = function;
                         } else {
-                                function->entry_basic_block = BasicBlock_create ();
+                                function->entry_basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
                                 current_basic_block = function->entry_basic_block;
+                                current_basic_block->parent = function;
                         }
                 }
                 if (!parse_basic_block (current_basic_block))
                         break;
         }
+
+        function->entry_basic_block = add_entry_and_exit_blocks (function->entry_basic_block);
 
         return function;
 }

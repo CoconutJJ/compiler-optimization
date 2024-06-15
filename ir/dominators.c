@@ -25,12 +25,17 @@ struct DFAConfiguration DominatorDFAConfiguration ()
 
         for (size_t i = 0; i < MAX_BASIC_BLOCK_COUNT; i++) {
                 struct DFABitMap *out_map = ir_malloc (sizeof (struct DFABitMap));
-                DFABitMap_setbit (out_map, i);
+                DFABitMap_init(out_map, MAX_BASIC_BLOCK_COUNT);
+                DFABitMap_fill(out_map);
+
                 hash_table_insert (&config.out_set_inits, i, out_map);
 
                 struct DFABitMap *in_map = ir_malloc (sizeof (struct DFABitMap));
+                DFABitMap_init(in_map, MAX_BASIC_BLOCK_COUNT);
                 hash_table_insert (&config.in_set_inits, i, in_map);
         }
+
+        // DFABitMap_fill(config.)
 
         return config;
 }

@@ -1,5 +1,7 @@
 #include "ir_parser.h"
 #include "mem.h"
+#include "dfa.h"
+#include "dominators.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,4 +50,9 @@ int main (int argc, char **argv)
         struct Function *function = parse_ir (ir_source);
 
         display_function (function);
+
+        struct DFAConfiguration config = DominatorDFAConfiguration();
+
+        run_Forward_DFA(&config, function);
+
 }

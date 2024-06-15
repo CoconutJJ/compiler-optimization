@@ -1,4 +1,5 @@
 #include "map.h"
+#include "mem.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +16,12 @@ void hash_table_init (HashTable *table, size_t size)
 {
         table->size = size;
         table->count = 0;
-        table->buckets = calloc (table->size, sizeof (HashTableEntry *));
+        table->buckets = ir_calloc (table->size, sizeof (HashTableEntry *));
 }
 // Create a new hash table
 HashTable *hash_table_create (size_t size)
 {
-        HashTable *table = malloc (sizeof (HashTable));
+        HashTable *table = ir_malloc (sizeof (HashTable));
 
         hash_table_init (table, size);
 
@@ -30,7 +31,7 @@ HashTable *hash_table_create (size_t size)
 // Create a new hash table entry
 HashTableEntry *hash_table_entry_create (uint64_t key, void *value)
 {
-        HashTableEntry *entry = malloc (sizeof (HashTableEntry));
+        HashTableEntry *entry = ir_malloc (sizeof (HashTableEntry));
         entry->key = key;
         entry->value = value;
         entry->next = NULL;
