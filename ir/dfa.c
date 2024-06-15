@@ -99,6 +99,11 @@ struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABit
         return DFABitMap_Union (dest, a, dest);
 }
 
+struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no)
+{
+        UINT64_BITMAP_SET_BIT (map->map, bit_no);
+}
+
 struct Array reverse_postorder_iter (struct BasicBlock *entry)
 {
         struct Array basic_block_order, stack;
@@ -137,8 +142,8 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
         struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
         struct DFAResult analysis_result;
 
-        hash_table_init (&analysis_result.in_sets, MAX_BASIC_BLOCK_COUNT);
-        hash_table_init (&analysis_result.out_sets, MAX_BASIC_BLOCK_COUNT);
+        analysis_result.in_sets = config->in_set_inits;
+        analysis_result.out_sets = config->out_set_inits;
 
         for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                 size_t iter_count = 0;
@@ -162,9 +167,14 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
 
                 DFABitMap_copy (curr_in_set, curr_out_set);
 
-                struct Instruction *instruction;
-                while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
-                        config->transfer (curr_out_set, instruction);
+                switch (config->domain_value_type) {
+                case DOMAIN_BASIC_BLOCK: config->transfer (curr_out_set, curr_basic_block); break;
+                case DOMAIN_INSTRUCTION: {
+                        struct Instruction *instruction;
+                        while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
+                                config->transfer (curr_out_set, instruction);
+                }
+                }
 
                 // free the old in and out set
                 DFABitMap_free (hash_table_find_and_delete (&analysis_result.in_sets, curr_basic_block->block_no));

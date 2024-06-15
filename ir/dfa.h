@@ -1,7 +1,7 @@
 #pragma once
 
-#include "map.h"
 #include "instruction.h"
+#include "map.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,6 +12,7 @@
 #define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no + 1) / 64] &= ~(1 << ((bit_no) % 64))
 #define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no + 1) / 64] & (1 << ((bit_no) % 64))) > 0)
 
+enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
 
 struct DFABitMap {
         uint64_t *map;
@@ -19,12 +20,12 @@ struct DFABitMap {
 };
 
 typedef void (*MeetOp) (struct DFABitMap *accum, struct DFABitMap *item);
-typedef void (*TransferFunction) (struct DFABitMap *in, struct Instruction *instruction);
+typedef void (*TransferFunction) (struct DFABitMap *in, void *domain_value);
 
 struct DFAConfiguration {
+        enum DomainValueType domain_value_type;
         MeetOp meet;
         TransferFunction transfer;
-        struct DFABitMap top;
         HashTable in_set_inits;
         HashTable out_set_inits;
 };
@@ -41,3 +42,4 @@ struct DFABitMap *DFABitMap_Union (struct DFABitMap *a, struct DFABitMap *b, str
 struct DFABitMap *DFABitMap_inplace_Complement (struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Intersect (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABitMap *a);
+struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no);
