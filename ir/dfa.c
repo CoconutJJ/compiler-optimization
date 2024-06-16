@@ -19,7 +19,7 @@ void DFABitMap_init (struct DFABitMap *map, size_t num_bits)
         if (num_bits % 64 > 0)
                 map_size++;
 
-        map->map = calloc (map_size, sizeof (uint64_t));
+        map->map = ir_calloc (map_size, sizeof (uint64_t));
         map->size = map_size;
         if (!map->map) {
                 perror ("calloc");
@@ -135,29 +135,29 @@ bool DFABitMap_compare (struct DFABitMap *a, struct DFABitMap *b)
 struct Array reverse_postorder_iter (struct BasicBlock *entry)
 {
         struct Array basic_block_order, stack;
-        Array_init (&basic_block_order, sizeof (struct BasicBlock *));
-        Array_init (&stack, sizeof (struct BasicBlock *));
+        Array_init (&basic_block_order);
+        Array_init (&stack);
 
         uint64_t visited[MAX_BASIC_BLOCK_COUNT / 64 + 1] = { 0 };
-        Array_push (&stack, &entry);
+        Array_push (&stack, entry);
         UINT64_BITMAP_SET_BIT (visited, entry->block_no);
 
         while (Array_length (&stack) > 0) {
-                struct BasicBlock *curr = *(struct BasicBlock **)Array_top (&stack);
+                struct BasicBlock *curr = Array_top (&stack);
 
                 if (curr->left && !UINT64_BITMAP_BIT_IS_SET (visited, curr->left->block_no)) {
-                        Array_push (&stack, &curr->left);
+                        Array_push (&stack, curr->left);
                         UINT64_BITMAP_SET_BIT (visited, curr->left->block_no);
                         continue;
                 }
                 if (curr->right && !UINT64_BITMAP_BIT_IS_SET (visited, curr->right->block_no)) {
-                        Array_push (&stack, &curr->right);
+                        Array_push (&stack, curr->right);
                         UINT64_BITMAP_SET_BIT (visited, curr->right->block_no);
                         continue;
                 }
 
                 Array_push (&basic_block_order, curr);
-                Array_pop (&stack, false);
+                Array_pop (&stack);
         }
 
         Array_reverse (&basic_block_order);

@@ -1,4 +1,5 @@
 #include "array.h"
+#include "map.h"
 #include "mem.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -107,71 +108,80 @@ void dynarr_set (void **buffer, size_t *count, size_t *size, size_t index, void 
         memcpy (set_addr, item, item_size);
 }
 
-void Array_init (struct Array *array, size_t item_size)
+void Array_init (struct Array *array)
 {
-        array->item_size = item_size;
+        array->array = ir_malloc (DYNARR_INIT_SIZE_CNT * sizeof (void *));
+        array->array_size = DYNARR_INIT_SIZE_CNT;
+        array->array_count = 0;
+}
 
-        DYNARR_INIT (array->array, array->array_count, array->array_size, item_size);
+void Array_resize_if_required (struct Array *array)
+{
+        if (array->array_size == array->array_count) {
+                array->array_size *= 2;
+                array->array = ir_realloc (array->array, array->array_size * sizeof (void *));
+        } else if (array->array_count < array->array_size / 4) {
+                array->array_size /= 2;
+                array->array = ir_realloc (array->array, array->array_size * sizeof (void *));
+        }
 }
 
 void Array_push (struct Array *array, void *item)
 {
-        dynarr_push ((void **)&(array->array), &(array->array_count), &(array->array_size), item, array->item_size);
+        Array_resize_if_required (array);
+
+        array->array[array->array_count++] = item;
 }
 
-void *Array_pop (struct Array *array, bool return_item)
+void *Array_pop (struct Array *array)
 {
-        void *item = return_item ? ir_malloc (array->item_size) : NULL;
+        void *last_item = array->array[array->array_count - 1];
+        array->array_count--;
 
-        dynarr_pop ((void **)&(array->array), &(array->array_count), &(array->array_size), item, array->item_size);
-
-        return item;
+        return last_item;
 }
 
 void Array_insert (struct Array *array, size_t index, void *item)
 {
-        dynarr_insert ((void **)&array->array, &array->array_count, &array->array_size, item, array->item_size, index);
+        Array_resize_if_required (array);
+
+        memmove (&array->array[index + 1], &array->array[index], (array->array_count - (index)) * sizeof (void *));
+
+        array->array[index] = item;
 }
 
 void Array_set_index (struct Array *array, size_t index, void *item)
 {
-        dynarr_set (
-                (void **)&(array->array), &(array->array_count), &(array->array_size), index, item, array->item_size);
+        array->array[index] = item;
 }
 
 void *Array_get_index (struct Array *array, size_t index)
 {
-        return array->array + index * array->item_size;
+        return array->array[index];
 }
 
 size_t Array_length (struct Array *array)
 {
-        return array->array_count / array->item_size;
+        return array->array_count;
 }
 
 void *Array_top (struct Array *array)
 {
-        return Array_get_index (array, Array_length (array) - 1);
-}
-
-void Array_swap_items (struct Array *array, size_t i, size_t j)
-{
-        struct Array *a = Array_get_index (array, i), *b = Array_get_index (array, j);
-
-        void *item = ir_malloc (array->item_size);
-
-        memcpy (item, a, array->item_size);
-        memcpy (a, b, array->item_size);
-        memcpy (b, item, array->item_size);
-        free (item);
+        return array->array[array->array_count - 1];
 }
 
 void Array_reverse (struct Array *array)
 {
         size_t i = 0, j = Array_length (array) - 1;
 
-        while (i < j)
-                Array_swap_items (array, i++, j--);
+        while (i < j) {
+                void *tmp = array->array[i];
+                array->array[i] = array->array[j];
+                array->array[j] = tmp;
+
+                i++;
+                j--;
+        }
 }
 
 void Array_free (struct Array *array)

@@ -84,7 +84,7 @@ void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instructio
 
         before->parent = basic_block;
 
-        Array_insert (&basic_block->values, index, &before);
+        Array_insert (&basic_block->values, index, before);
 }
 
 struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
@@ -107,7 +107,7 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
         case OPCODE_LOAD:
         case OPCODE_STORE:
         case OPCODE_ALLOCA: instruction->inst_type = INST_MEM; break;
-        case OPCODE_PHI: Array_init (&instruction->operand_list, sizeof (struct Value *)); break;
+        case OPCODE_PHI: Array_init (&instruction->operand_list); break;
 
         default:
                 error(dest_token, "Invalid instruction: %s", Token_to_str(dest_token));

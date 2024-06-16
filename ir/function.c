@@ -11,13 +11,13 @@ void Function_init (struct Function *function)
 {
         function->entry_basic_block = NULL;
 
-        Array_init(&function->arguments, sizeof (struct Argument *));
+        Array_init(&function->arguments);
 }
 
 void Function_add_argument(struct Function *function, struct Argument * argument) {
         
         argument->parent = function;
 
-        Array_push(&function->arguments, &argument);
+        Array_push(&function->arguments, argument);
 
 }

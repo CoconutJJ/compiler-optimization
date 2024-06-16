@@ -299,11 +299,11 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
         struct BasicBlock *exit = BasicBlock_create (BASICBLOCK_EXIT);
 
         struct Array stack;
-        Array_init (&stack, sizeof (struct BasicBlock *));
-        Array_push (&stack, &root);
+        Array_init (&stack);
+        Array_push (&stack, root);
 
         while (Array_length (&stack) > 0) {
-                struct BasicBlock *curr = ARRAY_AS (struct BasicBlock *, Array_pop (&stack, true));
+                struct BasicBlock *curr = Array_pop (&stack);
 
                 // we use whether the left and right child have been set to indicate
                 // whether we have already visited the node or not.
@@ -314,11 +314,11 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
                 if (!curr->left) {
                         BasicBlock_set_left_child (curr, exit);
 
-                        Array_push (&stack, &curr->right);
+                        Array_push (&stack, curr->right);
                 } else if (!curr->right) {
                         BasicBlock_set_right_child (curr, exit);
 
-                        Array_push (&stack, &curr->left);
+                        Array_push (&stack, curr->left);
                 }
         }
 

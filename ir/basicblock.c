@@ -16,9 +16,9 @@ void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
         basic_block->left = NULL;
         basic_block->right = NULL;
 
-        Array_init (&basic_block->preds, sizeof (struct BasicBlock *));
+        Array_init (&basic_block->preds);
         
-        Array_init (&basic_block->values, sizeof (struct Instruction *));
+        Array_init (&basic_block->values);
 }
 
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block)
@@ -30,18 +30,18 @@ void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBloc
 {
         basic_block->left = left_child;
 
-        Array_push (&left_child->preds, &basic_block);
+        Array_push (&left_child->preds, basic_block);
 }
 
 void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child)
 {
         basic_block->right = right_child;
-        Array_push (&right_child->preds, &right_child);
+        Array_push (&right_child->preds, right_child);
 }
 
 void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)
 {
-        Array_push (&basic_block->values, &instruction);
+        Array_push (&basic_block->values, instruction);
         instruction->parent = basic_block;
 }
 
@@ -58,7 +58,7 @@ struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block,
         if (Array_length (&basic_block->values) == *iter_count)
                 return NULL;
 
-        struct Instruction *instruction = *(struct Instruction **)Array_get_index (&basic_block->values, *iter_count);
+        struct Instruction *instruction = Array_get_index (&basic_block->values, *iter_count);
 
         (*iter_count)++;
 
