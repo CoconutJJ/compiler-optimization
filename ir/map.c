@@ -96,6 +96,9 @@ void *hash_table_find_and_delete (HashTable *table, uint64_t key)
 
                         void *value = entry->value;
                         free (entry);
+
+                        table->count--;
+                        table->buckets[index] = NULL;
                         return value;
                 }
                 prev = entry;

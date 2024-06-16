@@ -1,17 +1,17 @@
-#include "ir_parser.h"
-#include "mem.h"
 #include "dfa.h"
 #include "dominators.h"
+#include "ir_parser.h"
+#include "mem.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 int main (int argc, char **argv)
 {
-
         struct option long_opts[] = {
                 (struct option){ .name = "ir_file", .has_arg = 1, .val = 'f', .flag = NULL },
-                 (struct option){ 0 }
+                (struct option){ .name = "pass", .has_arg = 1, .val = 'p', .flag = NULL },
+                (struct option){ 0 }
         };
 
         char *ir_file_name = NULL;
@@ -44,15 +44,14 @@ int main (int argc, char **argv)
         char *ir_source = ir_malloc (ir_file_size + 1);
 
         fread (ir_source, ir_file_size, 1, ir_fp);
-        
+
         ir_source[ir_file_size] = '\0';
 
         struct Function *function = parse_ir (ir_source);
 
         display_function (function);
 
-        struct DFAConfiguration config = DominatorDFAConfiguration();
+        struct DFAConfiguration config = DominatorDFAConfiguration ();
 
-        run_Forward_DFA(&config, function);
-
+        run_Forward_DFA (&config, function);
 }

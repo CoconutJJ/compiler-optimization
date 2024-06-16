@@ -24,6 +24,7 @@ typedef void (*TransferFunction) (struct DFABitMap *in, void *domain_value);
 
 struct DFAConfiguration {
         enum DomainValueType domain_value_type;
+        struct DFABitMap top;
         MeetOp meet;
         TransferFunction transfer;
         HashTable in_set_inits;
