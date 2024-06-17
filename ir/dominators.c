@@ -1,9 +1,12 @@
+#include "array.h"
 #include "basicblock.h"
 #include "dfa.h"
 #include "function.h"
 #include "global_constants.h"
 #include "map.h"
 #include "mem.h"
+#include <stdint.h>
+#include <stdio.h>
 
 void DominatorTransfer (struct DFABitMap *in, void *basic_block)
 {
@@ -21,7 +24,7 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
                                            .transfer = DominatorTransfer,
                                            .domain_value_type = DOMAIN_BASIC_BLOCK };
 
-        assert(BASICBLOCK_IS_ENTRY(function->entry_basic_block));
+        assert (BASICBLOCK_IS_ENTRY (function->entry_basic_block));
 
         hash_table_init (&config.in_set_inits);
         hash_table_init (&config.out_set_inits);
@@ -46,12 +49,25 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         return config;
 }
 
-HashTable ComputeDominanceFrontier (struct Function *function)
+void ComputeDominanceFrontier (struct Function *function)
 {
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
 
         struct DFAResult result = run_Forward_DFA (&config, function);
 
-        result.in_sets[]
+        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
 
+        int64_t block_no;
+
+        for (size_t i = 0; i < Array_length (&traversal_order); i++) {
+                struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
+
+                struct DFABitMap *in_map = hash_table_search (&result.in_sets, curr_basic_block->block_no);
+                size_t iter_count = 0;
+
+                printf ("Block %ld is dominated by...\n", curr_basic_block->block_no);
+                while ((block_no = DFABitMap_iter (in_map, &iter_count)) != -1LL) {
+                        printf ("Block %lld\n", block_no);
+                }
+        }
 }

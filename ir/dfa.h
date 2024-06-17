@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #define MAX(a, b) ((a < b) ? (b) : (a))
 
-#define UINT64_BITMAP_SET_BIT(map, bit_no)    map[(bit_no) / 64] |= (1 << ((bit_no) % 64))
-#define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no) / 64] &= ~(1 << ((bit_no) % 64))
-#define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no) / 64] & (1 << ((bit_no) % 64))) > 0)
+#define UINT64_BITMAP_SET_BIT(map, bit_no)    map[(bit_no) / 64] |= (1ULL << ((bit_no) % 64))
+#define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no) / 64] &= ~(1ULL << ((bit_no) % 64))
+#define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no) / 64] & (1ULL << ((bit_no) % 64))) > 0)
 
 enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
 
@@ -45,6 +45,8 @@ struct DFABitMap *DFABitMap_inplace_Complement (struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Intersect (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no);
+int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count);
+struct Array reverse_postorder_iter (struct BasicBlock *entry);
 void DFABitMap_fill (struct DFABitMap *a);
 void DFABitMap_empty (struct DFABitMap *a);
 struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function);

@@ -34,7 +34,7 @@ void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBloc
 void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child)
 {
         basic_block->right = right_child;
-        Array_push (&right_child->preds, right_child);
+        Array_push (&right_child->preds, basic_block);
 }
 
 void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)

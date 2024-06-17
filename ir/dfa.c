@@ -74,11 +74,11 @@ void DFABitMap_fill (struct DFABitMap *a)
 
 int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count)
 {
-        while (*iter_count < a->size * sizeof(uint64_t)) {
+        while (*iter_count < a->size * 64) {
                 if (*iter_count % 64 == 0) {
                         size_t index = *iter_count / 64;
 
-                        if (a->map[index] == 0LL) {
+                        if (a->map[index] == 0ULL) {
                                 *iter_count += 64;
                                 continue;
                         }
@@ -204,6 +204,10 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                 has_changes = false;
                 for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                         struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
+
+                        if (BASICBLOCK_IS_ENTRY(curr_basic_block))
+                                continue;
+
                         size_t iter_count = 0;
 
                         struct DFABitMap *curr_in_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
@@ -249,6 +253,8 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                         hash_table_insert (&analysis_result.out_sets, curr_basic_block->block_no, curr_out_set);
                 }
         } while (has_changes);
+
+        Array_free(&traversal_order);
 
         return analysis_result;
 }
