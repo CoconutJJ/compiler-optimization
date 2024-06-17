@@ -309,7 +309,7 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
                 // whether we have already visited the node or not.
                 if (curr->left && curr->right)
                         continue;
-                
+
                 // add the left and right child
                 if (!curr->left) {
                         BasicBlock_set_left_child (curr, exit);
@@ -443,7 +443,7 @@ void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visi
 void display_function (struct Function *function)
 {
         struct HashTable visited;
-        hash_table_init (&visited, MAX_BASIC_BLOCK_COUNT);
+        hash_table_init (&visited);
         display_basic_block (function->entry_basic_block, &visited);
 }
 
@@ -451,8 +451,8 @@ struct Function *parse_ir (char *ir_source)
 {
         threeaddr_init_parser (ir_source);
 
-        hash_table_init (&value_table, MAX_BASIC_BLOCK_COUNT * 5);
-        hash_table_init (&label_table, MAX_BASIC_BLOCK_COUNT);
+        hash_table_init (&value_table);
+        hash_table_init (&label_table);
 
         return parse_function ();
 }

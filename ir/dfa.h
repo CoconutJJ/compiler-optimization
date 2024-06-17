@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #define MAX(a, b) ((a < b) ? (b) : (a))
 
-#define UINT64_BITMAP_SET_BIT(map, bit_no)    map[(bit_no + 1) / 64] |= (1 << ((bit_no) % 64))
-#define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no + 1) / 64] &= ~(1 << ((bit_no) % 64))
-#define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no + 1) / 64] & (1 << ((bit_no) % 64))) > 0)
+#define UINT64_BITMAP_SET_BIT(map, bit_no)    map[(bit_no) / 64] |= (1 << ((bit_no) % 64))
+#define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no) / 64] &= ~(1 << ((bit_no) % 64))
+#define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no) / 64] & (1 << ((bit_no) % 64))) > 0)
 
 enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
 
@@ -37,6 +37,7 @@ struct DFAResult {
 };
 
 void DFABitMap_init (struct DFABitMap *map, size_t num_bits);
+struct DFABitMap *DFABitMap_create (size_t num_bits);
 struct DFABitMap *DFABitMap_Complement (struct DFABitMap *a, struct DFABitMap *dest);
 struct DFABitMap *DFABitMap_Intersect (struct DFABitMap *a, struct DFABitMap *b, struct DFABitMap *dest);
 struct DFABitMap *DFABitMap_Union (struct DFABitMap *a, struct DFABitMap *b, struct DFABitMap *dest);

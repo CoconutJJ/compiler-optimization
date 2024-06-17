@@ -135,6 +135,9 @@ void Array_push (struct Array *array, void *item)
 
 void *Array_pop (struct Array *array)
 {
+        if (array->array_count == 0)
+                return NULL;
+
         void *last_item = array->array[array->array_count - 1];
         array->array_count--;
 
@@ -186,5 +189,5 @@ void Array_reverse (struct Array *array)
 
 void Array_free (struct Array *array)
 {
-        free (array->array);
+        ir_free (array->array);
 }

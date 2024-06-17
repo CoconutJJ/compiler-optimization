@@ -51,7 +51,7 @@ int main (int argc, char **argv)
 
         display_function (function);
 
-        struct DFAConfiguration config = DominatorDFAConfiguration ();
+        struct DFAConfiguration config = DominatorDFAConfiguration (function);
 
         run_Forward_DFA (&config, function);
 }

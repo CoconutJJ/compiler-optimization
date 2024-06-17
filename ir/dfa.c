@@ -37,13 +37,13 @@ struct DFABitMap *DFABitMap_create (size_t num_bits)
 
 void DFABitMap_free (struct DFABitMap *map)
 {
-        free (map->map);
+        ir_free (map->map);
 }
 
 void DFABitMap_copy (struct DFABitMap *src, struct DFABitMap *dest)
 {
         if (dest->map)
-                dest->map = ir_realloc (dest->map, src->size * sizeof(uint64_t));
+                dest->map = ir_realloc (dest->map, src->size * sizeof (uint64_t));
         else
                 dest->map = ir_calloc (src->size, sizeof (uint64_t));
 
@@ -70,6 +70,28 @@ void DFABitMap_empty (struct DFABitMap *a)
 void DFABitMap_fill (struct DFABitMap *a)
 {
         memset (a->map, 0xFF, sizeof (uint64_t) * a->size);
+}
+
+int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count)
+{
+        while (*iter_count < a->size * sizeof(uint64_t)) {
+                if (*iter_count % 64 == 0) {
+                        size_t index = *iter_count / 64;
+
+                        if (a->map[index] == 0LL) {
+                                *iter_count += 64;
+                                continue;
+                        }
+                }
+
+                if (UINT64_BITMAP_BIT_IS_SET (a->map, *iter_count)) {
+                        return (*iter_count)++;
+                }
+
+                (*iter_count)++;
+        }
+
+        return -1LL;
 }
 
 struct DFABitMap *DFABitMap_Complement (struct DFABitMap *a, struct DFABitMap *dest)
@@ -170,8 +192,8 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
         struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
         struct DFAResult analysis_result;
 
-        hash_table_init (&analysis_result.in_sets, MAX_BASIC_BLOCK_COUNT);
-        hash_table_init (&analysis_result.out_sets, MAX_BASIC_BLOCK_COUNT);
+        hash_table_init (&analysis_result.in_sets);
+        hash_table_init (&analysis_result.out_sets);
 
         analysis_result.in_sets = config->in_set_inits;
         analysis_result.out_sets = config->out_set_inits;
@@ -215,7 +237,8 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                         struct DFABitMap *old_out_set =
                                 hash_table_find_and_delete (&analysis_result.out_sets, curr_basic_block->block_no);
 
-                        if (!DFABitMap_compare (old_in_set, curr_in_set) || !DFABitMap_compare (old_out_set, curr_out_set))
+                        if (!DFABitMap_compare (old_in_set, curr_in_set) ||
+                            !DFABitMap_compare (old_out_set, curr_out_set))
                                 has_changes = true;
 
                         // free the old in and out set

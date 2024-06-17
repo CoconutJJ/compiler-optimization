@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 #define BASICBLOCK_IS_ENTRY(bb_ptr) ((bb_ptr)->type == BASICBLOCK_ENTRY)
-#define BASICBLOCK_IS_EXIT(bb_ptr) ((bb_ptr)->type == BASICBLOCK_EXIT)
+#define BASICBLOCK_IS_EXIT(bb_ptr)  ((bb_ptr)->type == BASICBLOCK_EXIT)
 
-enum BasicBlockType {BASICBLOCK_ENTRY, BASICBLOCK_NORMAL, BASICBLOCK_EXIT};
+enum BasicBlockType { BASICBLOCK_ENTRY, BASICBLOCK_NORMAL, BASICBLOCK_EXIT };
 
 struct BasicBlock {
         size_t block_no;

@@ -1,7 +1,7 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 struct Array {
         void **array;
         size_t array_size;

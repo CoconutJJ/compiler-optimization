@@ -1,11 +1,10 @@
-#include <stdlib.h>
-#include <assert.h>
-#include "global_constants.h"
-#include "array.h"
 #include "basicblock.h"
+#include "array.h"
+#include "global_constants.h"
 #include "instruction.h"
+#include <assert.h>
+#include <stdlib.h>
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
-
 
 void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
 {
@@ -17,7 +16,6 @@ void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
         basic_block->right = NULL;
 
         Array_init (&basic_block->preds);
-        
         Array_init (&basic_block->values);
 }
 

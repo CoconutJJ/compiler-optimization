@@ -110,7 +110,7 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
         case OPCODE_PHI: Array_init (&instruction->operand_list); break;
 
         default:
-                error(dest_token, "Invalid instruction: %s", Token_to_str(dest_token));
+                error (dest_token, "Invalid instruction: %s", Token_to_str (dest_token));
                 exit (EXIT_FAILURE);
                 break;
         }
