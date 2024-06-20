@@ -1,5 +1,5 @@
 OPT = -O3
-FLAGS = -Wall 
+FLAGS = -Wall -Wextra 
 CC = gcc
 OBJECTS =   ir_parser.o \
 			main.o \

@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 void Instruction_init (struct Instruction *instruction)
 {
         Value_init (&instruction->value);

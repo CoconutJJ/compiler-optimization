@@ -401,6 +401,8 @@ struct Function *parse_function ()
 
         function->entry_basic_block = add_entry_and_exit_blocks (function->entry_basic_block);
 
+        Function_update_block_number_mapping (function);
+
         return function;
 }
 

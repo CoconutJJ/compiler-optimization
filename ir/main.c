@@ -43,7 +43,10 @@ int main (int argc, char **argv)
 
         char *ir_source = ir_malloc (ir_file_size + 1);
 
-        fread (ir_source, ir_file_size, 1, ir_fp);
+        if (fread (ir_source, ir_file_size, 1, ir_fp) < 1) {
+                fprintf (stderr, "error: Unexpected end of file");
+                exit (EXIT_FAILURE);
+        }
 
         ir_source[ir_file_size] = '\0';
 
@@ -51,5 +54,5 @@ int main (int argc, char **argv)
 
         display_function (function);
 
-        ComputeDominanceFrontier(function);
+        ComputeDominanceFrontier (function);
 }

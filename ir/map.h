@@ -30,7 +30,7 @@ typedef struct HashTable {
 void hash_table_init (HashTable *table);
 HashTable *hash_table_create (size_t size);
 void hash_table_empty (HashTable *table);
-
+size_t hash_table_count(HashTable *table);
 void hash_table_insert (HashTable *table, uint64_t key, void *value);
 
 // Search for an item in the hash table

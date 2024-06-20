@@ -1,6 +1,6 @@
 #pragma once
 
-#include "instruction.h"
+#include "function.h"
 #include "map.h"
 #include <assert.h>
 #include <stddef.h>
@@ -45,8 +45,11 @@ struct DFABitMap *DFABitMap_inplace_Complement (struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Intersect (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_inplace_Union (struct DFABitMap *dest, struct DFABitMap *a);
 struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no);
+struct BasicBlock *DFABitMap_BasicBlock_iter (struct Function *function, struct DFABitMap *map, size_t *iter_count);
+bool DFABitMap_BitIsSet (struct DFABitMap *a, size_t bit_no);
 int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count);
 struct Array reverse_postorder_iter (struct BasicBlock *entry);
 void DFABitMap_fill (struct DFABitMap *a);
 void DFABitMap_empty (struct DFABitMap *a);
 struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function);
+

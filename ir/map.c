@@ -152,6 +152,10 @@ void *hash_table_find_and_delete (HashTable *table, uint64_t key)
         return value;
 }
 
+size_t hash_table_count(HashTable *table) {
+        return table->count;
+}
+
 // Free the hash table
 void hash_table_free (HashTable *table)
 {

@@ -52,6 +52,11 @@ void DFABitMap_copy (struct DFABitMap *src, struct DFABitMap *dest)
         memcpy (dest->map, src->map, src->size * sizeof (uint64_t));
 }
 
+bool DFABitMap_BitIsSet (struct DFABitMap *a, size_t bit_no)
+{
+        return UINT64_BITMAP_BIT_IS_SET (a->map, bit_no);
+}
+
 void DFABitMap_SetBit (struct DFABitMap *a, size_t bit_no)
 {
         UINT64_BITMAP_SET_BIT (a->map, bit_no);
@@ -92,6 +97,21 @@ int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count)
         }
 
         return -1LL;
+}
+
+struct BasicBlock *DFABitMap_BasicBlock_iter (struct Function *function, struct DFABitMap *map, size_t *iter_count)
+{
+        int64_t bit_no = DFABitMap_iter (map, iter_count);
+
+        if (bit_no == -1LL) {
+                return NULL;
+        }
+
+        struct BasicBlock *block = hash_table_search (&function->block_number_map, bit_no);
+
+        assert (block != NULL);
+
+        return block;
 }
 
 struct DFABitMap *DFABitMap_Complement (struct DFABitMap *a, struct DFABitMap *dest)
@@ -187,6 +207,9 @@ struct Array reverse_postorder_iter (struct BasicBlock *entry)
 
         return basic_block_order;
 }
+
+
+
 struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function)
 {
         struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
@@ -205,7 +228,7 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                 for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                         struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
 
-                        if (BASICBLOCK_IS_ENTRY(curr_basic_block))
+                        if (BASICBLOCK_IS_ENTRY (curr_basic_block))
                                 continue;
 
                         size_t iter_count = 0;
@@ -254,7 +277,7 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                 }
         } while (has_changes);
 
-        Array_free(&traversal_order);
+        Array_free (&traversal_order);
 
         return analysis_result;
 }

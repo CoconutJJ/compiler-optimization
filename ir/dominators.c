@@ -49,6 +49,61 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         return config;
 }
 
+HashTable ComputeDominatorTree (struct Function *function)
+{
+        struct DFAConfiguration config = DominatorDFAConfiguration (function);
+        struct DFAResult result = run_Forward_DFA (&config, function);
+        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
+        struct BasicBlock *curr_block;
+        HashTable dom_tree_adjacency_list;
+        hash_table_init (&dom_tree_adjacency_list);
+        size_t iter_count = 0;
+
+        while ((curr_block = Array_iter (&traversal_order, &iter_count)) != NULL) {
+                struct DFABitMap *in_map = hash_table_search (&result.in_sets, curr_block->block_no);
+
+                size_t block_count = 0;
+
+                struct BasicBlock *dom_block = NULL, *immediate_dom = NULL;
+
+                // The set of dominators admits a total ordering, for any two
+                // dominators a, b either a dominates b (a > b) or b dominates a. (a < b)
+                // To find the immediate dominator, it is the "least" element in
+                // this chain (z):
+                // a > b > c > d ... > z
+                while ((dom_block = DFABitMap_BasicBlock_iter (function, in_map, &block_count)) != NULL) {
+                        if (!immediate_dom) {
+                                immediate_dom = dom_block;
+                                continue;
+                        }
+
+                        struct DFABitMap *dom_block_map = hash_table_search (&result.in_sets, dom_block->block_no);
+
+                        // check if current immediate dominator dominates the dom_block candidate
+
+                        if (DFABitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
+                                immediate_dom = dom_block;
+                        }
+                }
+
+                // we go through each block only once, create respective adjacency list for this block in the hashtable
+
+                struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
+
+                if (!array) {
+                        array = ir_malloc (sizeof (struct Array));
+                        Array_init (array);
+                        hash_table_insert (&dom_tree_adjacency_list, immediate_dom->block_no, array);
+                }
+
+                Array_push (array, curr_block);
+        }
+
+        Array_free (&traversal_order);
+
+        return dom_tree_adjacency_list;
+}
+
 void ComputeDominanceFrontier (struct Function *function)
 {
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
