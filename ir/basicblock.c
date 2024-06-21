@@ -51,6 +51,19 @@ struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t
         return Array_get_index (&basic_block->preds, (*iter_count)++);
 }
 
+struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count)
+{
+        if (*iter_count == 0) {
+                (*iter_count)++;
+                return basic_block->left;
+        } else if (*iter_count == 1) {
+                (*iter_count)++;
+                return basic_block->right;
+        } else {
+                return NULL;
+        }
+}
+
 struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         if (Array_length (&basic_block->values) == *iter_count)

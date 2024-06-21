@@ -191,8 +191,8 @@ void *Array_iter(struct Array *array, size_t *iter_count) {
 
         if (*iter_count == Array_length(array))
                 return NULL;
-
-        return Array_get_index(array, *iter_count++);
+        
+        return Array_get_index(array, (*iter_count)++);
 
 }
 

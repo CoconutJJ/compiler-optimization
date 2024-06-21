@@ -1,6 +1,7 @@
 #pragma once
 
 #include "array.h"
+#include "dfa.h"
 #include "instruction.h"
 #include <stdlib.h>
 
@@ -28,3 +29,4 @@ struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t
 void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction);
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block);
 struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count);
+struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count);

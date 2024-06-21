@@ -25,7 +25,7 @@ void Function_update_block_number_mapping (struct Function *function)
                 hash_table_init (&function->block_number_map);
         }
 
-        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
+        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
 
         struct BasicBlock *block;
         size_t iter_count = 0;

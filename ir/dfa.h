@@ -1,5 +1,6 @@
 #pragma once
 
+#include "basicblock.h"
 #include "function.h"
 #include "map.h"
 #include <assert.h>
@@ -12,7 +13,11 @@
 #define UINT64_BITMAP_UNSET_BIT(map, bit_no)  map[(bit_no) / 64] &= ~(1ULL << ((bit_no) % 64))
 #define UINT64_BITMAP_BIT_IS_SET(map, bit_no) ((map[(bit_no) / 64] & (1ULL << ((bit_no) % 64))) > 0)
 
+struct DFAConfiguration;
+
 enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
+
+enum DFAFlowDirection {DFA_FORWARD, DFA_BACKWARD};
 
 struct DFABitMap {
         uint64_t *map;
@@ -21,12 +26,18 @@ struct DFABitMap {
 
 typedef void (*MeetOp) (struct DFABitMap *accum, struct DFABitMap *item);
 typedef void (*TransferFunction) (struct DFABitMap *in, void *domain_value);
+typedef struct DFABitMap *(*BasicBlockDirectionalIter) (struct DFAConfiguration *config,
+                                                        struct BasicBlock *curr,
+                                                        size_t *iter_count);
+
+
 
 struct DFAConfiguration {
         enum DomainValueType domain_value_type;
         struct DFABitMap top;
-        MeetOp meet;
-        TransferFunction transfer;
+        enum DFAFlowDirection direction;
+        MeetOp Meet;
+        TransferFunction Transfer;
         HashTable in_set_inits;
         HashTable out_set_inits;
 };
@@ -48,8 +59,14 @@ struct DFABitMap *DFABitMap_setbit (struct DFABitMap *map, size_t bit_no);
 struct BasicBlock *DFABitMap_BasicBlock_iter (struct Function *function, struct DFABitMap *map, size_t *iter_count);
 bool DFABitMap_BitIsSet (struct DFABitMap *a, size_t bit_no);
 int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count);
-struct Array reverse_postorder_iter (struct BasicBlock *entry);
+struct Array reverse_postorder (struct BasicBlock *entry);
 void DFABitMap_fill (struct DFABitMap *a);
 void DFABitMap_empty (struct DFABitMap *a);
-struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function);
+struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *function);
+struct DFABitMap *DFABitMap_BasicBlock_pred_iter (struct DFAConfiguration *config,
+                                                  struct BasicBlock *curr_basic_block,
+                                                  size_t *iter_count);
 
+struct DFABitMap *DFABitMap_BasicBlock_successor_iter (struct DFAConfiguration *config,
+                                                       struct BasicBlock *curr_basic_block,
+                                                       size_t *iter_count);

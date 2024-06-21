@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -174,7 +175,7 @@ bool DFABitMap_compare (struct DFABitMap *a, struct DFABitMap *b)
         return memcmp (a->map, b->map, sizeof (uint64_t) * a->size) == 0;
 }
 
-struct Array reverse_postorder_iter (struct BasicBlock *entry)
+struct Array postorder (struct BasicBlock *entry)
 {
         struct Array basic_block_order, stack;
         Array_init (&basic_block_order);
@@ -202,24 +203,91 @@ struct Array reverse_postorder_iter (struct BasicBlock *entry)
                 Array_pop (&stack);
         }
 
-        Array_reverse (&basic_block_order);
         Array_free (&stack);
 
         return basic_block_order;
 }
 
-
-
-struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Function *function)
+struct Array reverse_postorder (struct BasicBlock *entry)
 {
-        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
-        struct DFAResult analysis_result;
+        struct Array postorder_traversal = postorder (entry);
 
-        hash_table_init (&analysis_result.in_sets);
-        hash_table_init (&analysis_result.out_sets);
+        Array_reverse (&postorder_traversal);
 
-        analysis_result.in_sets = config->in_set_inits;
-        analysis_result.out_sets = config->out_set_inits;
+        return postorder_traversal;
+}
+
+struct DFABitMap *DFABitMap_BasicBlock_pred_iter (struct DFAConfiguration *config,
+                                                  struct BasicBlock *curr_basic_block,
+                                                  size_t *iter_count)
+{
+        struct BasicBlock *pred = BasicBlock_preds_iter (curr_basic_block, iter_count);
+
+        if (!pred)
+                return NULL;
+
+        return hash_table_search (&config->out_set_inits, pred->block_no);
+}
+
+struct DFABitMap *DFABitMap_BasicBlock_successor_iter (struct DFAConfiguration *config,
+                                                       struct BasicBlock *curr_basic_block,
+                                                       size_t *iter_count)
+{
+        struct BasicBlock *succ = BasicBlock_successors_iter (curr_basic_block, iter_count);
+
+        if (!succ)
+                return NULL;
+
+        return hash_table_search (&config->in_set_inits, succ->block_no);
+}
+
+struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
+{
+        size_t iter_count = 0;
+
+        struct DFABitMap *curr_in_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+        DFABitMap_copy (&config->top, curr_in_set);
+
+        BasicBlockDirectionalIter OperandIter;
+
+        switch (config->direction) {
+        case DFA_FORWARD: OperandIter = DFABitMap_BasicBlock_pred_iter; break;
+        case DFA_BACKWARD: OperandIter = DFABitMap_BasicBlock_successor_iter; break;
+        default: fprintf (stderr, "error: Invalid dataflow direction!\n"); exit (EXIT_FAILURE);
+        }
+
+        struct DFABitMap *pred = NULL;
+        while ((pred = OperandIter (config, curr_basic_block, &iter_count)) != NULL) {
+                config->Meet (curr_in_set, pred);
+        }
+
+        return curr_in_set;
+}
+
+struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
+{
+        struct DFABitMap *curr_out_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+        struct DFABitMap *curr_in_set = hash_table_search (&config->in_set_inits, curr_basic_block->block_no);
+
+        DFABitMap_copy (curr_in_set, curr_out_set);
+
+        switch (config->domain_value_type) {
+        case DOMAIN_BASIC_BLOCK: config->Transfer (curr_out_set, curr_basic_block); break;
+        case DOMAIN_INSTRUCTION: {
+                struct Instruction *instruction;
+                size_t iter_count = 0;
+                // TODO: backwards analysis
+                while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
+                        config->Transfer (curr_out_set, instruction);
+        }
+        }
+
+        return curr_out_set;
+}
+
+struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *function)
+{
+        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
 
         bool has_changes;
 
@@ -228,56 +296,71 @@ struct DFAResult run_Forward_DFA (struct DFAConfiguration *config, struct Functi
                 for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                         struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
 
+                        // skip entry and exit blocks, these two block will be initialized with boundary values,
                         if (BASICBLOCK_IS_ENTRY (curr_basic_block))
                                 continue;
 
-                        size_t iter_count = 0;
+                        if (BASICBLOCK_IS_EXIT (curr_basic_block))
+                                continue;
 
-                        struct DFABitMap *curr_in_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
-                        DFABitMap_copy (&config->top, curr_in_set);
+                        struct DFABitMap *curr_in_set, *curr_out_set, *old_in_set, *old_out_set;
 
-                        struct BasicBlock *pred = NULL;
+                        if (config->direction == DFA_FORWARD) {
+                                curr_in_set = compute_Meet_from_Operands (config, curr_basic_block);
 
-                        while ((pred = BasicBlock_preds_iter (curr_basic_block, &iter_count)) != NULL) {
-                                struct DFABitMap *pred_out_set =
-                                        hash_table_search (&analysis_result.out_sets, pred->block_no);
-                                config->meet (curr_in_set, pred_out_set);
+                                old_in_set =
+                                        hash_table_find_and_delete (&config->in_set_inits, curr_basic_block->block_no);
+
+                                hash_table_insert (&config->in_set_inits, curr_basic_block->block_no, curr_in_set);
+
+                                if (!DFABitMap_compare (old_in_set, curr_in_set))
+                                        has_changes = true;
+
+                                curr_out_set = compute_Transfer (config, curr_basic_block);
+
+                                old_out_set =
+                                        hash_table_find_and_delete (&config->out_set_inits, curr_basic_block->block_no);
+
+                                hash_table_insert (&config->out_set_inits, curr_basic_block->block_no, curr_out_set);
+
+                                if (!DFABitMap_compare (old_out_set, curr_out_set))
+                                        has_changes = true;
+
+                        } else if (config->direction == DFA_BACKWARD) {
+                                curr_out_set = compute_Meet_from_Operands (config, curr_basic_block);
+                                old_out_set =
+                                        hash_table_find_and_delete (&config->out_set_inits, curr_basic_block->block_no);
+
+                                hash_table_insert (&config->out_set_inits, curr_basic_block->block_no, curr_out_set);
+
+                                if (!DFABitMap_compare (old_out_set, curr_out_set))
+                                        has_changes = true;
+                                curr_in_set = compute_Transfer (config, curr_basic_block);
+
+                                old_in_set =
+                                        hash_table_find_and_delete (&config->in_set_inits, curr_basic_block->block_no);
+
+                                hash_table_insert (&config->in_set_inits, curr_basic_block->block_no, curr_in_set);
+
+                                if (!DFABitMap_compare (old_in_set, curr_in_set))
+                                        has_changes = true;
+                        } else {
+                                fprintf (stderr, "error: Invalid dataflow direction!\n");
+                                exit (EXIT_FAILURE);
                         }
-
-                        iter_count = 0;
-
-                        struct DFABitMap *curr_out_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
-                        DFABitMap_copy (curr_in_set, curr_out_set);
-
-                        switch (config->domain_value_type) {
-                        case DOMAIN_BASIC_BLOCK: config->transfer (curr_out_set, curr_basic_block); break;
-                        case DOMAIN_INSTRUCTION: {
-                                struct Instruction *instruction;
-                                while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) !=
-                                       NULL)
-                                        config->transfer (curr_out_set, instruction);
-                        }
-                        }
-
-                        struct DFABitMap *old_in_set =
-                                hash_table_find_and_delete (&analysis_result.in_sets, curr_basic_block->block_no);
-                        struct DFABitMap *old_out_set =
-                                hash_table_find_and_delete (&analysis_result.out_sets, curr_basic_block->block_no);
-
-                        if (!DFABitMap_compare (old_in_set, curr_in_set) ||
-                            !DFABitMap_compare (old_out_set, curr_out_set))
-                                has_changes = true;
 
                         // free the old in and out set
                         DFABitMap_free (old_in_set);
                         DFABitMap_free (old_out_set);
-
-                        hash_table_insert (&analysis_result.in_sets, curr_basic_block->block_no, curr_in_set);
-                        hash_table_insert (&analysis_result.out_sets, curr_basic_block->block_no, curr_out_set);
                 }
         } while (has_changes);
 
         Array_free (&traversal_order);
+
+        struct DFAResult analysis_result = {
+                .in_sets = config->in_set_inits,
+                .out_sets = config->out_set_inits,
+        };
 
         return analysis_result;
 }

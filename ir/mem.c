@@ -78,17 +78,17 @@ void *ir_calloc (size_t nmemb, size_t size)
 
 void ir_free (void *mem)
 {
-        size_t i = 0;
-        for (; i < allocations_count; i++) {
-                if (allocations[i] == mem)
-                        break;
-        }
+        // size_t i = 0;
+        // for (; i < allocations_count; i++) {
+        //         if (allocations[i] == mem)
+        //                 break;
+        // }
 
-        assert (i != allocations_count);
+        // assert (i != allocations_count);
 
         free (mem);
 
-        memmove (&allocations[i], &allocations[i + 1], (allocations_count - (i + 1)) * sizeof (void *));
-        allocations_count--;
-        _ir_mem_autoresize ();
+        // memmove (&allocations[i], &allocations[i + 1], (allocations_count - (i + 1)) * sizeof (void *));
+        // allocations_count--;
+        // _ir_mem_autoresize ();
 }

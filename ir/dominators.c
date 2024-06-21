@@ -20,8 +20,9 @@ void DominatorMeet (struct DFABitMap *accum, struct DFABitMap *item)
 
 struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
 {
-        struct DFAConfiguration config = { .meet = DominatorMeet,
-                                           .transfer = DominatorTransfer,
+        struct DFAConfiguration config = { .Meet = DominatorMeet,
+                                           .Transfer = DominatorTransfer,
+                                           .direction = DFA_FORWARD,
                                            .domain_value_type = DOMAIN_BASIC_BLOCK };
 
         assert (BASICBLOCK_IS_ENTRY (function->entry_basic_block));
@@ -52,8 +53,8 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
 HashTable ComputeDominatorTree (struct Function *function)
 {
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
-        struct DFAResult result = run_Forward_DFA (&config, function);
-        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
+        struct DFAResult result = run_DFA (&config, function);
+        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
         struct BasicBlock *curr_block;
         HashTable dom_tree_adjacency_list;
         hash_table_init (&dom_tree_adjacency_list);
@@ -108,9 +109,9 @@ void ComputeDominanceFrontier (struct Function *function)
 {
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
 
-        struct DFAResult result = run_Forward_DFA (&config, function);
+        struct DFAResult result = run_DFA (&config, function);
 
-        struct Array traversal_order = reverse_postorder_iter (function->entry_basic_block);
+        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
 
         int64_t block_no;
 
