@@ -254,13 +254,13 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
 
         BasicBlockDirectionalIter OperandIter;
 
-        // Get the correct operand iterator based on forward of backward flow direction
-        // in forward analysis, the block preds are meet'ed together. Whereas in
-        // backwards analysis, it is the successors
+        // Select the appropriate operand iterator based on the flow direction.
+        // For forward analysis, merge the block predecessors.
+        // For backward analysis, merge the block successors.
         switch (config->direction) {
         case DFA_FORWARD: OperandIter = DFABitMap_BasicBlock_pred_iter; break;
         case DFA_BACKWARD: OperandIter = DFABitMap_BasicBlock_successor_iter; break;
-        default: UNREACHABLE ("Invalid dataflow direction!");
+        default: UNREACHABLE("Invalid dataflow direction!");
         }
 
         // The meet operator (^) is associative, here we are just doing ((a ^ b) ^ c) ^ ...

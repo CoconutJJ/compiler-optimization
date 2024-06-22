@@ -12,6 +12,7 @@
 #include "value.h"
 #include <assert.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,7 +212,7 @@ void parse_load_instruction (struct Instruction *instruction)
 
         struct Value *alloca_value = find_Value (address.value);
 
-        if (!VALUE_IS_INST (alloca_value) || !INST_ISA(AS_INST(alloca_value), OPCODE_ALLOCA)) {
+        if (!VALUE_IS_INST (alloca_value) || !INST_ISA (AS_INST (alloca_value), OPCODE_ALLOCA)) {
                 error (address, "Expected address variable to be defined as target of `alloca` instruction.");
                 error (alloca_value->token, "Definition of %s", Token_to_str (alloca_value->token));
                 exit (EXIT_FAILURE);
@@ -228,7 +229,7 @@ void parse_store_instruction (struct Instruction *instruction)
 
         struct Value *alloca_value = find_Value (address.value);
 
-        if (!VALUE_IS_INST (alloca_value) || !INST_ISA(AS_INST(alloca_value), OPCODE_ALLOCA)) {
+        if (!VALUE_IS_INST (alloca_value) || !INST_ISA (AS_INST (alloca_value), OPCODE_ALLOCA)) {
                 error (address, "Expected address variable to be defined as target of `alloca` instruction.");
                 error (alloca_value->token, "Definition of %s", Token_to_str (alloca_value->token));
                 exit (EXIT_FAILURE);
@@ -259,99 +260,127 @@ struct Instruction *parse_instruction ()
 {
         struct Instruction *new_instruction;
 
-        struct Token inst_token = advance_token ();
+        struct Token inst_token = peek_token ();
 
         switch (TOKEN_TYPE (inst_token)) {
         case INSTRUCTION_ADD: {
                 new_instruction = Instruction_create (OPCODE_ADD, inst_token);
+                advance_token ();
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_SUB: {
                 new_instruction = Instruction_create (OPCODE_SUB, inst_token);
+                advance_token ();
+
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_MUL: {
                 new_instruction = Instruction_create (OPCODE_MUL, inst_token);
+                advance_token ();
+
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_DIV: {
                 new_instruction = Instruction_create (OPCODE_DIV, inst_token);
+                advance_token ();
+
                 parse_binary_operator_operands (new_instruction);
 
                 break;
         }
         case INSTRUCTION_CMP: {
                 new_instruction = Instruction_create (OPCODE_CMP, inst_token);
+                advance_token ();
+
                 parse_binary_operator_operands (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMP: {
                 new_instruction = Instruction_create (OPCODE_JUMP, inst_token);
+                advance_token ();
+
                 parse_branch_operand (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMPIF: {
                 new_instruction = Instruction_create (OPCODE_JUMPIF, inst_token);
+                advance_token ();
+
                 parse_branch_operand (new_instruction);
                 break;
         }
         case INSTRUCTION_ALLOCA: {
                 new_instruction = Instruction_create (OPCODE_ALLOCA, inst_token);
+                advance_token ();
+
                 parse_alloca_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_PHI: {
                 new_instruction = Instruction_create (OPCODE_PHI, inst_token);
+                advance_token ();
+
                 parse_phi_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_LOAD: {
                 new_instruction = Instruction_create (OPCODE_LOAD, inst_token);
+                advance_token ();
+
                 parse_load_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_STORE: {
                 new_instruction = Instruction_create (OPCODE_STORE, inst_token);
+                advance_token ();
+
                 parse_store_instruction (new_instruction);
                 break;
         }
-        default:
-                error (peek_token (), "Expected instruction! Found %s instead", Token_to_str (peek_token ()));
-                exit (EXIT_FAILURE);
-                break;
+        default: return NULL;
         }
 
         return new_instruction;
 }
 
-bool parse_basic_block (struct BasicBlock *basic_block)
+struct BasicBlock *parse_basic_block ()
 {
-        while (1) {
-                switch (TOKEN_TYPE (peek_token ())) {
-                case LABEL: return true;
-                case FN:
-                case END: return false;
-                default: {
-                        struct Instruction *inst = parse_instruction ();
+        struct BasicBlock *basic_block;
+        struct Token label = peek_token ();
+        bool has_progress = false;
 
-                        BasicBlock_add_Instruction (basic_block, inst);
+        if (match_token (LABEL)) {
+                basic_block = find_BasicBlock (label.value);
+                has_progress = true;
+        } else {
+                basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
+        }
 
-                        if (INST_IS_BRANCH (inst)) {
-                                struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
+        struct Instruction *inst;
 
-                                BasicBlock_set_right_child (basic_block, find_BasicBlock (jump_location->constant));
+        while ((inst = parse_instruction ()) != NULL) {
+                has_progress = true;
+                BasicBlock_add_Instruction (basic_block, inst);
 
-                                return true;
-                        }
-                }
+                if (INST_IS_BRANCH (inst)) {
+                        struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
+                        BasicBlock_set_right_child (basic_block, find_BasicBlock (jump_location->constant));
+                        return basic_block;
                 }
         }
+
+        if (!has_progress) {
+                BasicBlock_free (basic_block);
+                return NULL;
+        }
+
+        return basic_block;
 }
 
 struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
@@ -366,17 +395,14 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
         while (Array_length (&stack) > 0) {
                 struct BasicBlock *curr = Array_pop (&stack);
 
-                // we use whether the left and right child have been set to indicate
-                // whether we have already visited the node or not.
-                if (curr->left && curr->right)
-                        continue;
-
                 // add the left and right child
                 if (!curr->left) {
                         BasicBlock_set_left_child (curr, exit);
 
                         Array_push (&stack, curr->right);
-                } else if (!curr->right) {
+                }
+
+                if (!curr->right) {
                         BasicBlock_set_right_child (curr, exit);
 
                         Array_push (&stack, curr->left);
@@ -384,11 +410,37 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
         }
 
         BasicBlock_set_left_child (entry, root);
-        BasicBlock_set_right_child (entry, root);
 
         Array_free (&stack);
 
         return entry;
+}
+
+struct BasicBlock *parse_block (struct Token function_name)
+{
+        consume_token (LCURLY, "Expected opening `{` after function %s", Token_to_str (function_name));
+        struct BasicBlock *curr_block = NULL, *root = NULL;
+
+        while (!match_token (RCURLY)) {
+                struct Token label = peek_token ();
+                struct BasicBlock *target_block = parse_basic_block ();
+
+                if (!target_block) {
+                        error (peek_token (),
+                               "Expected closing '}', but found %s instead",
+                               Token_to_str (peek_token ()));
+                        exit (EXIT_FAILURE);
+                }
+
+                if (curr_block)
+                        BasicBlock_set_left_child (curr_block, target_block);
+                else
+                        root = target_block;
+
+                curr_block = target_block;
+        }
+
+        return root;
 }
 
 struct Function *parse_function ()
@@ -430,42 +482,9 @@ struct Function *parse_function ()
                 }
         }
 
-        consume_token (COLON, "Expected `:` after function argument list\n");
+        struct BasicBlock *root = parse_block (fn_name);
 
-        struct BasicBlock *current_basic_block = NULL;
-        while (1) {
-                // we parse the function block by block, basic blocks can only
-                // be the start of a label or at the end of a branch instruction
-                // this will handle both these cases
-                struct Token label = peek_token ();
-
-                if (match_token (LABEL)) {
-                        if (current_basic_block) {
-                                BasicBlock_set_left_child (current_basic_block, find_BasicBlock (label.value));
-                                current_basic_block = current_basic_block->left;
-                                current_basic_block->parent = function;
-                        } else {
-                                current_basic_block = find_BasicBlock (label.value);
-                                function->entry_basic_block = current_basic_block;
-                                current_basic_block->parent = function;
-                        }
-
-                } else {
-                        if (current_basic_block) {
-                                BasicBlock_set_left_child (current_basic_block, BasicBlock_create (BASICBLOCK_NORMAL));
-                                current_basic_block = current_basic_block->left;
-                                current_basic_block->parent = function;
-                        } else {
-                                function->entry_basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
-                                current_basic_block = function->entry_basic_block;
-                                current_basic_block->parent = function;
-                        }
-                }
-                if (!parse_basic_block (current_basic_block))
-                        break;
-        }
-
-        function->entry_basic_block = add_entry_and_exit_blocks (function->entry_basic_block);
+        function->entry_basic_block = add_entry_and_exit_blocks (root);
 
         Function_update_block_number_mapping (function);
 
@@ -489,6 +508,11 @@ void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visi
         if (basic_block->right)
                 right_child_no = basic_block->right->block_no;
 
+        if (BASICBLOCK_IS_ENTRY (basic_block))
+                printf ("ENTRY\n");
+        else if (BASICBLOCK_IS_EXIT (basic_block))
+                printf ("EXIT\n");
+        
         printf ("+------------------+\n"
                 "| Basic Block: %4ld|\n"
                 "+------------------+\n"

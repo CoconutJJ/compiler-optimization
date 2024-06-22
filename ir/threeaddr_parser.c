@@ -106,6 +106,8 @@ struct Token next_token ()
                         return Token (END, -1);
 
                 switch (c) {
+                case '{': return Token(LCURLY, -1);
+                case '}': return Token(RCURLY, -1);
                 case ',': return Token (COMMA, -1);
                 case ':': return Token (COLON, -1);
                 case '(': return Token (LPAREN, -1);

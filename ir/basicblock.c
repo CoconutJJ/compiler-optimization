@@ -11,13 +11,19 @@ void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
         basic_block->type = type;
 
         assert (CURRENT_BASIC_BLOCK_NO < MAX_BASIC_BLOCK_COUNT);
-        
+
         basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
         basic_block->left = NULL;
         basic_block->right = NULL;
 
         Array_init (&basic_block->preds);
         Array_init (&basic_block->values);
+}
+
+void BasicBlock_free (struct BasicBlock *basic_block)
+{
+        Array_free (&basic_block->preds);
+        Array_free (&basic_block->values);
 }
 
 size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block)
