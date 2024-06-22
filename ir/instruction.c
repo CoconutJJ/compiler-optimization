@@ -38,7 +38,7 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
         switch (operand_index) {
         case 0: instruction->operands.first = operand; break;
         case 1: instruction->operands.second = operand; break;
-        default: fprintf (stderr, "Invalid operand index!\n"); exit (EXIT_FAILURE);
+        default: UNREACHABLE ("Invalid dataflow direction!");
         }
 
         struct Use *use = Value_create_use (operand);

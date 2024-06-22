@@ -67,10 +67,9 @@ HashTable ComputeDominatorTree (struct Function *function)
 
                 struct BasicBlock *dom_block = NULL, *immediate_dom = NULL;
 
-                // The set of dominators admits a total ordering, for any two
-                // dominators a, b either a dominates b (a > b) or b dominates a. (a < b)
-                // To find the immediate dominator, it is the "least" element in
-                // this chain (z):
+                // Dominators have a total ordering, meaning for any two dominators a and b, 
+                // either a dominates b (a > b) or b dominates a (a < b).
+                // The immediate dominator is the "least" element in this sequence (z):
                 // a > b > c > d ... > z
                 while ((dom_block = DFABitMap_BasicBlock_iter (function, in_map, &block_count)) != NULL) {
                         if (!immediate_dom) {
@@ -81,14 +80,12 @@ HashTable ComputeDominatorTree (struct Function *function)
                         struct DFABitMap *dom_block_map = hash_table_search (&result.in_sets, dom_block->block_no);
 
                         // check if current immediate dominator dominates the dom_block candidate
-
                         if (DFABitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
                                 immediate_dom = dom_block;
                         }
                 }
 
                 // we go through each block only once, create respective adjacency list for this block in the hashtable
-
                 struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
 
                 if (!array) {

@@ -11,6 +11,7 @@ void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
         basic_block->type = type;
 
         assert (CURRENT_BASIC_BLOCK_NO < MAX_BASIC_BLOCK_COUNT);
+        
         basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
         basic_block->left = NULL;
         basic_block->right = NULL;
@@ -74,4 +75,18 @@ struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block,
         (*iter_count)++;
 
         return instruction;
+}
+
+struct Instruction *BasicBlock_Instruction_ReverseIter (struct BasicBlock *basic_block, size_t *iter_count)
+{
+        size_t n = Array_length (&basic_block->values);
+
+        if (*iter_count == n)
+                return NULL;
+
+        size_t index = n - *iter_count - 1;
+
+        (*iter_count)++;
+
+        return Array_get_index (&basic_block->values, index);
 }

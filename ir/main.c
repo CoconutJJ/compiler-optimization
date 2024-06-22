@@ -2,6 +2,7 @@
 #include "dominators.h"
 #include "ir_parser.h"
 #include "mem.h"
+#include "utils.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>

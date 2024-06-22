@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Hash function for uint64_t keys
+// Open addressing, linear probe hash table.
+
 unsigned long uint64_t_hash_function (uint64_t key)
 {
         // Simple hash function for demonstration
@@ -40,9 +41,9 @@ void hash_table_empty (HashTable *table)
         memset (table->buckets, 0, table->count * sizeof (struct HashTableEntry *));
         table->count = 0;
 }
-// Insert an item into the hash table
 void _hash_table_insert (HashTable *table, uint64_t key, void *value)
 {
+        // Insert an item into the hash table
         uint64_t index = uint64_t_hash_function (key) % table->size;
         uint64_t size = table->size;
         while (size-- > 0) {
@@ -67,6 +68,10 @@ void hash_table_resize_if_required (HashTable *table)
         if (table->count == table->size) {
                 _hash_table_init (&resized_hash_table, table->size * 2);
         } else if (table->count < table->size / 4) {
+
+                if (table->size <= MAP_INIT_SIZE_CNT)
+                        return;
+
                 _hash_table_init (&resized_hash_table, table->size / 2);
         } else {
                 return;
@@ -152,7 +157,8 @@ void *hash_table_find_and_delete (HashTable *table, uint64_t key)
         return value;
 }
 
-size_t hash_table_count(HashTable *table) {
+size_t hash_table_count (HashTable *table)
+{
         return table->count;
 }
 

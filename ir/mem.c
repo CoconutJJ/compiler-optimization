@@ -38,14 +38,22 @@ void _ir_add_allocation (void *mem)
 
 void *ir_realloc (void *mem, size_t size)
 {
-        mem = realloc (mem, size);
+        void *new_mem = realloc (mem, size);
 
-        if (!mem) {
+        if (!new_mem) {
                 perror ("malloc");
                 exit (EXIT_FAILURE);
         }
+        if (new_mem != mem) {
+                for (size_t i = 0; i < allocations_count; i++) {
+                        if (allocations[i] == mem) {
+                                allocations[i] = new_mem;
+                                break;
+                        }
+                }
+        }
 
-        return mem;
+        return new_mem;
 }
 
 void *ir_malloc (size_t size)
@@ -78,17 +86,17 @@ void *ir_calloc (size_t nmemb, size_t size)
 
 void ir_free (void *mem)
 {
-        // size_t i = 0;
-        // for (; i < allocations_count; i++) {
-        //         if (allocations[i] == mem)
-        //                 break;
-        // }
+        size_t i = 0;
+        for (; i < allocations_count; i++) {
+                if (allocations[i] == mem)
+                        break;
+        }
 
-        // assert (i != allocations_count);
+        assert (i != allocations_count);
 
         free (mem);
 
-        // memmove (&allocations[i], &allocations[i + 1], (allocations_count - (i + 1)) * sizeof (void *));
-        // allocations_count--;
-        // _ir_mem_autoresize ();
+        memmove (&allocations[i], &allocations[i + 1], (allocations_count - (i + 1)) * sizeof (void *));
+        allocations_count--;
+        _ir_mem_autoresize ();
 }

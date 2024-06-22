@@ -1,9 +1,9 @@
 #include "global_constants.h"
 #include "threeaddr_parser.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #define TOKEN_BUFFER_SIZE (5 * (MAX_IDENTIFIER_LEN + 1))
 
 static char token_buffer[TOKEN_BUFFER_SIZE];

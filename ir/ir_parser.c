@@ -142,6 +142,8 @@ struct BasicBlock *find_BasicBlock (uint64_t label_no)
         struct BasicBlock *basic_block = hash_table_search (&label_table, label_no);
 
         if (!basic_block) {
+                // if the block doesn't exist yet, create it. This is usually
+                // because we are jumping to a label we have not yet parsed.
                 basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
                 hash_table_insert (&label_table, label_no, basic_block);
         }
@@ -346,6 +348,7 @@ struct Function *parse_function ()
         consume_token (LPAREN, "Expected opening '(' after function name declaration.\n");
 
         if (!match_token (RPAREN)) {
+                // parse function argument list
                 while (1) {
                         struct Token var = consume_token (VARIABLE,
                                                           "Expected argument in function argument list, got %s instead",
@@ -372,7 +375,12 @@ struct Function *parse_function ()
 
         struct BasicBlock *current_basic_block = NULL;
         while (1) {
+                // we parse the function block by block, basic blocks can only
+                // be the start of a label or at the end of a branch instruction
+                // this will handle both these cases
                 struct Token label = peek_token ();
+
+
                 if (match_token (LABEL)) {
                         if (current_basic_block) {
                                 BasicBlock_set_left_child (current_basic_block, find_BasicBlock (label.value));

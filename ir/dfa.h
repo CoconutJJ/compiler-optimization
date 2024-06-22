@@ -2,6 +2,7 @@
 
 #include "basicblock.h"
 #include "function.h"
+#include "instruction.h"
 #include "map.h"
 #include <assert.h>
 #include <stddef.h>
@@ -17,7 +18,7 @@ struct DFAConfiguration;
 
 enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
 
-enum DFAFlowDirection {DFA_FORWARD, DFA_BACKWARD};
+enum DFAFlowDirection { DFA_FORWARD, DFA_BACKWARD };
 
 struct DFABitMap {
         uint64_t *map;
@@ -29,8 +30,7 @@ typedef void (*TransferFunction) (struct DFABitMap *in, void *domain_value);
 typedef struct DFABitMap *(*BasicBlockDirectionalIter) (struct DFAConfiguration *config,
                                                         struct BasicBlock *curr,
                                                         size_t *iter_count);
-
-
+typedef struct Instruction *(*InstructionIter) (struct BasicBlock *curr_basic_block, size_t *iter_count);
 
 struct DFAConfiguration {
         enum DomainValueType domain_value_type;

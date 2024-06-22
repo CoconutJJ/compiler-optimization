@@ -6,6 +6,7 @@
 #include "instruction.h"
 #include "map.h"
 #include "mem.h"
+#include "utils.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -188,11 +189,14 @@ struct Array postorder (struct BasicBlock *entry)
         while (Array_length (&stack) > 0) {
                 struct BasicBlock *curr = Array_top (&stack);
 
+                // check if left child has been visited
                 if (curr->left && !UINT64_BITMAP_BIT_IS_SET (visited, curr->left->block_no)) {
                         Array_push (&stack, curr->left);
                         UINT64_BITMAP_SET_BIT (visited, curr->left->block_no);
                         continue;
                 }
+
+                // check if right child has been visited
                 if (curr->right && !UINT64_BITMAP_BIT_IS_SET (visited, curr->right->block_no)) {
                         Array_push (&stack, curr->right);
                         UINT64_BITMAP_SET_BIT (visited, curr->right->block_no);
@@ -250,12 +254,17 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
 
         BasicBlockDirectionalIter OperandIter;
 
+        // Get the correct operand iterator based on forward of backward flow direction
+        // in forward analysis, the block preds are meet'ed together. Whereas in
+        // backwards analysis, it is the successors
         switch (config->direction) {
         case DFA_FORWARD: OperandIter = DFABitMap_BasicBlock_pred_iter; break;
         case DFA_BACKWARD: OperandIter = DFABitMap_BasicBlock_successor_iter; break;
-        default: fprintf (stderr, "error: Invalid dataflow direction!\n"); exit (EXIT_FAILURE);
+        default: UNREACHABLE ("Invalid dataflow direction!");
         }
 
+        // The meet operator (^) is associative, here we are just doing ((a ^ b) ^ c) ^ ...
+        // where a, b, c, ... are the meet operands
         struct DFABitMap *pred = NULL;
         while ((pred = OperandIter (config, curr_basic_block, &iter_count)) != NULL) {
                 config->Meet (curr_in_set, pred);
@@ -266,18 +275,46 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
 
 struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
 {
-        struct DFABitMap *curr_out_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
-        struct DFABitMap *curr_in_set = hash_table_search (&config->in_set_inits, curr_basic_block->block_no);
+        // the transfer function maps IN sets into OUT sets or vica versa depending on flow direction
 
-        DFABitMap_copy (curr_in_set, curr_out_set);
+        struct DFABitMap *curr_out_set, *curr_in_set;
+
+        if (config->direction == DFA_FORWARD) {
+                curr_out_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+                curr_in_set = hash_table_search (&config->in_set_inits, curr_basic_block->block_no);
+                DFABitMap_copy (curr_in_set, curr_out_set);
+        } else if (config->direction == DFA_BACKWARD) {
+                curr_in_set = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+                curr_out_set = hash_table_search (&config->out_set_inits, curr_basic_block->block_no);
+                DFABitMap_copy (curr_out_set, curr_in_set);
+        } else {
+                UNREACHABLE ("Invalid dataflow direction!");
+        }
 
         switch (config->domain_value_type) {
-        case DOMAIN_BASIC_BLOCK: config->Transfer (curr_out_set, curr_basic_block); break;
+        case DOMAIN_BASIC_BLOCK: {
+                if (config->direction == DFA_FORWARD) {
+                        config->Transfer (curr_out_set, curr_basic_block);
+                } else if (config->direction == DFA_BACKWARD) {
+                        config->Transfer (curr_in_set, curr_basic_block);
+                } else {
+                        UNREACHABLE ("Invalid dataflow direction!");
+                }
+
+                break;
+        }
         case DOMAIN_INSTRUCTION: {
-                struct Instruction *instruction;
+                InstructionIter InstIter = NULL;
+                if (config->direction == DFA_FORWARD)
+                        InstIter = BasicBlock_Instruction_iter;
+                else if (config->direction == DFA_BACKWARD)
+                        InstIter = BasicBlock_Instruction_ReverseIter;
+                else
+                        UNREACHABLE("Invalid dataflow direction!");
+                
                 size_t iter_count = 0;
-                // TODO: backwards analysis
-                while ((instruction = BasicBlock_Instruction_iter (curr_basic_block, &iter_count)) != NULL)
+                struct Instruction *instruction;
+                while ((instruction = InstIter (curr_basic_block, &iter_count)) != NULL)
                         config->Transfer (curr_out_set, instruction);
         }
         }
@@ -345,13 +382,15 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
                                 if (!DFABitMap_compare (old_in_set, curr_in_set))
                                         has_changes = true;
                         } else {
-                                fprintf (stderr, "error: Invalid dataflow direction!\n");
-                                exit (EXIT_FAILURE);
+                                UNREACHABLE ("Invalid dataflow direction!");
                         }
 
                         // free the old in and out set
                         DFABitMap_free (old_in_set);
                         DFABitMap_free (old_out_set);
+
+                        ir_free (old_in_set);
+                        ir_free (old_out_set);
                 }
         } while (has_changes);
 

@@ -9,10 +9,17 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/ir", // Path to the executable
-            "args": ["-f", "test/02.txt"], // Arguments passed to the program
+            "args": ["-f", "${input:fileName}"], // Arguments passed to the program
             "cwd": "${workspaceFolder}", // Working directory
             "preLaunchTask": "build", // Assuming you have a task named "build" to compile your program
         }
+    ],
+    "inputs": [
+        {
+            "id": "fileName",
+            "type": "promptString",
+            "description": "IR file",
+            "default": "test/02.txt"
+        }
     ]
-
 }
