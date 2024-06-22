@@ -87,8 +87,6 @@ struct Value *find_Value (uint64_t value_no)
 {
         struct Value *value = hash_table_search (&value_table, value_no);
 
-        assert (value != NULL);
-
         return value;
 }
 
@@ -190,11 +188,71 @@ void parse_alloca_instruction (struct Instruction *instruction)
         struct Token size = consume_token (
                 INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
 
-        hash_table_insert (&value_table, dest.value, &instruction);
+        hash_table_insert (&value_table, dest.value, instruction);
 
-        Instruction_set_operand (instruction, AS_VALUE (instruction), 0);
+        Instruction_set_operand (instruction, AS_VALUE (Constant_create (size)), 0);
+}
 
-        Instruction_set_operand (instruction, AS_VALUE (Constant_create (size)), 1);
+void parse_load_instruction (struct Instruction *instruction)
+{
+        struct Token dest = consume_token (VARIABLE,
+                                           "Expected target variable after `load` instruction, found %s instead",
+                                           Token_to_str (peek_token ()));
+
+        check_valid_assignment_target (dest, "Invalid assignment target %s", Token_to_str (dest));
+
+        consume_token (COMMA,
+                       "Expected `,` after destination operand %s, found %s instead",
+                       Token_to_str (dest),
+                       Token_to_str (peek_token ()));
+
+        struct Token address = consume_token (
+                VARIABLE, "Expected alloca address target variable, found %s instead", Token_to_str (peek_token ()));
+
+        struct Value *alloca_value = find_Value (address.value);
+
+        if (!VALUE_IS_INST (alloca_value) || !INST_ISA(AS_INST(alloca_value), OPCODE_ALLOCA)) {
+                error (address, "Expected address variable to be defined as target of `alloca` instruction.");
+                error (alloca_value->token, "Definition of %s", Token_to_str (alloca_value->token));
+                exit (EXIT_FAILURE);
+        }
+
+        Instruction_set_operand (instruction, alloca_value, 0);
+}
+
+void parse_store_instruction (struct Instruction *instruction)
+{
+        struct Token address = consume_token (VARIABLE,
+                                              "Expected target address after `store` instruction, found %s instead",
+                                              Token_to_str (peek_token ()));
+
+        struct Value *alloca_value = find_Value (address.value);
+
+        if (!VALUE_IS_INST (alloca_value) || !INST_ISA(AS_INST(alloca_value), OPCODE_ALLOCA)) {
+                error (address, "Expected address variable to be defined as target of `alloca` instruction.");
+                error (alloca_value->token, "Definition of %s", Token_to_str (alloca_value->token));
+                exit (EXIT_FAILURE);
+        }
+
+        consume_token (COMMA,
+                       "Expected `,` after target address %s, found %s instead",
+                       Token_to_str (address),
+                       Token_to_str (peek_token ()));
+
+        struct Token src =
+                consume_token (VARIABLE,
+                               "Expected source variable after `,` for `store` instruction, found %s instead",
+                               Token_to_str (peek_token ()));
+
+        struct Value *src_value = find_Value (src.value);
+
+        if (!src_value) {
+                error (src, "No definition found for source variable %s in store instruction", Token_to_str (src));
+                exit (EXIT_FAILURE);
+        }
+
+        Instruction_set_operand (instruction, alloca_value, 0);
+        Instruction_set_operand (instruction, find_Value (src.value), 1);
 }
 
 struct Instruction *parse_instruction ()
@@ -255,11 +313,12 @@ struct Instruction *parse_instruction ()
         }
         case INSTRUCTION_LOAD: {
                 new_instruction = Instruction_create (OPCODE_LOAD, inst_token);
-
+                parse_load_instruction (new_instruction);
                 break;
         }
         case INSTRUCTION_STORE: {
                 new_instruction = Instruction_create (OPCODE_STORE, inst_token);
+                parse_store_instruction (new_instruction);
                 break;
         }
         default:
@@ -379,7 +438,6 @@ struct Function *parse_function ()
                 // be the start of a label or at the end of a branch instruction
                 // this will handle both these cases
                 struct Token label = peek_token ();
-
 
                 if (match_token (LABEL)) {
                         if (current_basic_block) {

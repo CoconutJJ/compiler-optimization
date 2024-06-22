@@ -1,4 +1,5 @@
 #include "instruction.h"
+#include "array.h"
 #include "basicblock.h"
 #include "global_constants.h"
 #include "mem.h"
@@ -41,18 +42,14 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
         default: UNREACHABLE ("Invalid dataflow direction!");
         }
 
-        struct Use *use = Value_create_use (operand);
-        use->operand_no = operand_index;
-        use->user = AS_VALUE (instruction);
+        Use_link (AS_VALUE (instruction), operand, operand_index);
 }
 
 void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand)
 {
         Array_push (&instruction->operand_list, operand);
 
-        struct Use *use = Value_create_use (operand);
-        use->operand_no = Array_length (&instruction->operand_list) - 1;
-        use->user = AS_VALUE (instruction);
+        Use_link (AS_VALUE (instruction), operand, Array_length (&instruction->operand_list) - 1);
 }
 
 bool Instruction_contains (struct Instruction *instruction, struct Value *value)

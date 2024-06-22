@@ -276,7 +276,6 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
 struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
 {
         // the transfer function maps IN sets into OUT sets or vica versa depending on flow direction
-
         struct DFABitMap *curr_out_set, *curr_in_set;
 
         if (config->direction == DFA_FORWARD) {
