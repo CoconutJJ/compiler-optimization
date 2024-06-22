@@ -52,8 +52,10 @@ void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruct
 
 struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count)
 {
-        if (*iter_count >= Array_length (&basic_block->preds))
+        if (*iter_count >= Array_length (&basic_block->preds)) {
+                *iter_count = 0;
                 return NULL;
+        }
 
         return Array_get_index (&basic_block->preds, (*iter_count)++);
 }
@@ -67,14 +69,17 @@ struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, s
                 (*iter_count)++;
                 return basic_block->right;
         } else {
+                *iter_count = 0;
                 return NULL;
         }
 }
 
 struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count)
 {
-        if (Array_length (&basic_block->values) == *iter_count)
+        if (Array_length (&basic_block->values) == *iter_count) {
+                *iter_count = 0;
                 return NULL;
+        }
 
         struct Instruction *instruction = Array_get_index (&basic_block->values, *iter_count);
 
@@ -87,8 +92,10 @@ struct Instruction *BasicBlock_Instruction_ReverseIter (struct BasicBlock *basic
 {
         size_t n = Array_length (&basic_block->values);
 
-        if (*iter_count == n)
+        if (*iter_count == n) {
+                *iter_count = 0;
                 return NULL;
+        }
 
         size_t index = n - *iter_count - 1;
 

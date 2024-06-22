@@ -2,6 +2,7 @@
 #include "global_constants.h"
 #include "mem.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +69,6 @@ void hash_table_resize_if_required (HashTable *table)
         if (table->count == table->size) {
                 _hash_table_init (&resized_hash_table, table->size * 2);
         } else if (table->count < table->size / 4) {
-
                 if (table->size <= MAP_INIT_SIZE_CNT)
                         return;
 
@@ -155,6 +155,23 @@ void *hash_table_find_and_delete (HashTable *table, uint64_t key)
         hash_table_resize_if_required (table);
 
         return value;
+}
+
+struct HashTableEntry *hash_table_entry_iter (HashTable *table, size_t *iter_count)
+{
+        while (*iter_count < table->size && !table->buckets[*iter_count].isOccupied)
+                (*iter_count)++;
+
+        if (*iter_count == table->size) {
+                *iter_count = 0;
+                return NULL;
+        }
+
+        struct HashTableEntry *entry = &table->buckets[*iter_count];
+
+        (*iter_count)++;
+
+        return entry;
 }
 
 size_t hash_table_count (HashTable *table)

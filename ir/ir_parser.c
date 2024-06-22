@@ -422,7 +422,6 @@ struct BasicBlock *parse_block (struct Token function_name)
         struct BasicBlock *curr_block = NULL, *root = NULL;
 
         while (!match_token (RCURLY)) {
-                struct Token label = peek_token ();
                 struct BasicBlock *target_block = parse_basic_block ();
 
                 if (!target_block) {
@@ -512,7 +511,7 @@ void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visi
                 printf ("ENTRY\n");
         else if (BASICBLOCK_IS_EXIT (basic_block))
                 printf ("EXIT\n");
-        
+
         printf ("+------------------+\n"
                 "| Basic Block: %4ld|\n"
                 "+------------------+\n"

@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "threeaddr_parser.h"
 #include <assert.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 static size_t CURRENT_VALUE_NO = 0;
@@ -19,6 +20,17 @@ void Value_init (struct Value *value)
 void Value_set_token (struct Value *value, struct Token token)
 {
         value->token = token;
+}
+
+struct Value *Value_Use_iter (struct Value *value, size_t *iter_count)
+{
+        struct Use *use = Array_iter (&value->uses, iter_count);
+
+        if (!use) {
+                return NULL;
+        }
+
+        return use->usee;
 }
 
 void Use_init (struct Use *use)

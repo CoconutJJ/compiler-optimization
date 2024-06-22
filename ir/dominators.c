@@ -5,6 +5,7 @@
 #include "global_constants.h"
 #include "map.h"
 #include "mem.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -67,7 +68,7 @@ HashTable ComputeDominatorTree (struct Function *function)
 
                 struct BasicBlock *dom_block = NULL, *immediate_dom = NULL;
 
-                // Dominators have a total ordering, meaning for any two dominators a and b, 
+                // Dominators have a total ordering, meaning for any two dominators a and b,
                 // either a dominates b (a > b) or b dominates a (a < b).
                 // The immediate dominator is the "least" element in this sequence (z):
                 // a > b > c > d ... > z
@@ -104,23 +105,58 @@ HashTable ComputeDominatorTree (struct Function *function)
 
 void ComputeDominanceFrontier (struct Function *function)
 {
-        struct DFAConfiguration config = DominatorDFAConfiguration (function);
+        struct Array postorder_traversal = postorder (function->entry_basic_block);
 
-        struct DFAResult result = run_DFA (&config, function);
+        HashTable dominator_tree_adj = ComputeDominatorTree (function);
 
-        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
+        // Compute the transpose graph from the dominator tree adjacency list
+        // Each node is guaranteed to have only one direct predecessor, since
+        // each node can only have one immediate dominator. We will need this
+        // in the DF algorithm below
 
-        int64_t block_no;
+        struct HashTableEntry *entry;
+        size_t entry_iter = 0;
 
-        for (size_t i = 0; i < Array_length (&traversal_order); i++) {
-                struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
+        while ((entry = hash_table_entry_iter (&dominator_tree_adj, &entry_iter))) {
+        }
 
-                struct DFABitMap *in_map = hash_table_search (&result.in_sets, curr_basic_block->block_no);
-                size_t iter_count = 0;
+        struct BasicBlock *block;
+        size_t iter_count = 0;
 
-                printf ("Block %ld is dominated by...\n", curr_basic_block->block_no);
-                while ((block_no = DFABitMap_iter (in_map, &iter_count)) != -1LL) {
-                        printf ("Block %lld\n", block_no);
+        HashTable dominance_frontier;
+
+        hash_table_init (&dominance_frontier);
+
+        while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
+                // Dominance frontier blocks can only appear at join points
+                // in the graph, disregard any block that has less than two
+                // predecessors.
+                if (Array_length (&block->preds) < 2)
+                        continue;
+
+                // The dominance frontier sets of the direct predecessors of this
+                // block contain this block
+                size_t preds_iter = 0;
+                struct BasicBlock *pred;
+                while ((pred = BasicBlock_preds_iter (block, &preds_iter))) {
+                        struct Array *df = hash_table_search (&dominance_frontier, pred->block_no);
+
+                        if (!df) {
+                                df = ir_malloc (sizeof (struct Array));
+                                Array_init (df);
+                                hash_table_insert (&dominance_frontier, pred->block_no, df);
+                        }
+
+                        Array_push (df, block);
                 }
+
+                // The dominators of each predecessor also contain this block
+                // in their dominance frontier sets, unless such block also
+                // dominates this block. Walk up the dominator tree adding the
+                // current block to the dominance frontier sets of each node
+                // until we reach the first node that also dominates the current
+                // block.
+
+                size_t block_iter = 0;
         }
 }

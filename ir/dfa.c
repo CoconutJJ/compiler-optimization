@@ -98,6 +98,7 @@ int64_t DFABitMap_iter (struct DFABitMap *a, size_t *iter_count)
                 (*iter_count)++;
         }
 
+        *iter_count = 0;
         return -1LL;
 }
 
@@ -106,6 +107,7 @@ struct BasicBlock *DFABitMap_BasicBlock_iter (struct Function *function, struct 
         int64_t bit_no = DFABitMap_iter (map, iter_count);
 
         if (bit_no == -1LL) {
+                *iter_count = 0;
                 return NULL;
         }
 

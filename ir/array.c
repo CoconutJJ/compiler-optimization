@@ -189,8 +189,10 @@ void Array_reverse (struct Array *array)
 
 void *Array_iter(struct Array *array, size_t *iter_count) {
 
-        if (*iter_count == Array_length(array))
+        if (*iter_count == Array_length(array)) {
+                *iter_count = 0;
                 return NULL;
+        }
         
         return Array_get_index(array, (*iter_count)++);
 
