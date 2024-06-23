@@ -35,6 +35,7 @@ void dynarr_pop (void **buffer, size_t *count, size_t *size, void *ret, size_t i
 void Array_init (struct Array *array);
 void Array_push (struct Array *array, void *item);
 void *Array_pop (struct Array *array);
+bool Array_contains (struct Array *array, void *item);
 size_t Array_length (struct Array *array);
 void *Array_top (struct Array *array);
 void Array_free (struct Array *array);

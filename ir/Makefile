@@ -1,6 +1,6 @@
 OPT = -O3
 FLAGS = -Wall -Wextra
-CC = gcc
+CC = cc
 OBJECTS =   ir_parser.o \
 			main.o \
 			threeaddr_parser.o \
@@ -18,7 +18,7 @@ OBJECTS =   ir_parser.o \
 
 
 ifdef DEBUG
-	OPT = -g -fsanitize=address
+	OPT = -g -fsanitize=null,address,undefined,pointer-compare,pointer-subtract -fstack-protector 
 else
 	OPT = -O3
 endif
@@ -33,4 +33,3 @@ all: $(OBJECTS)
 
 clean:
 	rm *.o
-

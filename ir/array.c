@@ -121,6 +121,10 @@ void Array_resize_if_required (struct Array *array)
                 array->array_size *= 2;
                 array->array = ir_realloc (array->array, array->array_size * sizeof (void *));
         } else if (array->array_count < array->array_size / 4) {
+
+                if (array->array_count == DYNARR_INIT_SIZE_CNT)
+                        return;
+
                 array->array_size /= 2;
                 array->array = ir_realloc (array->array, array->array_size * sizeof (void *));
         }
@@ -131,6 +135,16 @@ void Array_push (struct Array *array, void *item)
         Array_resize_if_required (array);
 
         array->array[array->array_count++] = item;
+}
+
+bool Array_contains (struct Array *array, void *item)
+{
+        for (size_t i = 0; i < array->array_count; i++) {
+                if (array->array[i] == item)
+                        return true;
+        }
+
+        return false;
 }
 
 void *Array_pop (struct Array *array)
@@ -187,15 +201,14 @@ void Array_reverse (struct Array *array)
         }
 }
 
-void *Array_iter(struct Array *array, size_t *iter_count) {
-
-        if (*iter_count == Array_length(array)) {
+void *Array_iter (struct Array *array, size_t *iter_count)
+{
+        if (*iter_count == Array_length (array)) {
                 *iter_count = 0;
                 return NULL;
         }
-        
-        return Array_get_index(array, (*iter_count)++);
 
+        return Array_get_index (array, (*iter_count)++);
 }
 
 void Array_free (struct Array *array)

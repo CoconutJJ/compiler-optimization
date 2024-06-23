@@ -51,10 +51,8 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         return config;
 }
 
-HashTable ComputeDominatorTree (struct Function *function)
+HashTable ComputeDominatorTree (struct Function *function, struct DFAResult *result)
 {
-        struct DFAConfiguration config = DominatorDFAConfiguration (function);
-        struct DFAResult result = run_DFA (&config, function);
         struct Array traversal_order = reverse_postorder (function->entry_basic_block);
         struct BasicBlock *curr_block;
         HashTable dom_tree_adjacency_list;
@@ -62,7 +60,10 @@ HashTable ComputeDominatorTree (struct Function *function)
         size_t iter_count = 0;
 
         while ((curr_block = Array_iter (&traversal_order, &iter_count)) != NULL) {
-                struct DFABitMap *in_map = hash_table_search (&result.in_sets, curr_block->block_no);
+                if (BASICBLOCK_IS_ENTRY (curr_block) || BASICBLOCK_IS_EXIT (curr_block))
+                        continue;
+
+                struct DFABitMap *in_map = hash_table_search (&result->in_sets, curr_block->block_no);
 
                 size_t block_count = 0;
 
@@ -78,7 +79,7 @@ HashTable ComputeDominatorTree (struct Function *function)
                                 continue;
                         }
 
-                        struct DFABitMap *dom_block_map = hash_table_search (&result.in_sets, dom_block->block_no);
+                        struct DFABitMap *dom_block_map = hash_table_search (&result->in_sets, dom_block->block_no);
 
                         // check if current immediate dominator dominates the dom_block candidate
                         if (DFABitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
@@ -103,29 +104,39 @@ HashTable ComputeDominatorTree (struct Function *function)
         return dom_tree_adjacency_list;
 }
 
-void ComputeDominanceFrontier (struct Function *function)
+HashTable ComputeDominanceFrontier (struct Function *function)
 {
-        struct Array postorder_traversal = postorder (function->entry_basic_block);
 
-        HashTable dominator_tree_adj = ComputeDominatorTree (function);
+        struct Array postorder_traversal = postorder (function->entry_basic_block);
+        struct DFAConfiguration config = DominatorDFAConfiguration (function);
+        struct DFAResult result = run_DFA (&config, function);
+        
+        HashTable dominator_tree_adj = ComputeDominatorTree (function, &result);
+        HashTable dominance_frontier;
 
         // Compute the transpose graph from the dominator tree adjacency list
         // Each node is guaranteed to have only one direct predecessor, since
         // each node can only have one immediate dominator. We will need this
         // in the DF algorithm below
+        HashTable dominator_tree_transpose;
+        hash_table_init (&dominator_tree_transpose);
 
+        hash_table_init (&dominance_frontier);
         struct HashTableEntry *entry;
         size_t entry_iter = 0;
 
         while ((entry = hash_table_entry_iter (&dominator_tree_adj, &entry_iter))) {
+                struct Array *doms = entry->value;
+                size_t doms_iter = 0;
+                struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);
+                while ((block = Array_iter (doms, &doms_iter)) != NULL) {
+                        hash_table_insert (&dominator_tree_transpose, block->block_no, parent);
+                }
         }
 
         struct BasicBlock *block;
         size_t iter_count = 0;
 
-        HashTable dominance_frontier;
-
-        hash_table_init (&dominance_frontier);
 
         while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
                 // Dominance frontier blocks can only appear at join points
@@ -133,6 +144,8 @@ void ComputeDominanceFrontier (struct Function *function)
                 // predecessors.
                 if (Array_length (&block->preds) < 2)
                         continue;
+
+                struct DFABitMap *block_doms_set = hash_table_search (&result.in_sets, block->block_no);
 
                 // The dominance frontier sets of the direct predecessors of this
                 // block contain this block
@@ -147,16 +160,28 @@ void ComputeDominanceFrontier (struct Function *function)
                                 hash_table_insert (&dominance_frontier, pred->block_no, df);
                         }
 
+                        // Add direct predecessor to DF set
                         Array_push (df, block);
+
+                        // The dominators of each predecessor also contain this block
+                        // in their dominance frontier sets, unless such block also
+                        // dominates this block. Walk up the dominator tree adding the
+                        // current block to the dominance frontier sets of each node
+                        // until we reach the first node that also dominates the current
+                        // block.
+                        struct BasicBlock *parent;
+                        while ((parent = hash_table_search (&dominator_tree_transpose, pred->block_no)) != NULL) {
+                                // if indirect predecessor block dominates current block, stop.
+                                if (DFABitMap_BitIsSet (block_doms_set, parent->block_no))
+                                        break;
+
+                                if (!Array_contains (df, parent))
+                                        Array_push (df, parent);
+
+                                pred = parent;
+                        }
                 }
-
-                // The dominators of each predecessor also contain this block
-                // in their dominance frontier sets, unless such block also
-                // dominates this block. Walk up the dominator tree adding the
-                // current block to the dominance frontier sets of each node
-                // until we reach the first node that also dominates the current
-                // block.
-
-                size_t block_iter = 0;
         }
+
+        return dominance_frontier;
 }

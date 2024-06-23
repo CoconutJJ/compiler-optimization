@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-static struct HashTable value_table;
-static struct HashTable label_table;
+static HashTable value_table;
+static HashTable label_table;
 
 void check_valid_assignment_target (struct Token dest_token, char *error_message, ...)
 {

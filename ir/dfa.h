@@ -38,7 +38,7 @@ struct DFAConfiguration {
         enum DFAFlowDirection direction;
         MeetOp Meet;
         TransferFunction Transfer;
-        HashTable in_set_inits;
+        struct HashTable in_set_inits;
         HashTable out_set_inits;
 };
 

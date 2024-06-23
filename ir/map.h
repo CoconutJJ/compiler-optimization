@@ -1,10 +1,10 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 // Define the initial size of the hash table
 #define INITIAL_SIZE 16
@@ -24,13 +24,10 @@ typedef struct HashTable {
         size_t count;
 } HashTable;
 
-
-
-
 void hash_table_init (HashTable *table);
 HashTable *hash_table_create (size_t size);
 void hash_table_empty (HashTable *table);
-size_t hash_table_count(HashTable *table);
+size_t hash_table_count (HashTable *table);
 void hash_table_insert (HashTable *table, uint64_t key, void *value);
 
 // Search for an item in the hash table
