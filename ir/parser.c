@@ -1,4 +1,4 @@
-#include "ir_parser.h"
+#include "parser.h"
 #include "array.h"
 #include "basicblock.h"
 #include "constant.h"
@@ -7,7 +7,7 @@
 #include "instruction.h"
 #include "map.h"
 #include "mem.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include "utils.h"
 #include "value.h"
 #include <assert.h>

@@ -15,6 +15,14 @@ void Array_init (struct Array *array)
         array->array_count = 0;
 }
 
+struct Array *Array_create ()
+{
+        struct Array *array = ir_malloc (sizeof (struct Array));
+        Array_init (array);
+
+        return array;
+}
+
 static void Array_resize_if_required (struct Array *array)
 {
         if (array->array_size == array->array_count) {

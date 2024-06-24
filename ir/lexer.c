@@ -1,4 +1,4 @@
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -238,5 +238,6 @@ void threeaddr_init_parser (char *ir)
 {
         ir_source = ir;
         ir_source_index = 0;
+        current_line = ir;
         curr_token = next_token ();
 }

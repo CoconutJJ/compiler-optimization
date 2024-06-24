@@ -14,6 +14,7 @@ struct Array {
 #define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER (buffer) + DYNARR_ITEM_OFFSET (item_size, index))
 
 void Array_init (struct Array *array);
+struct Array *Array_create (void);
 void Array_push (struct Array *array, void *item);
 void *Array_pop (struct Array *array);
 bool Array_contains (struct Array *array, void *item);

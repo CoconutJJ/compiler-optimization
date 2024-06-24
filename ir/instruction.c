@@ -3,7 +3,7 @@
 #include "basicblock.h"
 #include "global_constants.h"
 #include "mem.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include "utils.h"
 #include "value.h"
 #include <assert.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "array.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include "value.h"
 
 enum InstType { INST_UNARY, INST_BINARY, INST_NIL, INST_BRANCH, INST_MEM };

@@ -2,7 +2,7 @@
 
 #include "basicblock.h"
 #include "global_constants.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -2,7 +2,7 @@
 #include "array.h"
 #include "global_constants.h"
 #include "mem.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>

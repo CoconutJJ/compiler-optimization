@@ -10,14 +10,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void DominatorTransfer (struct DFABitMap *in, void *basic_block)
+void DominatorTransfer (struct BitMap *in, void *basic_block)
 {
-        DFABitMap_setbit (in, ((struct BasicBlock *)basic_block)->block_no);
+        BitMap_setbit (in, ((struct BasicBlock *)basic_block)->block_no);
 }
 
-void DominatorMeet (struct DFABitMap *accum, struct DFABitMap *item)
+void DominatorMeet (struct BitMap *accum, struct BitMap *item)
 {
-        DFABitMap_inplace_Intersect (accum, item);
+        BitMap_inplace_Intersect (accum, item);
 }
 
 struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
@@ -31,21 +31,21 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
 
         hash_table_init (&config.in_set_inits);
         hash_table_init (&config.out_set_inits);
-        DFABitMap_init (&config.top, MAX_BASIC_BLOCK_COUNT);
-        DFABitMap_fill (&config.top);
+        BitMap_init (&config.top, MAX_BASIC_BLOCK_COUNT);
+        BitMap_fill (&config.top);
 
         for (size_t block_no = 0; block_no < MAX_BASIC_BLOCK_COUNT; block_no++) {
-                struct DFABitMap *out_map = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+                struct BitMap *out_map = BitMap_create (MAX_BASIC_BLOCK_COUNT);
 
                 if (block_no == function->entry_basic_block->block_no) {
-                        DFABitMap_setbit (out_map, block_no);
+                        BitMap_setbit (out_map, block_no);
                 } else {
-                        DFABitMap_fill (out_map);
+                        BitMap_fill (out_map);
                 }
 
                 hash_table_insert (&config.out_set_inits, block_no, out_map);
 
-                struct DFABitMap *in_map = DFABitMap_create (MAX_BASIC_BLOCK_COUNT);
+                struct BitMap *in_map = BitMap_create (MAX_BASIC_BLOCK_COUNT);
                 hash_table_insert (&config.in_set_inits, block_no, in_map);
         }
 
@@ -64,7 +64,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAResu
                 if (BASICBLOCK_IS_ENTRY (curr_block) || BASICBLOCK_IS_EXIT (curr_block))
                         continue;
 
-                struct DFABitMap *in_map = hash_table_search (&result->in_sets, curr_block->block_no);
+                struct BitMap *in_map = hash_table_search (&result->in_sets, curr_block->block_no);
 
                 size_t block_count = 0;
 
@@ -74,16 +74,16 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAResu
                 // either a dominates b (a > b) or b dominates a (a < b).
                 // The immediate dominator is the "least" element in this sequence (z):
                 // a > b > c > d ... > z
-                while ((dom_block = DFABitMap_BasicBlock_iter (function, in_map, &block_count)) != NULL) {
+                while ((dom_block = BitMap_BasicBlock_iter (function, in_map, &block_count)) != NULL) {
                         if (!immediate_dom) {
                                 immediate_dom = dom_block;
                                 continue;
                         }
 
-                        struct DFABitMap *dom_block_map = hash_table_search (&result->in_sets, dom_block->block_no);
+                        struct BitMap *dom_block_map = hash_table_search (&result->in_sets, dom_block->block_no);
 
                         // check if current immediate dominator dominates the dom_block candidate
-                        if (DFABitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
+                        if (BitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
                                 immediate_dom = dom_block;
                         }
                 }
@@ -92,8 +92,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAResu
                 struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
 
                 if (!array) {
-                        array = ir_malloc (sizeof (struct Array));
-                        Array_init (array);
+                        array = Array_create();
                         hash_table_insert (&dom_tree_adjacency_list, immediate_dom->block_no, array);
                 }
 
@@ -144,7 +143,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                 if (Array_length (&block->preds) < 2)
                         continue;
 
-                struct DFABitMap *block_doms_set = hash_table_search (&result.in_sets, block->block_no);
+                struct BitMap *block_doms_set = hash_table_search (&result.in_sets, block->block_no);
 
                 // The dominance frontier sets of the direct predecessors of this
                 // block contain this block
@@ -154,8 +153,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                         struct Array *df = hash_table_search (&dominance_frontier, pred->block_no);
 
                         if (!df) {
-                                df = ir_malloc (sizeof (struct Array));
-                                Array_init (df);
+                                df = Array_create();
                                 hash_table_insert (&dominance_frontier, pred->block_no, df);
                         }
 
@@ -171,7 +169,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                         struct BasicBlock *parent;
                         while ((parent = hash_table_search (&dominator_tree_transpose, pred->block_no)) != NULL) {
                                 // if indirect predecessor block dominates current block, stop.
-                                if (DFABitMap_BitIsSet (block_doms_set, parent->block_no))
+                                if (BitMap_BitIsSet (block_doms_set, parent->block_no))
                                         break;
 
                                 if (!Array_contains (df, parent))

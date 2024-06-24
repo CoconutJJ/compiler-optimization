@@ -1,9 +1,9 @@
 OPT = -O3
 FLAGS = -Wall -Wextra -Wmissing-prototypes
 CC = gcc
-OBJECTS =   ir_parser.o \
+OBJECTS =   parser.o \
 			main.o \
-			threeaddr_parser.o \
+			lexer.o \
 			instruction.o \
 			function.o \
 			basicblock.o \
@@ -14,7 +14,8 @@ OBJECTS =   ir_parser.o \
 			mem.o \
 			map.o \
 			dfa.o \
-			dominators.o
+			dominators.o \
+			bitmap.o
 
 
 ifdef DEBUG

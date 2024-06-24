@@ -1,5 +1,5 @@
 #pragma once
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #define UNREACHABLE(msg)                                                                                               \
         {                                                                                                              \
                 fprintf (stderr,                                                                                       \

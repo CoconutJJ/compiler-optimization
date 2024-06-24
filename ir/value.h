@@ -1,6 +1,6 @@
 #pragma once
 #include "array.h"
-#include "threeaddr_parser.h"
+#include "lexer.h"
 #include <stdlib.h>
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
 
