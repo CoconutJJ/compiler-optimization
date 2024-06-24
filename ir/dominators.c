@@ -70,10 +70,10 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAResu
 
                 struct BasicBlock *dom_block = NULL, *immediate_dom = NULL;
 
-                // Dominators have a total ordering, meaning for any two dominators a and b,
-                // either a dominates b (a > b) or b dominates a (a < b).
-                // The immediate dominator is the "least" element in this sequence (z):
-                // a > b > c > d ... > z
+                // Dominators have a total ordering, meaning for any two
+                // dominators a and b, either a dominates b (a > b) or b
+                // dominates a (a < b). The immediate dominator is the "least"
+                // element in this sequence (z): a > b > c > d ... > z
                 while ((dom_block = BitMap_BasicBlock_iter (function, in_map, &block_count)) != NULL) {
                         if (!immediate_dom) {
                                 immediate_dom = dom_block;
@@ -82,17 +82,19 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAResu
 
                         struct BitMap *dom_block_map = hash_table_search (&result->in_sets, dom_block->block_no);
 
-                        // check if current immediate dominator dominates the dom_block candidate
+                        // check if current immediate dominator dominates the
+                        // dom_block candidate
                         if (BitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
                                 immediate_dom = dom_block;
                         }
                 }
 
-                // we go through each block only once, create respective adjacency list for this block in the hashtable
+                // we go through each block only once, create respective
+                // adjacency list for this block in the hashtable
                 struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
 
                 if (!array) {
-                        array = Array_create();
+                        array = Array_create ();
                         hash_table_insert (&dom_tree_adjacency_list, immediate_dom->block_no, array);
                 }
 
@@ -113,8 +115,8 @@ HashTable ComputeDominanceFrontier (struct Function *function)
 
         // Compute the transpose graph from the dominator tree adjacency list
         // Each node is guaranteed to have only one direct predecessor, since
-        // each node can only have one immediate dominator. We will need this
-        // in the DF algorithm below
+        // each node can only have one immediate dominator. We will need this in
+        // the DF algorithm below
         HashTable dominator_tree_transpose;
         hash_table_init (&dominator_tree_transpose);
 
@@ -126,6 +128,8 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                 size_t doms_iter = 0;
                 struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);
                 while ((block = Array_iter (doms, &doms_iter)) != NULL) {
+                        assert (hash_table_search (&dominator_tree_transpose, block->block_no) == NULL);
+
                         hash_table_insert (&dominator_tree_transpose, block->block_no, parent);
                 }
         }
@@ -137,45 +141,37 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         HashTable dominance_frontier;
         hash_table_init (&dominance_frontier);
         while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
-                // Dominance frontier blocks can only appear at join points
-                // in the graph, disregard any block that has less than two
+                // Dominance frontier blocks can only appear at join points in
+                // the graph, disregard any block that has less than two
                 // predecessors.
                 if (Array_length (&block->preds) < 2)
                         continue;
 
-                struct BitMap *block_doms_set = hash_table_search (&result.in_sets, block->block_no);
-
-                // The dominance frontier sets of the direct predecessors of this
-                // block contain this block
+                struct BasicBlock *immediate_dom = hash_table_search (&dominator_tree_transpose, block->block_no);
+                // The dominance frontier sets of the direct predecessors of
+                // this block contain this block
                 size_t preds_iter = 0;
                 struct BasicBlock *pred;
                 while ((pred = BasicBlock_preds_iter (block, &preds_iter))) {
-                        struct Array *df = hash_table_search (&dominance_frontier, pred->block_no);
+                        // The dominators of each predecessor also contain this
+                        // block in their dominance frontier sets, unless such
+                        // block also dominates this block. Walk up the
+                        // dominator tree adding the current block to the
+                        // dominance frontier sets of each node until we reach
+                        // the first node that also dominates the current block.
 
-                        if (!df) {
-                                df = Array_create();
-                                hash_table_insert (&dominance_frontier, pred->block_no, df);
-                        }
+                        while (pred != immediate_dom) {
+                                struct Array *df = hash_table_search (&dominance_frontier, pred->block_no);
 
-                        // Add direct predecessor to DF set
-                        Array_push (df, block);
+                                if (!df) {
+                                        df = Array_create ();
+                                        hash_table_insert (&dominance_frontier, pred->block_no, df);
+                                }
 
-                        // The dominators of each predecessor also contain this block
-                        // in their dominance frontier sets, unless such block also
-                        // dominates this block. Walk up the dominator tree adding the
-                        // current block to the dominance frontier sets of each node
-                        // until we reach the first node that also dominates the current
-                        // block.
-                        struct BasicBlock *parent;
-                        while ((parent = hash_table_search (&dominator_tree_transpose, pred->block_no)) != NULL) {
-                                // if indirect predecessor block dominates current block, stop.
-                                if (BitMap_BitIsSet (block_doms_set, parent->block_no))
-                                        break;
+                                if (!Array_contains (df, block))
+                                        Array_push (df, block);
 
-                                if (!Array_contains (df, parent))
-                                        Array_push (df, parent);
-
-                                pred = parent;
+                                pred = hash_table_search (&dominator_tree_transpose, pred->block_no);
                         }
                 }
         }

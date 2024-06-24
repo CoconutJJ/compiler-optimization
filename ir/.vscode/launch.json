@@ -19,7 +19,7 @@
             "id": "fileName",
             "type": "promptString",
             "description": "IR file",
-            "default": "test/02.txt"
+            "default": "samples/02.txt"
         }
     ]
 }

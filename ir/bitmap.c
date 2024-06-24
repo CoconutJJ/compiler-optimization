@@ -15,10 +15,6 @@ void BitMap_init (struct BitMap *map, size_t num_bits)
 
         map->map = ir_calloc (map_size, sizeof (uint64_t));
         map->size = map_size;
-        if (!map->map) {
-                perror ("calloc");
-                exit (EXIT_FAILURE);
-        }
 }
 
 struct BitMap *BitMap_create (size_t num_bits)

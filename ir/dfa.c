@@ -115,16 +115,16 @@ static struct BitMap *compute_Meet_from_Operands (struct DFAConfiguration *confi
         BasicBlockDirectionalIter OperandIter;
 
         // Select the appropriate operand iterator based on the flow direction.
-        // For forward analysis, merge the block predecessors.
-        // For backward analysis, merge the block successors.
+        // For forward analysis, merge the block predecessors. For backward
+        // analysis, merge the block successors.
         switch (config->direction) {
         case DFA_FORWARD: OperandIter = BitMap_BasicBlock_pred_iter; break;
         case DFA_BACKWARD: OperandIter = BitMap_BasicBlock_successor_iter; break;
         default: UNREACHABLE ("Invalid dataflow direction!");
         }
 
-        // The meet operator (^) is associative, here we are just doing ((a ^ b) ^ c) ^ ...
-        // where a, b, c, ... are the meet operands
+        // The meet operator (^) is associative, here we are just doing ((a ^ b)
+        // ^ c) ^ ... where a, b, c, ... are the meet operands
         struct BitMap *pred = NULL;
         while ((pred = OperandIter (config, curr_basic_block, &iter_count)) != NULL) {
                 config->Meet (curr_in_set, pred);
@@ -135,7 +135,8 @@ static struct BitMap *compute_Meet_from_Operands (struct DFAConfiguration *confi
 
 static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
 {
-        // the transfer function maps IN sets into OUT sets or vica versa depending on flow direction
+        // the transfer function maps IN sets into OUT sets or vica versa
+        // depending on flow direction
         struct BitMap *curr_out_set, *curr_in_set;
 
         if (config->direction == DFA_FORWARD) {
@@ -192,7 +193,8 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
                 for (size_t i = 0, n = Array_length (&traversal_order); i < n; i++) {
                         struct BasicBlock *curr_basic_block = Array_get_index (&traversal_order, i);
 
-                        // skip entry and exit blocks, these two block will be initialized with boundary values,
+                        // skip entry and exit blocks, these two block will be
+                        // initialized with boundary values,
                         if (BASICBLOCK_IS_ENTRY (curr_basic_block))
                                 continue;
 
