@@ -43,6 +43,7 @@ struct Instruction {
 void Instruction_init (struct Instruction *instruction);
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
+void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instruction *before);
 struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token);
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);

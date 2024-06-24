@@ -33,7 +33,7 @@ void Function_update_block_number_mapping (struct Function *function)
                 hash_table_insert (&function->block_number_map, block->block_no, block);
         }
 
-        Array_free(&traversal_order);
+        Array_free (&traversal_order);
 }
 
 void Function_add_argument (struct Function *function, struct Argument *argument)

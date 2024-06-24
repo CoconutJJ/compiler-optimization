@@ -1,3 +1,4 @@
+#include "mem.h"
 #include "array.h"
 #include <assert.h>
 #include <stddef.h>
@@ -8,7 +9,7 @@ static void **allocations = NULL;
 static size_t allocations_size = 0;
 static size_t allocations_count = 0;
 
-void _ir_mem_autoresize ()
+static void _ir_mem_autoresize ()
 {
         if (allocations_count == allocations_size) {
                 allocations_size *= 2;
@@ -20,7 +21,7 @@ void _ir_mem_autoresize ()
         }
 }
 
-void _ir_add_allocation (void *mem)
+static void _ir_add_allocation (void *mem)
 {
         if (!allocations) {
                 allocations = calloc (DYNARR_INIT_SIZE_CNT, sizeof (void *));

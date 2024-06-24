@@ -22,3 +22,4 @@ void Value_init (struct Value *value);
 void Value_set_token(struct Value *value, struct Token token);
 void Use_init (struct Use *use);
 void Use_link (struct Value *user, struct Value *usee, int usee_operand_no);
+struct Value *Value_Use_iter (struct Value *value, size_t *iter_count);

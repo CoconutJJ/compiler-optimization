@@ -10,13 +10,13 @@
 
 // Open addressing, linear probe hash table.
 
-unsigned long uint64_t_hash_function (uint64_t key)
+static unsigned long uint64_t_hash_function (uint64_t key)
 {
         // Simple hash function for demonstration
         return key;
 }
 
-void _hash_table_init (HashTable *table, size_t size)
+static void _hash_table_init (HashTable *table, size_t size)
 {
         table->size = size;
         table->count = 0;
@@ -42,7 +42,7 @@ void hash_table_empty (HashTable *table)
         memset (table->buckets, 0, table->count * sizeof (struct HashTableEntry *));
         table->count = 0;
 }
-void _hash_table_insert (HashTable *table, uint64_t key, void *value)
+static void _hash_table_insert (HashTable *table, uint64_t key, void *value)
 {
         // Insert an item into the hash table
         uint64_t index = uint64_t_hash_function (key) % table->size;
@@ -62,7 +62,7 @@ void _hash_table_insert (HashTable *table, uint64_t key, void *value)
                 index = (index + 1) % table->size;
         }
 }
-void hash_table_resize_if_required (HashTable *table)
+static void hash_table_resize_if_required (HashTable *table)
 {
         HashTable resized_hash_table;
 
@@ -103,7 +103,7 @@ void hash_table_insert (HashTable *table, uint64_t key, void *value)
 }
 
 // Search for an item in the hash table
-struct HashTableEntry *hash_table_find_entry (HashTable *table, uint64_t key)
+static struct HashTableEntry *hash_table_find_entry (HashTable *table, uint64_t key)
 {
         uint64_t index = uint64_t_hash_function (key) % table->size;
         uint64_t size = table->size;

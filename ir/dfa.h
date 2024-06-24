@@ -63,6 +63,11 @@ struct Array postorder (struct BasicBlock *entry);
 struct Array reverse_postorder (struct BasicBlock *entry);
 void DFABitMap_fill (struct DFABitMap *a);
 void DFABitMap_empty (struct DFABitMap *a);
+bool DFABitMap_compare (struct DFABitMap *a, struct DFABitMap *b);
+void DFABitMap_UnsetBit (struct DFABitMap *a, size_t bit_no);
+void DFABitMap_SetBit (struct DFABitMap *a, size_t bit_no);
+void DFABitMap_copy (struct DFABitMap *src, struct DFABitMap *dest);
+void DFABitMap_free (struct DFABitMap *map);
 struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *function);
 struct DFABitMap *DFABitMap_BasicBlock_pred_iter (struct DFAConfiguration *config,
                                                   struct BasicBlock *curr_basic_block,

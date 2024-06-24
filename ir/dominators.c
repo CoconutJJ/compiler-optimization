@@ -1,3 +1,4 @@
+#include "dominators.h"
 #include "array.h"
 #include "basicblock.h"
 #include "dfa.h"
@@ -51,7 +52,7 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         return config;
 }
 
-HashTable ComputeDominatorTree (struct Function *function, struct DFAResult *result)
+static HashTable ComputeDominatorTree (struct Function *function, struct DFAResult *result)
 {
         struct Array traversal_order = reverse_postorder (function->entry_basic_block);
         struct BasicBlock *curr_block;
@@ -106,13 +107,10 @@ HashTable ComputeDominatorTree (struct Function *function, struct DFAResult *res
 
 HashTable ComputeDominanceFrontier (struct Function *function)
 {
-
         struct Array postorder_traversal = postorder (function->entry_basic_block);
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
         struct DFAResult result = run_DFA (&config, function);
-        
         HashTable dominator_tree_adj = ComputeDominatorTree (function, &result);
-        HashTable dominance_frontier;
 
         // Compute the transpose graph from the dominator tree adjacency list
         // Each node is guaranteed to have only one direct predecessor, since
@@ -121,7 +119,6 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         HashTable dominator_tree_transpose;
         hash_table_init (&dominator_tree_transpose);
 
-        hash_table_init (&dominance_frontier);
         struct HashTableEntry *entry;
         size_t entry_iter = 0;
 
@@ -137,7 +134,9 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         struct BasicBlock *block;
         size_t iter_count = 0;
 
-
+        // Table to store the dominance frontier of every node
+        HashTable dominance_frontier;
+        hash_table_init (&dominance_frontier);
         while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
                 // Dominance frontier blocks can only appear at join points
                 // in the graph, disregard any block that has less than two

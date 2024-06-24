@@ -44,20 +44,11 @@ struct Token {
                 char str_value[MAX_IDENTIFIER_LEN + 1];
         };
 };
-
 struct Token Token (enum TokenType type, int value);
-char peek_char ();
-char advance_char ();
-bool match_char (char c);
-bool match_str (char *s);
-bool is_numeric (char c);
-bool is_alpha (char c);
-int parse_int (int lead_digit);
-void parse_str (char lead_char, char *buffer);
-struct Token next_token ();
-struct Token advance_token ();
+struct Token next_token (void);
+struct Token advance_token (void);
 bool match_token (enum TokenType t);
-struct Token peek_token ();
+struct Token peek_token (void);
 struct Token consume_token (enum TokenType t, char *error_message, ...);
 void threeaddr_init_parser (char *ir);
 void error (struct Token target, char *message, ...);

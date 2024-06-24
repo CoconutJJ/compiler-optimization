@@ -31,7 +31,6 @@ size_t hash_table_count (HashTable *table);
 void hash_table_insert (HashTable *table, uint64_t key, void *value);
 
 // Search for an item in the hash table
-struct HashTableEntry *hash_table_find_entry (HashTable *table, uint64_t key);
 void *hash_table_search (HashTable *table, uint64_t key);
 struct HashTableEntry *hash_table_entry_iter (HashTable *table, size_t *iter_count);
 void *hash_table_find_and_delete (HashTable *table, uint64_t key);

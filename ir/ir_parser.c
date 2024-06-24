@@ -20,7 +20,7 @@
 static HashTable value_table;
 static HashTable label_table;
 
-void check_valid_assignment_target (struct Token dest_token, char *error_message, ...)
+static void check_valid_assignment_target (struct Token dest_token, char *error_message, ...)
 {
         struct Value *value = hash_table_search (&value_table, dest_token.value);
 
@@ -39,7 +39,7 @@ void check_valid_assignment_target (struct Token dest_token, char *error_message
         exit (EXIT_FAILURE);
 }
 
-struct BasicBlock *BasicBlock_create (enum BasicBlockType type)
+static struct BasicBlock *BasicBlock_create (enum BasicBlockType type)
 {
         struct BasicBlock *basic_block = ir_malloc (sizeof (struct BasicBlock));
 
@@ -48,7 +48,7 @@ struct BasicBlock *BasicBlock_create (enum BasicBlockType type)
         return basic_block;
 }
 
-struct Function *Function_create ()
+static struct Function *Function_create ()
 {
         struct Function *function = ir_malloc (sizeof (struct Function));
 
@@ -57,7 +57,7 @@ struct Function *Function_create ()
         return function;
 }
 
-struct Argument *Argument_create ()
+static struct Argument *Argument_create ()
 {
         struct Argument *argument = ir_malloc (sizeof (struct Argument));
 
@@ -66,14 +66,14 @@ struct Argument *Argument_create ()
         return argument;
 }
 
-void Function_set_name (struct Function *function, char *name)
+static void Function_set_name (struct Function *function, char *name)
 {
         assert (strlen (name) <= MAX_IDENTIFIER_LEN);
 
         strcpy (function->fn_name, name);
 }
 
-struct Constant *Constant_create (struct Token constant_token)
+static struct Constant *Constant_create (struct Token constant_token)
 {
         struct Constant *constant = ir_malloc (sizeof (struct Constant));
 
@@ -84,14 +84,14 @@ struct Constant *Constant_create (struct Token constant_token)
         return constant;
 }
 
-struct Value *find_Value (uint64_t value_no)
+static struct Value *find_Value (uint64_t value_no)
 {
         struct Value *value = hash_table_search (&value_table, value_no);
 
         return value;
 }
 
-void parse_operand (struct Instruction *instruction, int operand_index)
+static void parse_operand (struct Instruction *instruction, int operand_index)
 {
         struct Token token = peek_token ();
         if (match_token (INTEGER)) {
@@ -107,7 +107,7 @@ void parse_operand (struct Instruction *instruction, int operand_index)
         }
 }
 
-void parse_binary_operator_operands (struct Instruction *instruction)
+static void parse_binary_operator_operands (struct Instruction *instruction)
 {
         struct Token token = consume_token (VARIABLE, "Expected destination operand to be a variable!\n");
 
@@ -124,7 +124,7 @@ void parse_binary_operator_operands (struct Instruction *instruction)
         parse_operand (instruction, 1);
 }
 
-void parse_branch_operand (struct Instruction *instruction)
+static void parse_branch_operand (struct Instruction *instruction)
 {
         struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
 
@@ -136,7 +136,7 @@ void parse_branch_operand (struct Instruction *instruction)
         }
 }
 
-struct BasicBlock *find_BasicBlock (uint64_t label_no)
+static struct BasicBlock *find_BasicBlock (uint64_t label_no)
 {
         struct BasicBlock *basic_block = hash_table_search (&label_table, label_no);
 
@@ -150,7 +150,7 @@ struct BasicBlock *find_BasicBlock (uint64_t label_no)
         return basic_block;
 }
 
-void parse_phi_instruction (struct Instruction *phi_instruction)
+static void parse_phi_instruction (struct Instruction *phi_instruction)
 {
         struct Token dest_token = consume_token (VARIABLE,
                                                  "Expected destination operand as first argument for PHI "
@@ -175,7 +175,7 @@ void parse_phi_instruction (struct Instruction *phi_instruction)
         } while (match_token (COMMA));
 }
 
-void parse_alloca_instruction (struct Instruction *instruction)
+static void parse_alloca_instruction (struct Instruction *instruction)
 {
         struct Token dest = consume_token (VARIABLE,
                                            "Expected target variable after `alloca` instruction, found %s instead",
@@ -194,7 +194,7 @@ void parse_alloca_instruction (struct Instruction *instruction)
         Instruction_set_operand (instruction, AS_VALUE (Constant_create (size)), 0);
 }
 
-void parse_load_instruction (struct Instruction *instruction)
+static void parse_load_instruction (struct Instruction *instruction)
 {
         struct Token dest = consume_token (VARIABLE,
                                            "Expected target variable after `load` instruction, found %s instead",
@@ -221,7 +221,7 @@ void parse_load_instruction (struct Instruction *instruction)
         Instruction_set_operand (instruction, alloca_value, 0);
 }
 
-void parse_store_instruction (struct Instruction *instruction)
+static void parse_store_instruction (struct Instruction *instruction)
 {
         struct Token address = consume_token (VARIABLE,
                                               "Expected target address after `store` instruction, found %s instead",
@@ -256,7 +256,7 @@ void parse_store_instruction (struct Instruction *instruction)
         Instruction_set_operand (instruction, find_Value (src.value), 1);
 }
 
-struct Instruction *parse_instruction ()
+static struct Instruction *parse_instruction ()
 {
         struct Instruction *new_instruction;
 
@@ -349,7 +349,7 @@ struct Instruction *parse_instruction ()
         return new_instruction;
 }
 
-struct BasicBlock *parse_basic_block ()
+static struct BasicBlock *parse_basic_block ()
 {
         struct BasicBlock *basic_block;
         struct Token label = peek_token ();
@@ -383,7 +383,7 @@ struct BasicBlock *parse_basic_block ()
         return basic_block;
 }
 
-struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
+static struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
 {
         struct BasicBlock *entry = BasicBlock_create (BASICBLOCK_ENTRY);
         struct BasicBlock *exit = BasicBlock_create (BASICBLOCK_EXIT);
@@ -416,7 +416,7 @@ struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
         return entry;
 }
 
-struct BasicBlock *parse_block (struct Token function_name)
+static struct BasicBlock *parse_block (struct Token function_name)
 {
         consume_token (LCURLY, "Expected opening `{` after function %s", Token_to_str (function_name));
         struct BasicBlock *curr_block = NULL, *root = NULL;
@@ -442,7 +442,7 @@ struct BasicBlock *parse_block (struct Token function_name)
         return root;
 }
 
-struct Function *parse_function ()
+static struct Function *parse_function ()
 {
         hash_table_empty (&value_table);
         hash_table_empty (&label_table);
@@ -490,7 +490,7 @@ struct Function *parse_function ()
         return function;
 }
 
-void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visited)
+static void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visited)
 {
         if (hash_table_search (visited, basic_block->block_no) != NULL)
                 return;

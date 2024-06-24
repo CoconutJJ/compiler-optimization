@@ -21,12 +21,12 @@ struct Token Token (enum TokenType type, int value)
                                .column_number = current_column_number };
 }
 
-char peek_char ()
+static char peek_char ()
 {
         return ir_source[ir_source_index];
 }
 
-char advance_char ()
+static char advance_char ()
 {
         char old = ir_source[ir_source_index];
         if (peek_char () != '\0') {
@@ -36,7 +36,7 @@ char advance_char ()
         return old;
 }
 
-bool match_char (char c)
+static bool match_char (char c)
 {
         if (peek_char () == c) {
                 ir_source_index++;
@@ -45,7 +45,7 @@ bool match_char (char c)
         return false;
 }
 
-bool match_str (char *s)
+static bool match_str (char *s)
 {
         if (strncmp (s, ir_source + ir_source_index, strlen (s)) == 0) {
                 ir_source_index += strlen (s);
@@ -55,17 +55,17 @@ bool match_str (char *s)
         return false;
 }
 
-bool is_numeric (char c)
+static bool is_numeric (char c)
 {
         return ('0' <= c && c <= '9');
 }
 
-bool is_alpha (char c)
+static bool is_alpha (char c)
 {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
-int parse_int (int lead_digit)
+static int parse_int (int lead_digit)
 {
         char c;
 
@@ -78,7 +78,7 @@ int parse_int (int lead_digit)
         return value;
 }
 
-void parse_str (char lead_char, char *buffer)
+static void parse_str (char lead_char, char *buffer)
 {
         buffer[0] = lead_char;
 
@@ -106,8 +106,8 @@ struct Token next_token ()
                         return Token (END, -1);
 
                 switch (c) {
-                case '{': return Token(LCURLY, -1);
-                case '}': return Token(RCURLY, -1);
+                case '{': return Token (LCURLY, -1);
+                case '}': return Token (RCURLY, -1);
                 case ',': return Token (COMMA, -1);
                 case ':': return Token (COLON, -1);
                 case '(': return Token (LPAREN, -1);

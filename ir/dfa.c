@@ -247,7 +247,8 @@ struct DFABitMap *DFABitMap_BasicBlock_successor_iter (struct DFAConfiguration *
         return hash_table_search (&config->in_set_inits, succ->block_no);
 }
 
-struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
+static struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config,
+                                                     struct BasicBlock *curr_basic_block)
 {
         size_t iter_count = 0;
 
@@ -262,7 +263,7 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
         switch (config->direction) {
         case DFA_FORWARD: OperandIter = DFABitMap_BasicBlock_pred_iter; break;
         case DFA_BACKWARD: OperandIter = DFABitMap_BasicBlock_successor_iter; break;
-        default: UNREACHABLE("Invalid dataflow direction!");
+        default: UNREACHABLE ("Invalid dataflow direction!");
         }
 
         // The meet operator (^) is associative, here we are just doing ((a ^ b) ^ c) ^ ...
@@ -275,7 +276,7 @@ struct DFABitMap *compute_Meet_from_Operands (struct DFAConfiguration *config, s
         return curr_in_set;
 }
 
-struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
+static struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block)
 {
         // the transfer function maps IN sets into OUT sets or vica versa depending on flow direction
         struct DFABitMap *curr_out_set, *curr_in_set;
@@ -311,8 +312,8 @@ struct DFABitMap *compute_Transfer (struct DFAConfiguration *config, struct Basi
                 else if (config->direction == DFA_BACKWARD)
                         InstIter = BasicBlock_Instruction_ReverseIter;
                 else
-                        UNREACHABLE("Invalid dataflow direction!");
-                
+                        UNREACHABLE ("Invalid dataflow direction!");
+
                 size_t iter_count = 0;
                 struct Instruction *instruction;
                 while ((instruction = InstIter (curr_basic_block, &iter_count)) != NULL)

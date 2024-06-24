@@ -1,3 +1,4 @@
+#include "utils.h"
 #include "global_constants.h"
 #include "threeaddr_parser.h"
 #include <stdarg.h>
@@ -9,7 +10,7 @@
 static char token_buffer[TOKEN_BUFFER_SIZE];
 static size_t token_buffer_count = 0;
 
-char *token_buffer_alloc_str (size_t len)
+static char *token_buffer_alloc_str (size_t len)
 {
         if (token_buffer_count + len > TOKEN_BUFFER_SIZE) {
                 token_buffer_count = 0;
