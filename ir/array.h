@@ -8,8 +8,8 @@ struct Array {
         size_t array_count;
 };
 
-#define DYNARR_INIT_SIZE_CNT 10
-#define AS_BYTE_BUFFER(buf)  ((uint8_t *)(buf))
+#define DYNARR_INIT_SIZE_CNT                       10
+#define AS_BYTE_BUFFER(buf)                        ((uint8_t *)(buf))
 #define DYNARR_ITEM_OFFSET(item_size, index)       ((index) * (item_size))
 #define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER (buffer) + DYNARR_ITEM_OFFSET (item_size, index))
 
@@ -24,4 +24,4 @@ void Array_reverse (struct Array *array);
 void *Array_get_index (struct Array *array, size_t index);
 void Array_set_index (struct Array *array, size_t index, void *item);
 void Array_insert (struct Array *array, size_t index, void *item);
-void *Array_iter(struct Array *array, size_t *iter_count);
+void *Array_iter (struct Array *array, size_t *iter_count);

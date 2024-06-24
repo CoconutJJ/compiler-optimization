@@ -37,8 +37,7 @@ struct Instruction {
 
 #define INST_IS_BINARY_OP(inst) ((inst)->inst_type == INST_BINARY)
 #define INST_IS_BRANCH(inst)    ((inst)->inst_type == INST_BRANCH)
-#define INST_ISA(inst, opcode) ((inst)->op_code == (opcode))
-
+#define INST_ISA(inst, opcode)  ((inst)->op_code == (opcode))
 
 void Instruction_init (struct Instruction *instruction);
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
