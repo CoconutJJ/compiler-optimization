@@ -149,7 +149,8 @@ HashTable ComputeDominanceFrontier (struct Function *function)
 
                 struct BasicBlock *immediate_dom = hash_table_search (&dominator_tree_transpose, block->block_no);
                 // The dominance frontier sets of the direct predecessors of
-                // this block contain this block
+                // this block contain this block, unless it is the immediate
+                // dominator of this block
                 size_t preds_iter = 0;
                 struct BasicBlock *pred;
                 while ((pred = BasicBlock_preds_iter (block, &preds_iter))) {

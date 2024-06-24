@@ -52,12 +52,7 @@ void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruct
 
 struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count)
 {
-        if (*iter_count >= Array_length (&basic_block->preds)) {
-                *iter_count = 0;
-                return NULL;
-        }
-
-        return Array_get_index (&basic_block->preds, (*iter_count)++);
+        return Array_iter (&basic_block->preds, iter_count);
 }
 
 struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count)

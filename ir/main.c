@@ -56,7 +56,7 @@ int main (int argc, char **argv)
 
         struct Function *function = parse_ir (ir_source);
 
-        display_function (function);
+        // display_function (function);
 
         HashTable dominance_frontier = ComputeDominanceFrontier (function);
         HashTableEntry *entry;
@@ -72,4 +72,5 @@ int main (int argc, char **argv)
 
                 }
         }
+        ir_free_all();
 }
