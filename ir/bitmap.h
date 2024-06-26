@@ -24,6 +24,7 @@ struct BitMap *BitMap_setbit (struct BitMap *map, size_t bit_no);
 struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct BitMap *map, size_t *iter_count);
 bool BitMap_BitIsSet (struct BitMap *a, size_t bit_no);
 int64_t BitMap_iter (struct BitMap *a, size_t *iter_count);
+size_t BitMap_count (struct BitMap *a);
 void BitMap_fill (struct BitMap *a);
 void BitMap_empty (struct BitMap *a);
 bool BitMap_compare (struct BitMap *a, struct BitMap *b);

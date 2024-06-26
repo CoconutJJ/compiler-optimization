@@ -1,8 +1,8 @@
 #include "value.h"
 #include "array.h"
 #include "global_constants.h"
-#include "mem.h"
 #include "lexer.h"
+#include "mem.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -31,6 +31,11 @@ struct Value *Value_Use_iter (struct Value *value, size_t *iter_count)
         }
 
         return use->usee;
+}
+
+size_t Value_Use_count (struct Value *value)
+{
+        return Array_length (&value->uses);
 }
 
 void Use_init (struct Use *use)

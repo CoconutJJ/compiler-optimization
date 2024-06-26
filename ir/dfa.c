@@ -15,16 +15,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct BitMap *BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config,
-                                               struct BasicBlock *curr_basic_block,
-                                               size_t *iter_count)
+struct BitMap *
+BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block, size_t *iter_count)
 {
         struct BasicBlock *pred = BasicBlock_preds_iter (curr_basic_block, iter_count);
 
         if (!pred)
                 return NULL;
 
-        return hash_table_search (&config->out_set_inits, pred->block_no);
+        return hash_table_search (&config->out_sets, pred->block_no);
 }
 
 struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct BitMap *map, size_t *iter_count)
@@ -44,46 +43,43 @@ struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct Bit
 }
 
 struct BitMap *BitMap_BasicBlock_successor_iter (struct DFAConfiguration *config,
-                                                    struct BasicBlock *curr_basic_block,
-                                                    size_t *iter_count)
+                                                 struct BasicBlock *curr_basic_block,
+                                                 size_t *iter_count)
 {
         struct BasicBlock *succ = BasicBlock_successors_iter (curr_basic_block, iter_count);
 
         if (!succ)
                 return NULL;
 
-        return hash_table_search (&config->in_set_inits, succ->block_no);
+        return hash_table_search (&config->in_sets, succ->block_no);
 }
 
 struct Array postorder (struct BasicBlock *entry)
 {
         struct Array basic_block_order, stack;
-        
 
         Array_init (&stack);
         Array_push (&stack, entry);
 
-
         struct BitMap visited;
-        BitMap_init(&visited, MAX_BASIC_BLOCK_COUNT);
-        BitMap_setbit(&visited, entry->block_no);
-
+        BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
+        BitMap_setbit (&visited, entry->block_no);
 
         Array_init (&basic_block_order);
         while (Array_length (&stack) > 0) {
                 struct BasicBlock *curr = Array_top (&stack);
 
                 // check if left child has been visited
-                if (curr->left && !BitMap_BitIsSet(&visited, curr->left->block_no)) {
+                if (curr->left && !BitMap_BitIsSet (&visited, curr->left->block_no)) {
                         Array_push (&stack, curr->left);
-                        BitMap_setbit(&visited, curr->left->block_no);
+                        BitMap_setbit (&visited, curr->left->block_no);
                         continue;
                 }
 
                 // check if right child has been visited
                 if (curr->right && !BitMap_BitIsSet (&visited, curr->right->block_no)) {
                         Array_push (&stack, curr->right);
-                        BitMap_BitIsSet (&visited, curr->right->block_no);
+                        BitMap_setbit (&visited, curr->right->block_no);
                         continue;
                 }
 
@@ -141,11 +137,11 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
 
         if (config->direction == DFA_FORWARD) {
                 curr_out_set = BitMap_create (MAX_BASIC_BLOCK_COUNT);
-                curr_in_set = hash_table_search (&config->in_set_inits, curr_basic_block->block_no);
+                curr_in_set = hash_table_search (&config->in_sets, curr_basic_block->block_no);
                 BitMap_copy (curr_in_set, curr_out_set);
         } else if (config->direction == DFA_BACKWARD) {
                 curr_in_set = BitMap_create (MAX_BASIC_BLOCK_COUNT);
-                curr_out_set = hash_table_search (&config->out_set_inits, curr_basic_block->block_no);
+                curr_out_set = hash_table_search (&config->out_sets, curr_basic_block->block_no);
                 BitMap_copy (curr_out_set, curr_in_set);
         } else {
                 UNREACHABLE ("Invalid dataflow direction!");
@@ -182,7 +178,7 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         return curr_out_set;
 }
 
-struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *function)
+void run_DFA (struct DFAConfiguration *config, struct Function *function)
 {
         struct Array traversal_order = reverse_postorder (function->entry_basic_block);
 
@@ -206,10 +202,9 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
                         if (config->direction == DFA_FORWARD) {
                                 curr_in_set = compute_Meet_from_Operands (config, curr_basic_block);
 
-                                old_in_set =
-                                        hash_table_find_and_delete (&config->in_set_inits, curr_basic_block->block_no);
+                                old_in_set = hash_table_find_and_delete (&config->in_sets, curr_basic_block->block_no);
 
-                                hash_table_insert (&config->in_set_inits, curr_basic_block->block_no, curr_in_set);
+                                hash_table_insert (&config->in_sets, curr_basic_block->block_no, curr_in_set);
 
                                 if (!BitMap_compare (old_in_set, curr_in_set))
                                         has_changes = true;
@@ -217,9 +212,9 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
                                 curr_out_set = compute_Transfer (config, curr_basic_block);
 
                                 old_out_set =
-                                        hash_table_find_and_delete (&config->out_set_inits, curr_basic_block->block_no);
+                                        hash_table_find_and_delete (&config->out_sets, curr_basic_block->block_no);
 
-                                hash_table_insert (&config->out_set_inits, curr_basic_block->block_no, curr_out_set);
+                                hash_table_insert (&config->out_sets, curr_basic_block->block_no, curr_out_set);
 
                                 if (!BitMap_compare (old_out_set, curr_out_set))
                                         has_changes = true;
@@ -227,18 +222,17 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
                         } else if (config->direction == DFA_BACKWARD) {
                                 curr_out_set = compute_Meet_from_Operands (config, curr_basic_block);
                                 old_out_set =
-                                        hash_table_find_and_delete (&config->out_set_inits, curr_basic_block->block_no);
+                                        hash_table_find_and_delete (&config->out_sets, curr_basic_block->block_no);
 
-                                hash_table_insert (&config->out_set_inits, curr_basic_block->block_no, curr_out_set);
+                                hash_table_insert (&config->out_sets, curr_basic_block->block_no, curr_out_set);
 
                                 if (!BitMap_compare (old_out_set, curr_out_set))
                                         has_changes = true;
                                 curr_in_set = compute_Transfer (config, curr_basic_block);
 
-                                old_in_set =
-                                        hash_table_find_and_delete (&config->in_set_inits, curr_basic_block->block_no);
+                                old_in_set = hash_table_find_and_delete (&config->in_sets, curr_basic_block->block_no);
 
-                                hash_table_insert (&config->in_set_inits, curr_basic_block->block_no, curr_in_set);
+                                hash_table_insert (&config->in_sets, curr_basic_block->block_no, curr_in_set);
 
                                 if (!BitMap_compare (old_in_set, curr_in_set))
                                         has_changes = true;
@@ -256,11 +250,4 @@ struct DFAResult run_DFA (struct DFAConfiguration *config, struct Function *func
         } while (has_changes);
 
         Array_free (&traversal_order);
-
-        struct DFAResult analysis_result = {
-                .in_sets = config->in_set_inits,
-                .out_sets = config->out_set_inits,
-        };
-
-        return analysis_result;
 }

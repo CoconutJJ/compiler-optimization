@@ -108,6 +108,17 @@ void Array_reverse (struct Array *array)
         }
 }
 
+struct Array Array_copy (struct Array *array)
+{
+        struct Array copy = { .array = ir_malloc (array->array_size * sizeof (void *)),
+                              .array_size = array->array_size,
+                              .array_count = array->array_count };
+
+        memcpy (copy.array, array->array, array->array_count * sizeof (void *));
+
+        return copy;
+}
+
 void *Array_iter (struct Array *array, size_t *iter_count)
 {
         if (*iter_count == Array_length (array)) {

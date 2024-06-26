@@ -26,3 +26,4 @@ void *Array_get_index (struct Array *array, size_t index);
 void Array_set_index (struct Array *array, size_t index, void *item);
 void Array_insert (struct Array *array, size_t index, void *item);
 void *Array_iter (struct Array *array, size_t *iter_count);
+struct Array Array_copy (struct Array *array);

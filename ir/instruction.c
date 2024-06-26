@@ -2,8 +2,8 @@
 #include "array.h"
 #include "basicblock.h"
 #include "global_constants.h"
-#include "mem.h"
 #include "lexer.h"
+#include "mem.h"
 #include "utils.h"
 #include "value.h"
 #include <assert.h>

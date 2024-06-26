@@ -3,6 +3,7 @@
 #include "map.h"
 #include "mem.h"
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,6 +89,17 @@ int64_t BitMap_iter (struct BitMap *a, size_t *iter_count)
 
         *iter_count = 0;
         return -1LL;
+}
+
+size_t BitMap_count (struct BitMap *a)
+{
+        size_t total_set_bits = 0;
+
+        for (size_t i = 0; i < a->size; i++) {
+                total_set_bits += __builtin_popcountll (a->map[i]);
+        }
+
+        return total_set_bits;
 }
 
 struct BitMap *BitMap_Complement (struct BitMap *a, struct BitMap *dest)

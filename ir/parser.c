@@ -5,9 +5,9 @@
 #include "function.h"
 #include "global_constants.h"
 #include "instruction.h"
+#include "lexer.h"
 #include "map.h"
 #include "mem.h"
-#include "lexer.h"
 #include "utils.h"
 #include "value.h"
 #include <assert.h>

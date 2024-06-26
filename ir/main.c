@@ -67,10 +67,8 @@ int main (int argc, char **argv)
                 struct BasicBlock *block;
                 size_t block_iter = 0;
                 while ((block = Array_iter (entry->value, &block_iter)) != NULL) {
-
-                        printf("Block %ld\n", block->block_no);
-
+                        printf ("Block %ld\n", block->block_no);
                 }
         }
-        ir_free_all();
+        ir_free_all ();
 }

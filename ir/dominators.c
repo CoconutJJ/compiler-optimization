@@ -29,8 +29,8 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
 
         assert (BASICBLOCK_IS_ENTRY (function->entry_basic_block));
 
-        hash_table_init (&config.in_set_inits);
-        hash_table_init (&config.out_set_inits);
+        hash_table_init (&config.in_sets);
+        hash_table_init (&config.out_sets);
         BitMap_init (&config.top, MAX_BASIC_BLOCK_COUNT);
         BitMap_fill (&config.top);
 
@@ -43,16 +43,16 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
                         BitMap_fill (out_map);
                 }
 
-                hash_table_insert (&config.out_set_inits, block_no, out_map);
+                hash_table_insert (&config.out_sets, block_no, out_map);
 
                 struct BitMap *in_map = BitMap_create (MAX_BASIC_BLOCK_COUNT);
-                hash_table_insert (&config.in_set_inits, block_no, in_map);
+                hash_table_insert (&config.in_sets, block_no, in_map);
         }
 
         return config;
 }
 
-static HashTable ComputeDominatorTree (struct Function *function, struct DFAResult *result)
+static HashTable ComputeDominatorTree (struct Function *function, struct DFAConfiguration *result)
 {
         struct Array traversal_order = reverse_postorder (function->entry_basic_block);
         struct BasicBlock *curr_block;
@@ -110,8 +110,10 @@ HashTable ComputeDominanceFrontier (struct Function *function)
 {
         struct Array postorder_traversal = postorder (function->entry_basic_block);
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
-        struct DFAResult result = run_DFA (&config, function);
-        HashTable dominator_tree_adj = ComputeDominatorTree (function, &result);
+
+        run_DFA (&config, function);
+
+        HashTable dominator_tree_adj = ComputeDominatorTree (function, &config);
 
         // Compute the transpose graph from the dominator tree adjacency list
         // Each node is guaranteed to have only one direct predecessor, since
@@ -176,6 +178,8 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                         }
                 }
         }
-
+        hash_table_free (&dominator_tree_adj);
+        hash_table_free (&dominator_tree_transpose);
+        Array_free (&postorder_traversal);
         return dominance_frontier;
 }
