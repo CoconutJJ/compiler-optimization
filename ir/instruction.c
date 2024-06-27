@@ -24,6 +24,10 @@ void Instruction_init (struct Instruction *instruction)
 
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index)
 {
+        if (INST_ISA (instruction, OPCODE_PHI)) {
+                return Array_get_index (&instruction->operand_list, operand_index);
+        }
+
         switch (operand_index) {
         case 0: return instruction->operands.first;
         case 1:
@@ -39,10 +43,29 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
         switch (operand_index) {
         case 0: instruction->operands.first = operand; break;
         case 1: instruction->operands.second = operand; break;
-        default: UNREACHABLE ("Invalid dataflow direction!");
+        default: UNREACHABLE ("Invalid operand index!");
         }
 
         Use_link (AS_VALUE (instruction), operand, operand_index);
+}
+struct Value *Instruction_Load_From_Operand (struct Instruction *instruction)
+{
+        ASSERT (INST_ISA (instruction, OPCODE_LOAD), "Must be a load instruction!");
+
+        return Instruction_get_operand (instruction, 0);
+}
+
+struct Value *Instruction_Store_To_Operand (struct Instruction *instruction)
+{
+        ASSERT (INST_ISA (instruction, OPCODE_STORE), "Must be a store instruction!");
+
+        return Instruction_get_operand (instruction, 0);
+}
+
+struct Value *Instruction_Store_From_Operand (struct Instruction *instruction)
+{
+        ASSERT (INST_ISA (instruction, OPCODE_STORE), "Must be a store instruction!");
+        return Instruction_get_operand (instruction, 1);
 }
 
 void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand)

@@ -190,9 +190,9 @@ bool match_token (enum TokenType t)
         return false;
 }
 
-void _va_error (struct Token target, char *message, va_list args)
+void _va_error (struct Token target, char *title, char *annotation, va_list args)
 {
-        fprintf (stderr, "Error on line %ld:%ld\n\n", target.line_number, target.column_number);
+        fprintf (stderr, "%s on line %ld:%ld\n\n", title, target.line_number, target.column_number);
 
         char *c = target.line;
         while (*c != '\n' && *c != '\0') {
@@ -207,7 +207,7 @@ void _va_error (struct Token target, char *message, va_list args)
         }
         fprintf (stderr, "^_____");
 
-        vfprintf (stderr, message, args);
+        vfprintf (stderr, annotation, args);
         fputc ('\n', stderr);
 }
 
@@ -215,7 +215,7 @@ void error (struct Token target, char *message, ...)
 {
         va_list args;
         va_start (args, message);
-        _va_error (target, message, args);
+        _va_error (target, "error", message, args);
         va_end (args);
 }
 
@@ -229,7 +229,7 @@ struct Token consume_token (enum TokenType t, char *error_message, ...)
 
         va_list args;
         va_start (args, error_message);
-        _va_error (curr, error_message, args);
+        _va_error (curr, "error", error_message, args);
         va_end (args);
         exit (EXIT_FAILURE);
 }

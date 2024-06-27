@@ -29,7 +29,7 @@ static void check_valid_assignment_target (struct Token dest_token, char *error_
 
         va_list args;
         va_start (args, error_message);
-        _va_error (dest_token, error_message, args);
+        _va_error (dest_token, "error", error_message, args);
         va_end (args);
 
         if (VALUE_IS_INST (value)) {

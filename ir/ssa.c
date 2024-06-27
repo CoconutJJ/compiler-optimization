@@ -247,9 +247,12 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
 
         while ((curr_inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
                 if (INST_ISA (curr_inst, OPCODE_LOAD)) {
-                        // TODO
+                        struct Value *load_from = Instruction_Load_From_Operand (curr_inst);
+                        Value_Replace_All_Uses_With (AS_VALUE(curr_inst), SSAFrame_search (frame, load_from->value_no));
                 } else if (INST_ISA (curr_inst, OPCODE_STORE)) {
-                        // TODO
+                        struct Value *store_to = Instruction_Store_To_Operand(curr_inst);
+                        struct Value *store_from = Instruction_Store_From_Operand(curr_inst);
+                        SSAFrame_insert(frame, store_to->value_no, store_from);
                 }
         }
 

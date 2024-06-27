@@ -1,4 +1,5 @@
 #include "array.h"
+#include "global_constants.h"
 #include "map.h"
 #include "mem.h"
 #include <assert.h>
@@ -127,6 +128,23 @@ void *Array_iter (struct Array *array, size_t *iter_count)
         }
 
         return Array_get_index (array, (*iter_count)++);
+}
+
+void Array_empty (struct Array *array)
+{
+        array->array_count = 0;
+
+        if (array->array_size > DYNARR_INIT_SIZE_CNT) {
+                array->array_size = DYNARR_INIT_SIZE_CNT;
+                array->array = ir_realloc (array->array, array->array_size * sizeof(void *));
+        }
+}
+
+void Array_apply (struct Array *array, ArrayApplyFn map)
+{
+        for (size_t i = 0; i < array->array_count; i++) {
+                map (array->array[i]);
+        }
 }
 
 void Array_free (struct Array *array)

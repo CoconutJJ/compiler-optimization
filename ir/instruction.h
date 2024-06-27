@@ -47,3 +47,6 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
 void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand);
+struct Value *Instruction_Load_From_Operand (struct Instruction *instruction);
+struct Value *Instruction_Store_To_Operand (struct Instruction *instruction);
+struct Value *Instruction_Store_From_Operand (struct Instruction *instruction);
