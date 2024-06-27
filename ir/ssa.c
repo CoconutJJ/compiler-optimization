@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct SSAFrame *SSAFrame_create ()
+static struct SSAFrame *SSAFrame_create ()
 {
         struct SSAFrame *frame = ir_malloc (sizeof (struct SSAFrame));
 
@@ -29,14 +29,14 @@ struct SSAFrame *SSAFrame_create ()
         return frame;
 }
 
-void SSAFrame_free (struct SSAFrame *frame)
+static void SSAFrame_free (struct SSAFrame *frame)
 {
         hash_table_free (&frame->variable_map);
 
         ir_free (frame);
 }
 
-struct SSAFrame *SSAFrame_push (struct SSAFrame *curr_frame)
+static struct SSAFrame *SSAFrame_push (struct SSAFrame *curr_frame)
 {
         curr_frame->next = SSAFrame_create ();
 
@@ -45,7 +45,7 @@ struct SSAFrame *SSAFrame_push (struct SSAFrame *curr_frame)
         return curr_frame->next;
 }
 
-struct SSAFrame *SSAFrame_pop (struct SSAFrame *curr_frame)
+static struct SSAFrame *SSAFrame_pop (struct SSAFrame *curr_frame)
 {
         struct SSAFrame *prev = curr_frame->prev;
 
@@ -54,12 +54,12 @@ struct SSAFrame *SSAFrame_pop (struct SSAFrame *curr_frame)
         return prev;
 }
 
-void SSAFrame_insert (struct SSAFrame *frame, uint64_t key, void *value)
+static void SSAFrame_insert (struct SSAFrame *frame, uint64_t key, void *value)
 {
         hash_table_insert (&frame->variable_map, key, value);
 }
 
-void *SSAFrame_search (struct SSAFrame *frame, uint64_t key)
+static void *SSAFrame_search (struct SSAFrame *frame, uint64_t key)
 {
         while (frame != NULL) {
                 void *value = hash_table_search (&frame->variable_map, key);
@@ -248,11 +248,12 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
         while ((curr_inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
                 if (INST_ISA (curr_inst, OPCODE_LOAD)) {
                         struct Value *load_from = Instruction_Load_From_Operand (curr_inst);
-                        Value_Replace_All_Uses_With (AS_VALUE(curr_inst), SSAFrame_search (frame, load_from->value_no));
+                        Value_Replace_All_Uses_With (AS_VALUE (curr_inst),
+                                                     SSAFrame_search (frame, load_from->value_no));
                 } else if (INST_ISA (curr_inst, OPCODE_STORE)) {
-                        struct Value *store_to = Instruction_Store_To_Operand(curr_inst);
-                        struct Value *store_from = Instruction_Store_From_Operand(curr_inst);
-                        SSAFrame_insert(frame, store_to->value_no, store_from);
+                        struct Value *store_to = Instruction_Store_To_Operand (curr_inst);
+                        struct Value *store_from = Instruction_Store_From_Operand (curr_inst);
+                        SSAFrame_insert (frame, store_to->value_no, store_from);
                 }
         }
 
@@ -267,4 +268,19 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                 Rename (basic_block->right, phi_node_mapping, frame, visited);
                 frame = SSAFrame_pop (frame);
         }
+}
+
+void SSATranslation (struct Function *function)
+{
+        struct Array allocas = Find_Allocas (function);
+
+        struct HashTable phi_node_mapping = Insert_Phi_Into_Blocks (function, &allocas);
+
+        struct SSAFrame *frame = SSAFrame_create ();
+
+        struct BitMap visited;
+
+        BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
+
+        Rename (function->entry_basic_block, &phi_node_mapping, frame, &visited);
 }

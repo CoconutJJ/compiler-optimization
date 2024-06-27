@@ -136,7 +136,7 @@ void Array_empty (struct Array *array)
 
         if (array->array_size > DYNARR_INIT_SIZE_CNT) {
                 array->array_size = DYNARR_INIT_SIZE_CNT;
-                array->array = ir_realloc (array->array, array->array_size * sizeof(void *));
+                array->array = ir_realloc (array->array, array->array_size * sizeof (void *));
         }
 }
 

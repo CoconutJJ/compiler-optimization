@@ -13,7 +13,7 @@ struct Array {
 #define DYNARR_ITEM_OFFSET(item_size, index)       ((index) * (item_size))
 #define DYNARR_ITEM_ADDR(buffer, item_size, index) (AS_BYTE_BUFFER (buffer) + DYNARR_ITEM_OFFSET (item_size, index))
 
-typedef void (*ArrayApplyFn)(void *);
+typedef void (*ArrayApplyFn) (void *);
 
 void Array_init (struct Array *array);
 struct Array *Array_create (void);
