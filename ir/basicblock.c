@@ -44,6 +44,13 @@ void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlo
         Array_push (&right_child->preds, basic_block);
 }
 
+void BasicBlock_prepend_Instruction(struct BasicBlock *basic_block, struct Instruction *instruction) {
+
+        Array_insert(&basic_block->values, 0, instruction);
+        instruction->parent = basic_block;
+
+}
+
 void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)
 {
         Array_push (&basic_block->values, instruction);

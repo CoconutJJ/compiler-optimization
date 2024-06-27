@@ -13,6 +13,7 @@ enum BasicBlockType { BASICBLOCK_ENTRY, BASICBLOCK_NORMAL, BASICBLOCK_EXIT };
 struct BasicBlock {
         size_t block_no;
         enum BasicBlockType type;
+        
         struct Array values;
 
         struct Function *parent;
@@ -32,3 +33,4 @@ struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block,
 struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count);
 struct Instruction *BasicBlock_Instruction_ReverseIter (struct BasicBlock *basic_block, size_t *iter_count);
 void BasicBlock_free (struct BasicBlock *basic_block);
+void BasicBlock_prepend_Instruction(struct BasicBlock *basic_block, struct Instruction *instruction);
