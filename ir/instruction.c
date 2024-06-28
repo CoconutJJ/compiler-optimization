@@ -31,8 +31,7 @@ struct Value *Instruction_get_operand (struct Instruction *instruction, int oper
         switch (operand_index) {
         case 0: return instruction->operands.first;
         case 1:
-                if (INST_IS_BINARY_OP (instruction))
-                        return instruction->operands.second;
+                return instruction->operands.second;
                 /* fall through if condition fails */
         default: return NULL;
         }
@@ -128,7 +127,11 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
         case OPCODE_LOAD:
         case OPCODE_STORE:
         case OPCODE_ALLOCA: instruction->inst_type = INST_MEM; break;
-        case OPCODE_PHI: Array_init (&instruction->operand_list); break;
+        case OPCODE_PHI: {
+                instruction->inst_type = INST_MEM;
+                Array_init (&instruction->operand_list); 
+                break;
+        }
 
         default:
                 error (dest_token, "Invalid instruction: %s", Token_to_str (dest_token));

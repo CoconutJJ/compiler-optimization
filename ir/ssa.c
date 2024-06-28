@@ -236,6 +236,11 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
 
                 struct Value *top_value = SSAFrame_search (frame, alloca_inst->value_no);
 
+                if (!top_value) {
+                        error(alloca_inst->token, "Attempting to populate PHI node for alloca instruction, but value is potentially undefined.");
+                        exit(EXIT_FAILURE);
+                }
+
                 Instruction_push_phi_operand_list (curr_inst, top_value);
         }
 

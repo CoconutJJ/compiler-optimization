@@ -31,7 +31,7 @@ struct Value *Value_Use_iter (struct Value *value, size_t *iter_count)
                 return NULL;
         }
 
-        return use->usee;
+        return use->user;
 }
 
 void Value_Replace_All_Uses_With (struct Value *target, struct Value *replacement)
@@ -72,5 +72,5 @@ void Use_link (struct Value *user, struct Value *usee, int usee_operand_no)
         use->usee = usee;
         use->user = user;
 
-        Array_push (&user->uses, use);
+        Array_push (&usee->uses, use);
 }

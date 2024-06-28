@@ -5,6 +5,7 @@
 #include "map.h"
 #include "mem.h"
 #include "parser.h"
+#include "ssa.h"
 #include "utils.h"
 #include <getopt.h>
 #include <stdio.h>
@@ -58,17 +59,19 @@ int main (int argc, char **argv)
 
         // display_function (function);
 
-        HashTable dominance_frontier = ComputeDominanceFrontier (function);
-        HashTableEntry *entry;
-        size_t iter_count = 0;
-        while ((entry = hash_table_entry_iter (&dominance_frontier, &iter_count)) != NULL) {
-                printf ("Dominance frontier of block %lld is...\n", entry->key);
+        SSATranslation (function);
 
-                struct BasicBlock *block;
-                size_t block_iter = 0;
-                while ((block = Array_iter (entry->value, &block_iter)) != NULL) {
-                        printf ("Block %ld\n", block->block_no);
-                }
-        }
+        // HashTable dominance_frontier = ComputeDominanceFrontier (function);
+        // HashTableEntry *entry;
+        // size_t iter_count = 0;
+        // while ((entry = hash_table_entry_iter (&dominance_frontier, &iter_count)) != NULL) {
+        //         printf ("Dominance frontier of block %lld is...\n", entry->key);
+
+        //         struct BasicBlock *block;
+        //         size_t block_iter = 0;
+        //         while ((block = Array_iter (entry->value, &block_iter)) != NULL) {
+        //                 printf ("Block %ld\n", block->block_no);
+        //         }
+        // }
         ir_free_all ();
 }
