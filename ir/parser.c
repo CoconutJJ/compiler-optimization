@@ -126,6 +126,10 @@ static void parse_binary_operator_operands (struct Instruction *instruction)
 
 static void parse_branch_operand (struct Instruction *instruction)
 {
+        consume_token (LABEL_LITERAL,
+                       "%s instruction requires `label` literal prefix before specifying label",
+                       Token_to_str (instruction->value.token));
+
         struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
 
         Instruction_set_operand (instruction, AS_VALUE (Constant_create (token)), 0);

@@ -11,6 +11,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main (int argc, char **argv)
 {
@@ -20,12 +21,13 @@ int main (int argc, char **argv)
                 (struct option){ 0 }
         };
 
-        char *ir_file_name = NULL;
+        char *ir_file_name = NULL, *passes = NULL;
         int opt_index = 0, c;
 
-        while ((c = getopt_long (argc, argv, "f:", long_opts, &opt_index)) != EOF) {
+        while ((c = getopt_long (argc, argv, "f:p:", long_opts, &opt_index)) != EOF) {
                 switch (c) {
                 case 'f': ir_file_name = optarg; break;
+                case 'p': passes = optarg; break;
                 case '?': exit (EXIT_FAILURE); break;
                 default: fprintf (stderr, "error: unknown argument %c", c); exit (EXIT_FAILURE);
                 }
@@ -58,24 +60,25 @@ int main (int argc, char **argv)
 
         struct Function *function = parse_ir (ir_source);
 
-        display_function (function);
+        char *pass = strtok (passes, ",");
 
-        SSATranslation (function);
+        if (!pass) {
+                fprintf (stderr, "error: No passes specified. Use argument -p pass1,pass2,... to specify.\n");
+                exit (EXIT_FAILURE);
+        }
 
-        EmitInit ();
-        EmitBasicBlock (function->entry_basic_block);
+        while (pass) {
+                if (strcmp (pass, "ssa") == 0) {
+                        SSATranslation (function);
+                } else if (strcmp (pass, "cfg") == 0) {
+                        display_function (function);
+                } else if (strcmp (pass, "disp") == 0) {
+                        EmitInit ();
+                        EmitFunction (function);
+                }
 
-        // HashTable dominance_frontier = ComputeDominanceFrontier (function);
-        // HashTableEntry *entry;
-        // size_t iter_count = 0;
-        // while ((entry = hash_table_entry_iter (&dominance_frontier, &iter_count)) != NULL) {
-        //         printf ("Dominance frontier of block %lld is...\n", entry->key);
+                pass = strtok (NULL, ",");
+        }
 
-        //         struct BasicBlock *block;
-        //         size_t block_iter = 0;
-        //         while ((block = Array_iter (entry->value, &block_iter)) != NULL) {
-        //                 printf ("Block %ld\n", block->block_no);
-        //         }
-        // }
         ir_free_all ();
 }

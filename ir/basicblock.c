@@ -2,6 +2,7 @@
 #include "array.h"
 #include "global_constants.h"
 #include "instruction.h"
+#include "utils.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -59,6 +60,7 @@ void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruct
 
 bool BasicBlock_remove_Instruction (struct BasicBlock *basic_block, struct Instruction *inst)
 {
+
         for (size_t i = 0; i < Array_length (&basic_block->values); i++) {
                 struct Instruction *curr = Array_get_index (&basic_block->values, i);
 

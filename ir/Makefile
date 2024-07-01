@@ -1,5 +1,4 @@
-OPT = -O3
-FLAGS = -Wall -Wextra -Wmissing-prototypes
+FLAGS := -Wall -Wextra -Wmissing-prototypes
 CC = gcc
 OBJECTS =   parser.o \
 			main.o \
@@ -21,18 +20,16 @@ OBJECTS =   parser.o \
 
 
 ifdef DEBUG
-	OPT = -g
+	FLAGS := -g $(FLAGS)
 else
-	OPT = -O3
+	FLAGS := -O3 $(FLAGS)
 endif
-
 
 all: $(OBJECTS)
 	$(CC) $(OPT) $(FLAGS) $^ -o ir
 
 %.o: %.c *.h
 	$(CC) $(OPT) $(FLAGS) -c $< -o $@
-
 
 clean:
 	rm *.o

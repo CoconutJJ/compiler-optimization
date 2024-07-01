@@ -66,13 +66,13 @@ void EmitIR (struct BasicBlock *basic_block)
                 EmitOperand (fst);                                                                                     \
                 EmitComma ();                                                                                          \
                 EmitOperand (snd);                                                                                     \
-                EmitNewLine ();                                                                                        \
         }
 
         struct Instruction *inst;
         size_t iter_count = 0;
 
         while ((inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
+                printf ("    ");
                 switch (inst->op_code) {
                 case OPCODE_ADD: {
                         EMIT_BINARY_OP ("add ");
@@ -104,7 +104,6 @@ void EmitIR (struct BasicBlock *basic_block)
                         printf ("jumpif %d", FindBasicBlockLabel (basic_block->right));
                         EmitComma ();
                         EmitOperand (cond);
-                        EmitNewLine ();
                         break;
                 };
                 case OPCODE_PHI: {
@@ -120,7 +119,6 @@ void EmitIR (struct BasicBlock *basic_block)
                                         EmitComma ();
                                 }
                         }
-                        EmitNewLine ();
                         break;
                 };
                 case OPCODE_STORE: {
@@ -131,7 +129,6 @@ void EmitIR (struct BasicBlock *basic_block)
                         EmitOperand (AS_VALUE (alloca_inst));
                         EmitComma ();
                         EmitOperand (AS_VALUE (store_value));
-                        EmitNewLine ();
 
                         break;
                 };
@@ -154,29 +151,30 @@ void EmitIR (struct BasicBlock *basic_block)
                         EmitOperand (AS_VALUE (inst));
                         EmitComma ();
                         EmitConst (size);
-                        EmitNewLine ();
 
                         break;
                 }
                 case OPCODE_NIL: {
                         printf ("nil");
-                        EmitNewLine ();
                         break;
                 }
                 }
+
+                EmitNewLine ();
         }
 }
 
-void EmitBasicBlock (struct BasicBlock *block)
+static void EmitBasicBlock (struct BasicBlock *block)
 {
         if (BitMap_BitIsSet (&visited, block->block_no))
                 return;
 
         BitMap_setbit (&visited, block->block_no);
 
-        printf ("\n%d:\n", FindBasicBlockLabel (block));
-
-        EmitIR (block);
+        if (Array_length (&block->preds) > 0) {
+                printf ("\n%d:\n", FindBasicBlockLabel (block));
+                EmitIR (block);
+        }
 
         if (block->left) {
                 EmitBasicBlock (block->left);
@@ -194,4 +192,19 @@ void EmitInit ()
 
 void EmitFunction (struct Function *function)
 {
+        printf ("fn %s (", function->fn_name);
+
+        struct Argument *arg;
+        size_t iter_count = 0;
+
+        while ((arg = Array_iter (&function->arguments, &iter_count)) != NULL) {
+                EmitOperand (AS_VALUE (arg));
+
+                if (iter_count < Array_length (&function->arguments))
+                        EmitComma ();
+        }
+
+        printf (") {\n");
+        EmitBasicBlock (function->entry_basic_block);
+        printf ("}\n");
 }

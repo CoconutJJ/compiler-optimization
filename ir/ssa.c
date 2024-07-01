@@ -185,12 +185,10 @@ static HashTable Insert_Phi_Into_Blocks (struct Function *function, struct Array
                         }
 
                         // TODO: insert a Phi node for each block in IDF list
-
                         while ((curr_frontier_node = Array_iter (&IDF, &frontier_iter)) != NULL) {
                                 // check if block already as phi node for current alloca instruction, if so, skip
-                                if (Block_has_Phi_Node_for_Alloca (curr_frontier_node, alloca_inst, &phi_node_mapping)) {
+                                if (Block_has_Phi_Node_for_Alloca (curr_frontier_node, alloca_inst, &phi_node_mapping))
                                         continue;
-                                }
 
                                 struct Instruction *phi_inst = Insert_Phi_Node (curr_frontier_node);
                                 hash_table_insert (&phi_node_mapping, AS_VALUE (phi_inst)->value_no, alloca_inst);
@@ -299,6 +297,9 @@ static void RemoveMemoryInstructions (struct Function *function)
 
         while ((curr_mem_inst = Array_iter (&mem_inst, &iter_count)) != NULL) {
                 Instruction_Remove_From_Parent (curr_mem_inst);
+                
+                Instruction_free(curr_mem_inst);
+                ir_free(curr_mem_inst);
         }
 
         Array_free (&mem_inst);

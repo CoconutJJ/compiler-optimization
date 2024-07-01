@@ -22,6 +22,15 @@ void Instruction_init (struct Instruction *instruction)
         instruction->operands.second = NULL;
 }
 
+void Instruction_free (struct Instruction *instruction)
+{
+        if (INST_ISA (instruction, OPCODE_PHI)) {
+                Array_free (&instruction->operand_list);
+        }
+
+        Value_free (&instruction->value);
+}
+
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index)
 {
         if (INST_ISA (instruction, OPCODE_PHI)) {

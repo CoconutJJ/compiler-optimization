@@ -18,6 +18,11 @@ void Value_init (struct Value *value)
         Array_init (&value->uses);
 }
 
+void Value_free (struct Value *value)
+{
+        Array_free (&value->uses);
+}
+
 void Value_set_token (struct Value *value, struct Token token)
 {
         value->token = token;

@@ -51,3 +51,4 @@ struct Value *Instruction_Load_From_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_To_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_From_Operand (struct Instruction *instruction);
 bool Instruction_Remove_From_Parent (struct Instruction *instruction);
+void Instruction_free (struct Instruction *instruction);
