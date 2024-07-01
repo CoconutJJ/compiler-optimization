@@ -1,0 +1,34 @@
+fn test5(%1, %2) {
+
+    alloca %9, 5          
+    alloca %10, 5        
+    alloca %11, 5       
+
+    store %9, %1             
+    store %10, %1        
+    store %11, %1       
+
+    add %3, %1, %2      
+    store %9, %3        
+    cmp %4, %1, %2      
+    jumpif 1, %4        
+
+    sub %5, %3, 1       
+    store %10, %5       
+    jumpif 2, %5        
+
+1:
+    add %6, %1, 20      
+    store %9, %6        
+    store %10, %6       
+    jump 3              
+
+2:
+    add %7, %2, 30      
+    store %11, %7       
+    store %10, %7       
+
+3:
+    sub %8, %3, %3      
+    store %11, %8       
+}

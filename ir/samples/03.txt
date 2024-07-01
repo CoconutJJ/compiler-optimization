@@ -5,6 +5,7 @@ fn test5(%1, %2) {
     alloca %10, 3 
     alloca %11, 4 
     add %3, %1, %2
+    store %9, %3  
     store %10, %3  
     store %11, %3
     cmp %4, %1, %2
