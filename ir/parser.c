@@ -202,6 +202,8 @@ static void parse_load_instruction (struct Instruction *instruction)
 
         check_valid_assignment_target (dest, "Invalid assignment target %s", Token_to_str (dest));
 
+        hash_table_insert (&value_table, dest.value, instruction);
+
         consume_token (COMMA,
                        "Expected `,` after destination operand %s, found %s instead",
                        Token_to_str (dest),
@@ -235,25 +237,35 @@ static void parse_store_instruction (struct Instruction *instruction)
                 exit (EXIT_FAILURE);
         }
 
+        Instruction_set_operand (instruction, alloca_value, 0);
         consume_token (COMMA,
                        "Expected `,` after target address %s, found %s instead",
                        Token_to_str (address),
                        Token_to_str (peek_token ()));
 
-        struct Token src =
-                consume_token (VARIABLE,
-                               "Expected source variable after `,` for `store` instruction, found %s instead",
-                               Token_to_str (peek_token ()));
+        struct Token src = peek_token ();
 
-        struct Value *src_value = find_Value (src.value);
+        if (match_token (VARIABLE)) {
+                struct Value *src_value = find_Value (src.value);
+                if (!src_value) {
+                        error (src,
+                               "No definition found for source variable %s in store instruction",
+                               Token_to_str (src));
+                        exit (EXIT_FAILURE);
+                }
+                Instruction_set_operand (instruction, src_value, 1);
 
-        if (!src_value) {
-                error (src, "No definition found for source variable %s in store instruction", Token_to_str (src));
+        } else if (match_token (INTEGER)) {
+                struct Value *const_src = AS_VALUE (Constant_create (src));
+
+                Instruction_set_operand (instruction, const_src, 1);
+
+        } else {
+                error (src,
+                       "Expected source variable after `,` for `store` instruction, found %s instead",
+                       Token_to_str (peek_token ()));
                 exit (EXIT_FAILURE);
         }
-
-        Instruction_set_operand (instruction, alloca_value, 0);
-        Instruction_set_operand (instruction, find_Value (src.value), 1);
 }
 
 static struct Instruction *parse_instruction ()

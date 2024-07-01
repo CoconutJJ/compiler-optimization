@@ -16,7 +16,8 @@ OBJECTS =   parser.o \
 			dfa.o \
 			dominators.o \
 			bitmap.o \
-			ssa.o 
+			ssa.o \
+			ir_gen.o
 
 
 ifdef DEBUG

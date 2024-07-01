@@ -3,6 +3,7 @@
 #include "global_constants.h"
 #include "instruction.h"
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
@@ -54,6 +55,20 @@ void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruct
 {
         Array_push (&basic_block->values, instruction);
         instruction->parent = basic_block;
+}
+
+bool BasicBlock_remove_Instruction (struct BasicBlock *basic_block, struct Instruction *inst)
+{
+        for (size_t i = 0; i < Array_length (&basic_block->values); i++) {
+                struct Instruction *curr = Array_get_index (&basic_block->values, i);
+
+                if (curr == inst) {
+                        Array_delete (&basic_block->values, i);
+                        return true;
+                }
+        }
+
+        return false;
 }
 
 struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count)

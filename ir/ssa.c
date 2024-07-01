@@ -73,44 +73,6 @@ static void *SSAFrame_search (struct SSAFrame *frame, uint64_t key)
         return NULL;
 }
 
-static bool is_used_across_multiple_blocks (struct Instruction *alloca_instruction)
-{
-        if (Value_Use_count (AS_VALUE (alloca_instruction)) < 2) {
-                return false;
-        }
-
-        struct Value *use;
-        size_t use_iter = 0;
-
-        struct BitMap blocks_def;
-        struct BitMap blocks_use;
-
-        BitMap_init (&blocks_def, MAX_BASIC_BLOCK_COUNT);
-        BitMap_init (&blocks_use, MAX_BASIC_BLOCK_COUNT);
-
-        while ((use = Value_Use_iter (AS_VALUE (alloca_instruction), &use_iter)) != NULL) {
-                if (INST_ISA (AS_INST (use), OPCODE_LOAD)) {
-                        BitMap_setbit (&blocks_use, AS_INST (use)->parent->block_no);
-                } else if (INST_ISA (AS_INST (use), OPCODE_STORE)) {
-                        BitMap_setbit (&blocks_def, AS_INST (use)->parent->block_no);
-                } else {
-                        error (use->token, "%s cannot reference an alloca target", Token_to_str (use->token));
-                        error (AS_VALUE (alloca_instruction)->token, "note: alloca instruction defined here");
-                        exit (EXIT_FAILURE);
-                }
-        }
-
-        size_t use_count = BitMap_count (&blocks_use);
-
-        BitMap_free (&blocks_use);
-        BitMap_free (&blocks_def);
-
-        if (use_count < 2)
-                return false;
-
-        return true;
-}
-
 static struct Array Find_Allocas (struct Function *function)
 {
         struct Array postorder_traversal = postorder (function->entry_basic_block);
@@ -147,6 +109,25 @@ static struct Instruction *Insert_Phi_Node (struct BasicBlock *basic_block)
         BasicBlock_prepend_Instruction (basic_block, phi_node);
 
         return phi_node;
+}
+
+static bool
+Block_has_Phi_Node_for_Alloca (struct BasicBlock *block, struct Instruction *alloca_inst, HashTable *phi_map)
+{
+        struct Instruction *curr_inst;
+        size_t iter_count = 0;
+
+        while ((curr_inst = BasicBlock_Instruction_iter (block, &iter_count)) != NULL) {
+                if (!INST_ISA (curr_inst, OPCODE_PHI))
+                        continue;
+
+                struct Instruction *alloca_candidate = hash_table_search (phi_map, AS_VALUE (curr_inst)->value_no);
+
+                if (alloca_candidate == alloca_inst)
+                        return true;
+        }
+
+        return false;
 }
 
 static HashTable Insert_Phi_Into_Blocks (struct Function *function, struct Array *allocas)
@@ -206,6 +187,11 @@ static HashTable Insert_Phi_Into_Blocks (struct Function *function, struct Array
                         // TODO: insert a Phi node for each block in IDF list
 
                         while ((curr_frontier_node = Array_iter (&IDF, &frontier_iter)) != NULL) {
+                                // check if block already as phi node for current alloca instruction, if so, skip
+                                if (Block_has_Phi_Node_for_Alloca (curr_frontier_node, alloca_inst, &phi_node_mapping)) {
+                                        continue;
+                                }
+
                                 struct Instruction *phi_inst = Insert_Phi_Node (curr_frontier_node);
                                 hash_table_insert (&phi_node_mapping, AS_VALUE (phi_inst)->value_no, alloca_inst);
                         }
@@ -237,13 +223,17 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                 struct Value *top_value = SSAFrame_search (frame, alloca_inst->value_no);
 
                 if (!top_value) {
-                        error(alloca_inst->token, "Attempting to populate PHI node for alloca instruction, but value is potentially undefined.");
-                        exit(EXIT_FAILURE);
+                        error (alloca_inst->token,
+                               "Attempting to populate PHI node for alloca instruction, but value is potentially undefined.");
+                        exit (EXIT_FAILURE);
                 }
 
                 Instruction_push_phi_operand_list (curr_inst, top_value);
+                SSAFrame_insert (frame, alloca_inst->value_no, curr_inst);
         }
 
+        // we may need to revisit a block to insert Phi operands, so we only perform the visited check after inserting
+        // the phi operands.
         if (BitMap_BitIsSet (visited, basic_block->block_no)) {
                 return;
         } else {
@@ -253,6 +243,12 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
         while ((curr_inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
                 if (INST_ISA (curr_inst, OPCODE_LOAD)) {
                         struct Value *load_from = Instruction_Load_From_Operand (curr_inst);
+
+                        if (!VALUE_IS_INST (load_from) || !INST_ISA (AS_INST (load_from), OPCODE_ALLOCA)) {
+                                error (load_from->token, "Expected alloca instruction target for load src operand!");
+                                exit (EXIT_FAILURE);
+                        }
+
                         Value_Replace_All_Uses_With (AS_VALUE (curr_inst),
                                                      SSAFrame_search (frame, load_from->value_no));
                 } else if (INST_ISA (curr_inst, OPCODE_STORE)) {
@@ -275,6 +271,39 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
         }
 }
 
+static void RemoveMemoryInstructions (struct Function *function)
+{
+        struct Array mem_inst;
+        Array_init (&mem_inst);
+
+        struct Array traversal = postorder (function->entry_basic_block);
+
+        struct BasicBlock *block;
+        size_t iter_count = 0;
+        while ((block = Array_iter (&traversal, &iter_count)) != NULL) {
+                struct Instruction *inst;
+                size_t inst_count = 0;
+
+                while ((inst = BasicBlock_Instruction_iter (block, &inst_count)) != NULL) {
+                        if (!INST_ISA (inst, OPCODE_STORE) && !INST_ISA (inst, OPCODE_LOAD) &&
+                            !INST_ISA (inst, OPCODE_ALLOCA))
+                                continue;
+
+                        Array_push (&mem_inst, inst);
+                }
+        }
+
+        Array_free (&traversal);
+
+        struct Instruction *curr_mem_inst;
+
+        while ((curr_mem_inst = Array_iter (&mem_inst, &iter_count)) != NULL) {
+                Instruction_Remove_From_Parent (curr_mem_inst);
+        }
+
+        Array_free (&mem_inst);
+}
+
 void SSATranslation (struct Function *function)
 {
         struct Array allocas = Find_Allocas (function);
@@ -288,4 +317,6 @@ void SSATranslation (struct Function *function)
         BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
 
         Rename (function->entry_basic_block, &phi_node_mapping, frame, &visited);
+
+        RemoveMemoryInstructions (function);
 }

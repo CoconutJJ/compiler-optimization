@@ -9,4 +9,5 @@
 #define AS_VALUE(val)         ((struct Value *)(val))
 #define AS_CONST(constant)    ((struct Constant *)(constant))
 #define VALUE_IS_INST(value)  ((value)->value_type == VALUE_INST)
+#define VALUE_IS_CONST(value) ((value)->value_type == VALUE_CONST)
 #define VALUE_IS_ARG(value)   ((value)->value_type == VALUE_ARGUMENT)

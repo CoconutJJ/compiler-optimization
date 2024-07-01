@@ -73,6 +73,15 @@ void Array_insert (struct Array *array, size_t index, void *item)
         memmove (&array->array[index + 1], &array->array[index], (array->array_count - (index)) * sizeof (void *));
 
         array->array[index] = item;
+        array->array_count++;
+}
+
+void Array_delete (struct Array *array, size_t index)
+{
+        memmove (&array->array[index], &array->array[index + 1], (array->array_count - (index + 1)) * sizeof (void *));
+        array->array_count--;
+
+        Array_resize_if_required (array);
 }
 
 void Array_set_index (struct Array *array, size_t index, void *item)

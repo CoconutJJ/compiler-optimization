@@ -125,7 +125,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         struct HashTableEntry *entry;
         size_t entry_iter = 0;
 
-        while ((entry = hash_table_entry_iter (&dominator_tree_adj, &entry_iter))) {
+        while ((entry = hash_table_entry_iter (&dominator_tree_adj, &entry_iter)) != NULL) {
                 struct Array *doms = entry->value;
                 size_t doms_iter = 0;
                 struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);

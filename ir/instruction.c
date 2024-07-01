@@ -47,6 +47,14 @@ void Instruction_set_operand (struct Instruction *instruction, struct Value *ope
 
         Use_link (AS_VALUE (instruction), operand, operand_index);
 }
+
+bool Instruction_Remove_From_Parent (struct Instruction *instruction)
+{
+        struct BasicBlock *parent = instruction->parent;
+
+        return BasicBlock_remove_Instruction (parent, instruction);
+}
+
 struct Value *Instruction_Load_From_Operand (struct Instruction *instruction)
 {
         ASSERT (INST_ISA (instruction, OPCODE_LOAD), "Must be a load instruction!");
@@ -129,7 +137,7 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
         case OPCODE_ALLOCA: instruction->inst_type = INST_MEM; break;
         case OPCODE_PHI: {
                 instruction->inst_type = INST_MEM;
-                Array_init (&instruction->operand_list); 
+                Array_init (&instruction->operand_list);
                 break;
         }
 

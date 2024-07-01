@@ -2,6 +2,7 @@
 #include "dfa.h"
 #include "dominators.h"
 #include "function.h"
+#include "ir_gen.h"
 #include "map.h"
 #include "mem.h"
 #include "parser.h"
@@ -57,9 +58,12 @@ int main (int argc, char **argv)
 
         struct Function *function = parse_ir (ir_source);
 
-        // display_function (function);
+        display_function (function);
 
         SSATranslation (function);
+
+        EmitInit ();
+        EmitBasicBlock (function->entry_basic_block);
 
         // HashTable dominance_frontier = ComputeDominanceFrontier (function);
         // HashTableEntry *entry;

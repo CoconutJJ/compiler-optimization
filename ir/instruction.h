@@ -50,3 +50,4 @@ void Instruction_push_phi_operand_list (struct Instruction *instruction, struct 
 struct Value *Instruction_Load_From_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_To_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_From_Operand (struct Instruction *instruction);
+bool Instruction_Remove_From_Parent (struct Instruction *instruction);

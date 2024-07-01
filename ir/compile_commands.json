@@ -238,5 +238,37 @@
     "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
     "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.c",
     "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wmissing-prototypes",
+      "-c",
+      "-o",
+      "ssa.o",
+      "ssa.c"
+    ],
+    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.c",
+    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wmissing-prototypes",
+      "-c",
+      "-o",
+      "ir_gen.o",
+      "ir_gen.c"
+    ],
+    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.c",
+    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.o"
   }
 ]
