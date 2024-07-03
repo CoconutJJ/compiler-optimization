@@ -58,7 +58,7 @@ int main (int argc, char **argv)
 
         ir_source[ir_file_size] = '\0';
 
-        struct Function *function = parse_ir (ir_source);
+        struct Function *function = ParseIR (ir_source);
 
         char *pass = strtok (passes, ",");
 
@@ -71,7 +71,7 @@ int main (int argc, char **argv)
                 if (strcmp (pass, "ssa") == 0) {
                         SSATranslation (function);
                 } else if (strcmp (pass, "cfg") == 0) {
-                        display_function (function);
+                        PrintFunction (function);
                 } else if (strcmp (pass, "disp") == 0) {
                         EmitInit ();
                         EmitFunction (function);

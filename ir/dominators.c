@@ -12,12 +12,12 @@
 
 void DominatorTransfer (struct BitMap *in, void *basic_block)
 {
-        BitMap_setbit (in, ((struct BasicBlock *)basic_block)->block_no);
+        BitMapSetBit (in, ((struct BasicBlock *)basic_block)->block_no);
 }
 
 void DominatorMeet (struct BitMap *accum, struct BitMap *item)
 {
-        BitMap_inplace_Intersect (accum, item);
+        BitMapInPlaceIntersect (accum, item);
 }
 
 struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
@@ -31,21 +31,21 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
 
         hash_table_init (&config.in_sets);
         hash_table_init (&config.out_sets);
-        BitMap_init (&config.top, MAX_BASIC_BLOCK_COUNT);
-        BitMap_fill (&config.top);
+        BitMapInit (&config.top, MAX_BASIC_BLOCK_COUNT);
+        BitMapFill (&config.top);
 
         for (size_t block_no = 0; block_no < MAX_BASIC_BLOCK_COUNT; block_no++) {
-                struct BitMap *out_map = BitMap_create (MAX_BASIC_BLOCK_COUNT);
+                struct BitMap *out_map = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
 
                 if (block_no == function->entry_basic_block->block_no) {
-                        BitMap_setbit (out_map, block_no);
+                        BitMapSetBit (out_map, block_no);
                 } else {
-                        BitMap_fill (out_map);
+                        BitMapFill (out_map);
                 }
 
                 hash_table_insert (&config.out_sets, block_no, out_map);
 
-                struct BitMap *in_map = BitMap_create (MAX_BASIC_BLOCK_COUNT);
+                struct BitMap *in_map = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
                 hash_table_insert (&config.in_sets, block_no, in_map);
         }
 
@@ -84,7 +84,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
 
                         // check if current immediate dominator dominates the
                         // dom_block candidate
-                        if (BitMap_BitIsSet (dom_block_map, immediate_dom->block_no)) {
+                        if (BitMapIsSet (dom_block_map, immediate_dom->block_no)) {
                                 immediate_dom = dom_block;
                         }
                 }
@@ -155,7 +155,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                 // dominator of this block
                 size_t preds_iter = 0;
                 struct BasicBlock *pred;
-                while ((pred = BasicBlock_preds_iter (block, &preds_iter))) {
+                while ((pred = BasicBlockPredsIter (block, &preds_iter))) {
                         // The dominators of each predecessor also contain this
                         // block in their dominance frontier sets, unless such
                         // block also dominates this block. Walk up the

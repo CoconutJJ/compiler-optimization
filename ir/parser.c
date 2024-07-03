@@ -20,7 +20,7 @@
 static HashTable value_table;
 static HashTable label_table;
 
-static void check_valid_assignment_target (struct Token dest_token, char *error_message, ...)
+static void CheckValidAssignmentTarget (struct Token dest_token, char *error_message, ...)
 {
         struct Value *value = hash_table_search (&value_table, dest_token.value);
 
@@ -29,7 +29,7 @@ static void check_valid_assignment_target (struct Token dest_token, char *error_
 
         va_list args;
         va_start (args, error_message);
-        _va_error (dest_token, "error", error_message, args);
+        va_error (dest_token, "error", error_message, args);
         va_end (args);
 
         if (VALUE_IS_INST (value)) {
@@ -39,16 +39,16 @@ static void check_valid_assignment_target (struct Token dest_token, char *error_
         exit (EXIT_FAILURE);
 }
 
-static struct BasicBlock *BasicBlock_create (enum BasicBlockType type)
+static struct BasicBlock *BasicBlockCreate (enum BasicBlockType type)
 {
         struct BasicBlock *basic_block = ir_malloc (sizeof (struct BasicBlock));
 
-        BasicBlock_init (basic_block, type);
+        BasicBlockInit (basic_block, type);
 
         return basic_block;
 }
 
-static struct Function *Function_create ()
+static struct Function *FunctionCreate ()
 {
         struct Function *function = ir_malloc (sizeof (struct Function));
 
@@ -57,7 +57,7 @@ static struct Function *Function_create ()
         return function;
 }
 
-static struct Argument *Argument_create ()
+static struct Argument *ArgumentCreate ()
 {
         struct Argument *argument = ir_malloc (sizeof (struct Argument));
 
@@ -66,65 +66,65 @@ static struct Argument *Argument_create ()
         return argument;
 }
 
-static void Function_set_name (struct Function *function, char *name)
+static void FunctionSetName (struct Function *function, char *name)
 {
         assert (strlen (name) <= MAX_IDENTIFIER_LEN);
 
         strcpy (function->fn_name, name);
 }
 
-static struct Constant *Constant_create (struct Token constant_token)
+static struct Constant *ConstantCreate (struct Token constant_token)
 {
         struct Constant *constant = ir_malloc (sizeof (struct Constant));
 
-        Constant_init (constant, constant_token.value);
+        ConstantInit (constant, constant_token.value);
 
         Value_set_token (AS_VALUE (constant), constant_token);
 
         return constant;
 }
 
-static struct Value *find_Value (uint64_t value_no)
+static struct Value *FindValue (uint64_t value_no)
 {
         struct Value *value = hash_table_search (&value_table, value_no);
 
         return value;
 }
 
-static void parse_operand (struct Instruction *instruction, int operand_index)
+static void ParseOperand (struct Instruction *instruction, int operand_index)
 {
         struct Token token = peek_token ();
         if (match_token (INTEGER)) {
-                struct Constant *op = Constant_create (token);
+                struct Constant *op = ConstantCreate (token);
                 Instruction_set_operand (instruction, AS_VALUE (op), operand_index);
         } else {
                 struct Token fst_op =
                         consume_token (VARIABLE, "Expected variable or constant as %d operand!", operand_index + 1);
 
-                struct Value *op = find_Value (fst_op.value);
+                struct Value *op = FindValue (fst_op.value);
 
                 Instruction_set_operand (instruction, op, operand_index);
         }
 }
 
-static void parse_binary_operator_operands (struct Instruction *instruction)
+static void ParseBinaryOperatorOperands (struct Instruction *instruction)
 {
         struct Token token = consume_token (VARIABLE, "Expected destination operand to be a variable!\n");
 
-        check_valid_assignment_target (token, "Invalid assignment target %s", Token_to_str (token));
+        CheckValidAssignmentTarget (token, "Invalid assignment target %s", Token_to_str (token));
 
         hash_table_insert (&value_table, token.value, AS_VALUE (instruction));
 
         consume_token (COMMA, "Expected ',' after destination operand\n");
 
-        parse_operand (instruction, 0);
+        ParseOperand (instruction, 0);
 
         consume_token (COMMA, "Expected ',' after first operand\n");
 
-        parse_operand (instruction, 1);
+        ParseOperand (instruction, 1);
 }
 
-static void parse_branch_operand (struct Instruction *instruction)
+static void ParseBranchOperand (struct Instruction *instruction)
 {
         consume_token (LABEL_LITERAL,
                        "%s instruction requires `label` literal prefix before specifying label",
@@ -132,29 +132,29 @@ static void parse_branch_operand (struct Instruction *instruction)
 
         struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
 
-        Instruction_set_operand (instruction, AS_VALUE (Constant_create (token)), 0);
+        Instruction_set_operand (instruction, AS_VALUE (ConstantCreate (token)), 0);
 
         if (instruction->op_code == OPCODE_JUMPIF) {
                 consume_token (COMMA, "Expected `, <condition>` after jumpif target label\n");
-                parse_operand (instruction, 1);
+                ParseOperand (instruction, 1);
         }
 }
 
-static struct BasicBlock *find_BasicBlock (uint64_t label_no)
+static struct BasicBlock *FindBasicblock (uint64_t label_no)
 {
         struct BasicBlock *basic_block = hash_table_search (&label_table, label_no);
 
         if (!basic_block) {
                 // if the block doesn't exist yet, create it. This is usually
                 // because we are jumping to a label we have not yet parsed.
-                basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
+                basic_block = BasicBlockCreate (BASICBLOCK_NORMAL);
                 hash_table_insert (&label_table, label_no, basic_block);
         }
 
         return basic_block;
 }
 
-static void parse_phi_instruction (struct Instruction *phi_instruction)
+static void ParsePhiInstruction (struct Instruction *phi_instruction)
 {
         struct Token dest_token = consume_token (VARIABLE,
                                                  "Expected destination operand as first argument for PHI "
@@ -164,22 +164,33 @@ static void parse_phi_instruction (struct Instruction *phi_instruction)
         hash_table_insert (&value_table, dest_token.value, phi_instruction);
 
         do {
+                consume_token (LBRACKET, "Expected opening '[' for PHI instruction operand pair [operand, label].");
                 struct Token token = peek_token ();
 
+                struct Value *operand = NULL;
+
                 if (match_token (VARIABLE)) {
-                        Instruction_push_phi_operand_list (phi_instruction, find_Value (token.value));
+                        operand = FindValue (token.value);
                 } else if (match_token (INTEGER)) {
-                        Instruction_push_phi_operand_list (phi_instruction, AS_VALUE (Constant_create (token)));
+                        operand = AS_VALUE (ConstantCreate (token));
                 } else {
                         error (peek_token (),
                                "Expected either a variable or integer constant as PHI instruction operand, got %s instead\n",
                                Token_to_str (peek_token ()));
                         exit (EXIT_FAILURE);
                 }
+
+                consume_token (COMMA, "Expected ',' after PHI instruction operand");
+
+                struct Token label_token = consume_token (INTEGER, "Expected label value after phi function operand.");
+
+                consume_token (RBRACKET, "Expected closing ']' after PHI instruction operand pair.");
+
+                Instruction_push_phi_operand_list (phi_instruction, operand, FindBasicblock (label_token.value));
         } while (match_token (COMMA));
 }
 
-static void parse_alloca_instruction (struct Instruction *instruction)
+static void ParseAllocaInstruction (struct Instruction *instruction)
 {
         struct Token dest = consume_token (VARIABLE,
                                            "Expected target variable after `alloca` instruction, found %s instead",
@@ -195,16 +206,16 @@ static void parse_alloca_instruction (struct Instruction *instruction)
 
         hash_table_insert (&value_table, dest.value, instruction);
 
-        Instruction_set_operand (instruction, AS_VALUE (Constant_create (size)), 0);
+        Instruction_set_operand (instruction, AS_VALUE (ConstantCreate (size)), 0);
 }
 
-static void parse_load_instruction (struct Instruction *instruction)
+static void ParseLoadInstruction (struct Instruction *instruction)
 {
         struct Token dest = consume_token (VARIABLE,
                                            "Expected target variable after `load` instruction, found %s instead",
                                            Token_to_str (peek_token ()));
 
-        check_valid_assignment_target (dest, "Invalid assignment target %s", Token_to_str (dest));
+        CheckValidAssignmentTarget (dest, "Invalid assignment target %s", Token_to_str (dest));
 
         hash_table_insert (&value_table, dest.value, instruction);
 
@@ -216,7 +227,7 @@ static void parse_load_instruction (struct Instruction *instruction)
         struct Token address = consume_token (
                 VARIABLE, "Expected alloca address target variable, found %s instead", Token_to_str (peek_token ()));
 
-        struct Value *alloca_value = find_Value (address.value);
+        struct Value *alloca_value = FindValue (address.value);
 
         if (!VALUE_IS_INST (alloca_value) || !INST_ISA (AS_INST (alloca_value), OPCODE_ALLOCA)) {
                 error (address, "Expected address variable to be defined as target of `alloca` instruction.");
@@ -227,13 +238,13 @@ static void parse_load_instruction (struct Instruction *instruction)
         Instruction_set_operand (instruction, alloca_value, 0);
 }
 
-static void parse_store_instruction (struct Instruction *instruction)
+static void ParseStoreInstruction (struct Instruction *instruction)
 {
         struct Token address = consume_token (VARIABLE,
                                               "Expected target address after `store` instruction, found %s instead",
                                               Token_to_str (peek_token ()));
 
-        struct Value *alloca_value = find_Value (address.value);
+        struct Value *alloca_value = FindValue (address.value);
 
         if (!VALUE_IS_INST (alloca_value) || !INST_ISA (AS_INST (alloca_value), OPCODE_ALLOCA)) {
                 error (address, "Expected address variable to be defined as target of `alloca` instruction.");
@@ -250,7 +261,7 @@ static void parse_store_instruction (struct Instruction *instruction)
         struct Token src = peek_token ();
 
         if (match_token (VARIABLE)) {
-                struct Value *src_value = find_Value (src.value);
+                struct Value *src_value = FindValue (src.value);
                 if (!src_value) {
                         error (src,
                                "No definition found for source variable %s in store instruction",
@@ -260,7 +271,7 @@ static void parse_store_instruction (struct Instruction *instruction)
                 Instruction_set_operand (instruction, src_value, 1);
 
         } else if (match_token (INTEGER)) {
-                struct Value *const_src = AS_VALUE (Constant_create (src));
+                struct Value *const_src = AS_VALUE (ConstantCreate (src));
 
                 Instruction_set_operand (instruction, const_src, 1);
 
@@ -272,7 +283,7 @@ static void parse_store_instruction (struct Instruction *instruction)
         }
 }
 
-static struct Instruction *parse_instruction ()
+static struct Instruction *ParseInstruction ()
 {
         struct Instruction *new_instruction;
 
@@ -282,7 +293,7 @@ static struct Instruction *parse_instruction ()
         case INSTRUCTION_ADD: {
                 new_instruction = Instruction_create (OPCODE_ADD, inst_token);
                 advance_token ();
-                parse_binary_operator_operands (new_instruction);
+                ParseBinaryOperatorOperands (new_instruction);
 
                 break;
         }
@@ -290,7 +301,7 @@ static struct Instruction *parse_instruction ()
                 new_instruction = Instruction_create (OPCODE_SUB, inst_token);
                 advance_token ();
 
-                parse_binary_operator_operands (new_instruction);
+                ParseBinaryOperatorOperands (new_instruction);
 
                 break;
         }
@@ -298,7 +309,7 @@ static struct Instruction *parse_instruction ()
                 new_instruction = Instruction_create (OPCODE_MUL, inst_token);
                 advance_token ();
 
-                parse_binary_operator_operands (new_instruction);
+                ParseBinaryOperatorOperands (new_instruction);
 
                 break;
         }
@@ -306,7 +317,7 @@ static struct Instruction *parse_instruction ()
                 new_instruction = Instruction_create (OPCODE_DIV, inst_token);
                 advance_token ();
 
-                parse_binary_operator_operands (new_instruction);
+                ParseBinaryOperatorOperands (new_instruction);
 
                 break;
         }
@@ -314,49 +325,49 @@ static struct Instruction *parse_instruction ()
                 new_instruction = Instruction_create (OPCODE_CMP, inst_token);
                 advance_token ();
 
-                parse_binary_operator_operands (new_instruction);
+                ParseBinaryOperatorOperands (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMP: {
                 new_instruction = Instruction_create (OPCODE_JUMP, inst_token);
                 advance_token ();
 
-                parse_branch_operand (new_instruction);
+                ParseBranchOperand (new_instruction);
                 break;
         }
         case INSTRUCTION_JUMPIF: {
                 new_instruction = Instruction_create (OPCODE_JUMPIF, inst_token);
                 advance_token ();
 
-                parse_branch_operand (new_instruction);
+                ParseBranchOperand (new_instruction);
                 break;
         }
         case INSTRUCTION_ALLOCA: {
                 new_instruction = Instruction_create (OPCODE_ALLOCA, inst_token);
                 advance_token ();
 
-                parse_alloca_instruction (new_instruction);
+                ParseAllocaInstruction (new_instruction);
                 break;
         }
         case INSTRUCTION_PHI: {
                 new_instruction = Instruction_create (OPCODE_PHI, inst_token);
                 advance_token ();
 
-                parse_phi_instruction (new_instruction);
+                ParsePhiInstruction (new_instruction);
                 break;
         }
         case INSTRUCTION_LOAD: {
                 new_instruction = Instruction_create (OPCODE_LOAD, inst_token);
                 advance_token ();
 
-                parse_load_instruction (new_instruction);
+                ParseLoadInstruction (new_instruction);
                 break;
         }
         case INSTRUCTION_STORE: {
                 new_instruction = Instruction_create (OPCODE_STORE, inst_token);
                 advance_token ();
 
-                parse_store_instruction (new_instruction);
+                ParseStoreInstruction (new_instruction);
                 break;
         }
         default: return NULL;
@@ -365,44 +376,44 @@ static struct Instruction *parse_instruction ()
         return new_instruction;
 }
 
-static struct BasicBlock *parse_basic_block ()
+static struct BasicBlock *ParseBasicBlock ()
 {
         struct BasicBlock *basic_block;
         struct Token label = peek_token ();
         bool has_progress = false;
 
         if (match_token (LABEL)) {
-                basic_block = find_BasicBlock (label.value);
+                basic_block = FindBasicblock (label.value);
                 has_progress = true;
         } else {
-                basic_block = BasicBlock_create (BASICBLOCK_NORMAL);
+                basic_block = BasicBlockCreate (BASICBLOCK_NORMAL);
         }
 
         struct Instruction *inst;
 
-        while ((inst = parse_instruction ()) != NULL) {
+        while ((inst = ParseInstruction ()) != NULL) {
                 has_progress = true;
-                BasicBlock_add_Instruction (basic_block, inst);
+                BasicBlockAddInstruction (basic_block, inst);
 
                 if (INST_IS_BRANCH (inst)) {
                         struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
-                        BasicBlock_set_right_child (basic_block, find_BasicBlock (jump_location->constant));
+                        BasicBlockSetRightChild (basic_block, FindBasicblock (jump_location->constant));
                         return basic_block;
                 }
         }
 
         if (!has_progress) {
-                BasicBlock_free (basic_block);
+                BasicBlockFree (basic_block);
                 return NULL;
         }
 
         return basic_block;
 }
 
-static struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
+static struct BasicBlock *AddEntryAndExitBlocks (struct BasicBlock *root)
 {
-        struct BasicBlock *entry = BasicBlock_create (BASICBLOCK_ENTRY);
-        struct BasicBlock *exit = BasicBlock_create (BASICBLOCK_EXIT);
+        struct BasicBlock *entry = BasicBlockCreate (BASICBLOCK_ENTRY);
+        struct BasicBlock *exit = BasicBlockCreate (BASICBLOCK_EXIT);
 
         struct Array stack;
         Array_init (&stack);
@@ -413,32 +424,32 @@ static struct BasicBlock *add_entry_and_exit_blocks (struct BasicBlock *root)
 
                 // add the left and right child
                 if (!curr->left) {
-                        BasicBlock_set_left_child (curr, exit);
+                        BasicBlockSetLeftChild (curr, exit);
 
                         Array_push (&stack, curr->right);
                 }
 
                 if (!curr->right) {
-                        BasicBlock_set_right_child (curr, exit);
+                        BasicBlockSetRightChild (curr, exit);
 
                         Array_push (&stack, curr->left);
                 }
         }
 
-        BasicBlock_set_left_child (entry, root);
+        BasicBlockSetLeftChild (entry, root);
 
         Array_free (&stack);
 
         return entry;
 }
 
-static struct BasicBlock *parse_block (struct Token function_name)
+static struct BasicBlock *ParseBlock (struct Token function_name)
 {
         consume_token (LCURLY, "Expected opening `{` after function %s", Token_to_str (function_name));
         struct BasicBlock *curr_block = NULL, *root = NULL;
 
         while (!match_token (RCURLY)) {
-                struct BasicBlock *target_block = parse_basic_block ();
+                struct BasicBlock *target_block = ParseBasicBlock ();
 
                 if (!target_block) {
                         error (peek_token (),
@@ -448,7 +459,7 @@ static struct BasicBlock *parse_block (struct Token function_name)
                 }
 
                 if (curr_block)
-                        BasicBlock_set_left_child (curr_block, target_block);
+                        BasicBlockSetLeftChild (curr_block, target_block);
                 else
                         root = target_block;
 
@@ -458,18 +469,18 @@ static struct BasicBlock *parse_block (struct Token function_name)
         return root;
 }
 
-static struct Function *parse_function ()
+static struct Function *ParseFunction ()
 {
         hash_table_empty (&value_table);
         hash_table_empty (&label_table);
 
         consume_token (FN, "Expected `fn` keyword for function.\n");
 
-        struct Function *function = Function_create ();
+        struct Function *function = FunctionCreate ();
 
         struct Token fn_name = consume_token (STR, "Expected function name after `fn` keyword.\n");
 
-        Function_set_name (function, fn_name.str_value);
+        FunctionSetName (function, fn_name.str_value);
 
         consume_token (LPAREN, "Expected opening '(' after function name declaration.\n");
 
@@ -480,7 +491,7 @@ static struct Function *parse_function ()
                                                           "Expected argument in function argument list, got %s instead",
                                                           Token_to_str (peek_token ()));
 
-                        struct Argument *arg = Argument_create ();
+                        struct Argument *arg = ArgumentCreate ();
 
                         Function_add_argument (function, arg);
 
@@ -497,23 +508,23 @@ static struct Function *parse_function ()
                 }
         }
 
-        struct BasicBlock *root = parse_block (fn_name);
+        struct BasicBlock *root = ParseBlock (fn_name);
 
-        function->entry_basic_block = add_entry_and_exit_blocks (root);
+        function->entry_basic_block = AddEntryAndExitBlocks (root);
 
         Function_update_block_number_mapping (function);
 
         return function;
 }
 
-static void display_basic_block (struct BasicBlock *basic_block, struct HashTable *visited)
+static void PrintBasicBlock (struct BasicBlock *basic_block, struct HashTable *visited)
 {
         if (hash_table_search (visited, basic_block->block_no) != NULL)
                 return;
         else
                 hash_table_insert (visited, basic_block->block_no, basic_block);
 
-        size_t instruction_count = BasicBlock_get_Instruction_count (basic_block);
+        size_t instruction_count = BasicBlockGetInstructionCount (basic_block);
 
         int left_child_no = -1, right_child_no = -1;
 
@@ -541,25 +552,25 @@ static void display_basic_block (struct BasicBlock *basic_block, struct HashTabl
                 right_child_no);
 
         if (basic_block->left)
-                display_basic_block (basic_block->left, visited);
+                PrintBasicBlock (basic_block->left, visited);
 
         if (basic_block->right)
-                display_basic_block (basic_block->right, visited);
+                PrintBasicBlock (basic_block->right, visited);
 }
 
-void display_function (struct Function *function)
+void PrintFunction (struct Function *function)
 {
         struct HashTable visited;
         hash_table_init (&visited);
-        display_basic_block (function->entry_basic_block, &visited);
+        PrintBasicBlock (function->entry_basic_block, &visited);
 }
 
-struct Function *parse_ir (char *ir_source)
+struct Function *ParseIR (char *ir_source)
 {
         threeaddr_init_parser (ir_source);
 
         hash_table_init (&value_table);
         hash_table_init (&label_table);
 
-        return parse_function ();
+        return ParseFunction ();
 }

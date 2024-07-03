@@ -71,7 +71,7 @@ void EmitIR (struct BasicBlock *basic_block)
         struct Instruction *inst;
         size_t iter_count = 0;
 
-        while ((inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
+        while ((inst = BasicBlockInstructionIter (basic_block, &iter_count)) != NULL) {
                 printf ("    ");
                 switch (inst->op_code) {
                 case OPCODE_ADD: {
@@ -107,14 +107,17 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 };
                 case OPCODE_PHI: {
-                        struct Value *curr;
+                        struct SSAOperand *curr;
                         size_t iter_count = 0;
                         printf ("phi ");
                         EmitOperand (AS_VALUE (inst));
                         EmitComma ();
-                        while ((curr = Array_iter (&inst->operand_list, &iter_count)) != NULL) {
-                                EmitOperand (curr);
 
+                        while ((curr = Array_iter (&inst->operand_list, &iter_count)) != NULL) {
+                                putc ('[', stdout);
+                                EmitOperand (curr->operand);
+                                EmitComma ();
+                                printf ("%d]", FindBasicBlockLabel (curr->pred_block));
                                 if (iter_count < Array_length (&inst->operand_list)) {
                                         EmitComma ();
                                 }
@@ -166,10 +169,10 @@ void EmitIR (struct BasicBlock *basic_block)
 
 static void EmitBasicBlock (struct BasicBlock *block)
 {
-        if (BitMap_BitIsSet (&visited, block->block_no))
+        if (BitMapIsSet (&visited, block->block_no))
                 return;
 
-        BitMap_setbit (&visited, block->block_no);
+        BitMapSetBit (&visited, block->block_no);
 
         if (Array_length (&block->preds) > 0) {
                 printf ("\n%d:\n", FindBasicBlockLabel (block));
@@ -187,7 +190,7 @@ static void EmitBasicBlock (struct BasicBlock *block)
 
 void EmitInit ()
 {
-        BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
+        BitMapInit (&visited, MAX_BASIC_BLOCK_COUNT);
 }
 
 void EmitFunction (struct Function *function)

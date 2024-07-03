@@ -18,7 +18,7 @@
 struct BitMap *
 BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block, size_t *iter_count)
 {
-        struct BasicBlock *pred = BasicBlock_preds_iter (curr_basic_block, iter_count);
+        struct BasicBlock *pred = BasicBlockPredsIter (curr_basic_block, iter_count);
 
         if (!pred)
                 return NULL;
@@ -28,7 +28,7 @@ BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config, struct BasicBlock 
 
 struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct BitMap *map, size_t *iter_count)
 {
-        int64_t bit_no = BitMap_iter (map, iter_count);
+        int64_t bit_no = BitMapIter (map, iter_count);
 
         if (bit_no == -1LL) {
                 *iter_count = 0;
@@ -46,7 +46,7 @@ struct BitMap *BitMap_BasicBlock_successor_iter (struct DFAConfiguration *config
                                                  struct BasicBlock *curr_basic_block,
                                                  size_t *iter_count)
 {
-        struct BasicBlock *succ = BasicBlock_successors_iter (curr_basic_block, iter_count);
+        struct BasicBlock *succ = BasicBlockSuccessorsIter (curr_basic_block, iter_count);
 
         if (!succ)
                 return NULL;
@@ -62,24 +62,24 @@ struct Array postorder (struct BasicBlock *entry)
         Array_push (&stack, entry);
 
         struct BitMap visited;
-        BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
-        BitMap_setbit (&visited, entry->block_no);
+        BitMapInit (&visited, MAX_BASIC_BLOCK_COUNT);
+        BitMapSetBit (&visited, entry->block_no);
 
         Array_init (&basic_block_order);
         while (Array_length (&stack) > 0) {
                 struct BasicBlock *curr = Array_top (&stack);
 
                 // check if left child has been visited
-                if (curr->left && !BitMap_BitIsSet (&visited, curr->left->block_no)) {
+                if (curr->left && !BitMapIsSet (&visited, curr->left->block_no)) {
                         Array_push (&stack, curr->left);
-                        BitMap_setbit (&visited, curr->left->block_no);
+                        BitMapSetBit (&visited, curr->left->block_no);
                         continue;
                 }
 
                 // check if right child has been visited
-                if (curr->right && !BitMap_BitIsSet (&visited, curr->right->block_no)) {
+                if (curr->right && !BitMapIsSet (&visited, curr->right->block_no)) {
                         Array_push (&stack, curr->right);
-                        BitMap_setbit (&visited, curr->right->block_no);
+                        BitMapSetBit (&visited, curr->right->block_no);
                         continue;
                 }
 
@@ -105,8 +105,8 @@ static struct BitMap *compute_Meet_from_Operands (struct DFAConfiguration *confi
 {
         size_t iter_count = 0;
 
-        struct BitMap *curr_in_set = BitMap_create (MAX_BASIC_BLOCK_COUNT);
-        BitMap_copy (&config->top, curr_in_set);
+        struct BitMap *curr_in_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
+        BitMapCopy (&config->top, curr_in_set);
 
         BasicBlockDirectionalIter OperandIter;
 
@@ -136,13 +136,13 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         struct BitMap *curr_out_set, *curr_in_set;
 
         if (config->direction == DFA_FORWARD) {
-                curr_out_set = BitMap_create (MAX_BASIC_BLOCK_COUNT);
+                curr_out_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
                 curr_in_set = hash_table_search (&config->in_sets, curr_basic_block->block_no);
-                BitMap_copy (curr_in_set, curr_out_set);
+                BitMapCopy (curr_in_set, curr_out_set);
         } else if (config->direction == DFA_BACKWARD) {
-                curr_in_set = BitMap_create (MAX_BASIC_BLOCK_COUNT);
+                curr_in_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
                 curr_out_set = hash_table_search (&config->out_sets, curr_basic_block->block_no);
-                BitMap_copy (curr_out_set, curr_in_set);
+                BitMapCopy (curr_out_set, curr_in_set);
         } else {
                 UNREACHABLE ("Invalid dataflow direction!");
         }
@@ -162,9 +162,9 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         case DOMAIN_INSTRUCTION: {
                 InstructionIter InstIter = NULL;
                 if (config->direction == DFA_FORWARD)
-                        InstIter = BasicBlock_Instruction_iter;
+                        InstIter = BasicBlockInstructionIter;
                 else if (config->direction == DFA_BACKWARD)
-                        InstIter = BasicBlock_Instruction_ReverseIter;
+                        InstIter = BasicBlockInstructionReverseIter;
                 else
                         UNREACHABLE ("Invalid dataflow direction!");
 
@@ -206,7 +206,7 @@ void run_DFA (struct DFAConfiguration *config, struct Function *function)
 
                                 hash_table_insert (&config->in_sets, curr_basic_block->block_no, curr_in_set);
 
-                                if (!BitMap_compare (old_in_set, curr_in_set))
+                                if (!BitMapCompare (old_in_set, curr_in_set))
                                         has_changes = true;
 
                                 curr_out_set = compute_Transfer (config, curr_basic_block);
@@ -216,7 +216,7 @@ void run_DFA (struct DFAConfiguration *config, struct Function *function)
 
                                 hash_table_insert (&config->out_sets, curr_basic_block->block_no, curr_out_set);
 
-                                if (!BitMap_compare (old_out_set, curr_out_set))
+                                if (!BitMapCompare (old_out_set, curr_out_set))
                                         has_changes = true;
 
                         } else if (config->direction == DFA_BACKWARD) {
@@ -226,7 +226,7 @@ void run_DFA (struct DFAConfiguration *config, struct Function *function)
 
                                 hash_table_insert (&config->out_sets, curr_basic_block->block_no, curr_out_set);
 
-                                if (!BitMap_compare (old_out_set, curr_out_set))
+                                if (!BitMapCompare (old_out_set, curr_out_set))
                                         has_changes = true;
                                 curr_in_set = compute_Transfer (config, curr_basic_block);
 
@@ -234,18 +234,15 @@ void run_DFA (struct DFAConfiguration *config, struct Function *function)
 
                                 hash_table_insert (&config->in_sets, curr_basic_block->block_no, curr_in_set);
 
-                                if (!BitMap_compare (old_in_set, curr_in_set))
+                                if (!BitMapCompare (old_in_set, curr_in_set))
                                         has_changes = true;
                         } else {
                                 UNREACHABLE ("Invalid dataflow direction!");
                         }
 
                         // free the old in and out set
-                        BitMap_free (old_in_set);
-                        BitMap_free (old_out_set);
-
-                        ir_free (old_in_set);
-                        ir_free (old_out_set);
+                        BitMapDestroy (old_in_set);
+                        BitMapDestroy (old_out_set);
                 }
         } while (has_changes);
 

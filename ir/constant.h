@@ -6,4 +6,4 @@ struct Constant {
         int constant;
 };
 
-void Constant_init (struct Constant *constant, int constant_value);
+void ConstantInit (struct Constant *constant, int constant_value);

@@ -6,5 +6,5 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void display_function (struct Function *function);
-struct Function *parse_ir (char *ir_source);
+void PrintFunction (struct Function *function);
+struct Function *ParseIR (char *ir_source);

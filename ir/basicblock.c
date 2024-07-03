@@ -8,7 +8,7 @@
 #include <stdlib.h>
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
-void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
+void BasicBlockInit (struct BasicBlock *basic_block, enum BasicBlockType type)
 {
         basic_block->type = type;
 
@@ -22,45 +22,44 @@ void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type)
         Array_init (&basic_block->values);
 }
 
-void BasicBlock_free (struct BasicBlock *basic_block)
+void BasicBlockFree (struct BasicBlock *basic_block)
 {
         Array_free (&basic_block->preds);
         Array_free (&basic_block->values);
 }
 
-size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block)
+size_t BasicBlockGetInstructionCount (struct BasicBlock *basic_block)
 {
         return Array_length (&basic_block->values);
 }
 
-void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBlock *left_child)
+void BasicBlockSetLeftChild (struct BasicBlock *basic_block, struct BasicBlock *left_child)
 {
         basic_block->left = left_child;
 
         Array_push (&left_child->preds, basic_block);
 }
 
-void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child)
+void BasicBlockSetRightChild (struct BasicBlock *basic_block, struct BasicBlock *right_child)
 {
         basic_block->right = right_child;
         Array_push (&right_child->preds, basic_block);
 }
 
-void BasicBlock_prepend_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)
+void BasicBlockPrependInstruction (struct BasicBlock *basic_block, struct Instruction *instruction)
 {
         Array_insert (&basic_block->values, 0, instruction);
         instruction->parent = basic_block;
 }
 
-void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction)
+void BasicBlockAddInstruction (struct BasicBlock *basic_block, struct Instruction *instruction)
 {
         Array_push (&basic_block->values, instruction);
         instruction->parent = basic_block;
 }
 
-bool BasicBlock_remove_Instruction (struct BasicBlock *basic_block, struct Instruction *inst)
+bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruction *inst)
 {
-
         for (size_t i = 0; i < Array_length (&basic_block->values); i++) {
                 struct Instruction *curr = Array_get_index (&basic_block->values, i);
 
@@ -73,12 +72,12 @@ bool BasicBlock_remove_Instruction (struct BasicBlock *basic_block, struct Instr
         return false;
 }
 
-struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count)
+struct BasicBlock *BasicBlockPredsIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         return Array_iter (&basic_block->preds, iter_count);
 }
 
-struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count)
+struct BasicBlock *BasicBlockSuccessorsIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         if (*iter_count == 0) {
                 (*iter_count)++;
@@ -92,7 +91,7 @@ struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, s
         }
 }
 
-struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count)
+struct Instruction *BasicBlockInstructionIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         if (Array_length (&basic_block->values) == *iter_count) {
                 *iter_count = 0;
@@ -106,7 +105,7 @@ struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block,
         return instruction;
 }
 
-struct Instruction *BasicBlock_Instruction_ReverseIter (struct BasicBlock *basic_block, size_t *iter_count)
+struct Instruction *BasicBlockInstructionReverseIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         size_t n = Array_length (&basic_block->values);
 

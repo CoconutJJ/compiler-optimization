@@ -10,6 +10,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static struct SSAOperand *SSAOperand_create (struct Value *operand, struct BasicBlock *pred)
+{
+        struct SSAOperand *ssa_operand = ir_malloc (sizeof (struct SSAOperand));
+
+        ssa_operand->operand = operand;
+        ssa_operand->pred_block = pred;
+
+        return ssa_operand;
+}
+
+static void SSAOperand_destroy (struct SSAOperand *operand)
+{
+        ir_free (operand);
+}
+
 void Instruction_init (struct Instruction *instruction)
 {
         Value_init (&instruction->value);
@@ -25,16 +40,24 @@ void Instruction_init (struct Instruction *instruction)
 void Instruction_free (struct Instruction *instruction)
 {
         if (INST_ISA (instruction, OPCODE_PHI)) {
+                Array_apply (&instruction->operand_list, (ArrayApplyFn)SSAOperand_destroy);
                 Array_free (&instruction->operand_list);
         }
 
         Value_free (&instruction->value);
 }
 
+void Instruction_destroy (struct Instruction *instruction)
+{
+        Instruction_free (instruction);
+        ir_free (instruction);
+}
+
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index)
 {
         if (INST_ISA (instruction, OPCODE_PHI)) {
-                return Array_get_index (&instruction->operand_list, operand_index);
+                struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);
+                return op->operand;
         }
 
         switch (operand_index) {
@@ -48,20 +71,26 @@ struct Value *Instruction_get_operand (struct Instruction *instruction, int oper
 
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index)
 {
+        Use_link (AS_VALUE (instruction), operand, operand_index);
+
+        if (INST_ISA (instruction, OPCODE_PHI)) {
+                struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);
+                op->operand = operand;
+                return;
+        }
+
         switch (operand_index) {
         case 0: instruction->operands.first = operand; break;
         case 1: instruction->operands.second = operand; break;
         default: UNREACHABLE ("Invalid operand index!");
         }
-
-        Use_link (AS_VALUE (instruction), operand, operand_index);
 }
 
 bool Instruction_Remove_From_Parent (struct Instruction *instruction)
 {
         struct BasicBlock *parent = instruction->parent;
 
-        return BasicBlock_remove_Instruction (parent, instruction);
+        return BasicBlockRemoveInstruction (parent, instruction);
 }
 
 struct Value *Instruction_Load_From_Operand (struct Instruction *instruction)
@@ -84,9 +113,9 @@ struct Value *Instruction_Store_From_Operand (struct Instruction *instruction)
         return Instruction_get_operand (instruction, 1);
 }
 
-void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand)
+void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand, struct BasicBlock *pred)
 {
-        Array_push (&instruction->operand_list, operand);
+        Array_push (&instruction->operand_list, SSAOperand_create (operand, pred));
 
         Use_link (AS_VALUE (instruction), operand, Array_length (&instruction->operand_list) - 1);
 }
@@ -112,7 +141,7 @@ void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instructio
 
         struct Instruction *curr = NULL;
 
-        while ((curr = BasicBlock_Instruction_iter (basic_block, &index)) != NULL) {
+        while ((curr = BasicBlockInstructionIter (basic_block, &index)) != NULL) {
                 if (curr == before)
                         break;
         }

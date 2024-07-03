@@ -11,4 +11,7 @@ of anything. Just trying to prove to myself I understand the concepts
 - [ ] Out of SSA translation
 
 
+LLVM mem2reg Algorithm: https://longfangsong.github.io/en/mem2reg-made-simple/
+
+
 

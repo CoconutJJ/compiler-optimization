@@ -24,6 +24,8 @@ enum TokenType {
         FN,
         LPAREN,
         RPAREN,
+        LBRACKET,
+        RBRACKET,
         INTEGER,
         LABEL,
         LABEL_LITERAL,
@@ -54,4 +56,4 @@ struct Token peek_token (void);
 struct Token consume_token (enum TokenType t, char *error_message, ...);
 void threeaddr_init_parser (char *ir);
 void error (struct Token target, char *message, ...);
-void _va_error (struct Token target, char *title, char *annotation, va_list args);
+void va_error (struct Token target, char *title, char *annotation, va_list args);

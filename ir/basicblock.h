@@ -23,15 +23,15 @@ struct BasicBlock {
         struct BasicBlock *right;
 };
 
-void BasicBlock_init (struct BasicBlock *basic_block, enum BasicBlockType type);
-void BasicBlock_set_left_child (struct BasicBlock *basic_block, struct BasicBlock *left_child);
-void BasicBlock_set_right_child (struct BasicBlock *basic_block, struct BasicBlock *right_child);
-struct BasicBlock *BasicBlock_preds_iter (struct BasicBlock *basic_block, size_t *iter_count);
-void BasicBlock_add_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction);
-size_t BasicBlock_get_Instruction_count (struct BasicBlock *basic_block);
-struct Instruction *BasicBlock_Instruction_iter (struct BasicBlock *basic_block, size_t *iter_count);
-struct BasicBlock *BasicBlock_successors_iter (struct BasicBlock *basic_block, size_t *iter_count);
-struct Instruction *BasicBlock_Instruction_ReverseIter (struct BasicBlock *basic_block, size_t *iter_count);
-void BasicBlock_free (struct BasicBlock *basic_block);
-void BasicBlock_prepend_Instruction (struct BasicBlock *basic_block, struct Instruction *instruction);
-bool BasicBlock_remove_Instruction (struct BasicBlock *basic_block, struct Instruction *inst);
+void BasicBlockInit (struct BasicBlock *basic_block, enum BasicBlockType type);
+void BasicBlockSetLeftChild (struct BasicBlock *basic_block, struct BasicBlock *left_child);
+void BasicBlockSetRightChild (struct BasicBlock *basic_block, struct BasicBlock *right_child);
+struct BasicBlock *BasicBlockPredsIter (struct BasicBlock *basic_block, size_t *iter_count);
+void BasicBlockAddInstruction (struct BasicBlock *basic_block, struct Instruction *instruction);
+size_t BasicBlockGetInstructionCount (struct BasicBlock *basic_block);
+struct Instruction *BasicBlockInstructionIter (struct BasicBlock *basic_block, size_t *iter_count);
+struct BasicBlock *BasicBlockSuccessorsIter (struct BasicBlock *basic_block, size_t *iter_count);
+struct Instruction *BasicBlockInstructionReverseIter (struct BasicBlock *basic_block, size_t *iter_count);
+void BasicBlockFree (struct BasicBlock *basic_block);
+void BasicBlockPrependInstruction (struct BasicBlock *basic_block, struct Instruction *instruction);
+bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruction *inst);

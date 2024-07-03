@@ -17,10 +17,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static struct SSAFrame *SSAFrame_create ()
+static struct SSAFrame *SSAFrameCreate (struct BasicBlock *block)
 {
         struct SSAFrame *frame = ir_malloc (sizeof (struct SSAFrame));
 
+        frame->block = block;
         frame->next = NULL;
         frame->prev = NULL;
 
@@ -29,37 +30,37 @@ static struct SSAFrame *SSAFrame_create ()
         return frame;
 }
 
-static void SSAFrame_free (struct SSAFrame *frame)
+static void SSAFrameFree (struct SSAFrame *frame)
 {
         hash_table_free (&frame->variable_map);
 
         ir_free (frame);
 }
 
-static struct SSAFrame *SSAFrame_push (struct SSAFrame *curr_frame)
+static struct SSAFrame *SSAFramePush (struct SSAFrame *curr_frame, struct BasicBlock *block)
 {
-        curr_frame->next = SSAFrame_create ();
+        curr_frame->next = SSAFrameCreate (block);
 
         curr_frame->next->prev = curr_frame;
 
         return curr_frame->next;
 }
 
-static struct SSAFrame *SSAFrame_pop (struct SSAFrame *curr_frame)
+static struct SSAFrame *SSAFramePop (struct SSAFrame *curr_frame)
 {
         struct SSAFrame *prev = curr_frame->prev;
 
-        SSAFrame_free (curr_frame);
+        SSAFrameFree (curr_frame);
 
         return prev;
 }
 
-static void SSAFrame_insert (struct SSAFrame *frame, uint64_t key, void *value)
+static void SSAFrameInsert (struct SSAFrame *frame, uint64_t key, void *value)
 {
         hash_table_insert (&frame->variable_map, key, value);
 }
 
-static void *SSAFrame_search (struct SSAFrame *frame, uint64_t key)
+static void *SSAFrameSearch (struct SSAFrame *frame, uint64_t key)
 {
         while (frame != NULL) {
                 void *value = hash_table_search (&frame->variable_map, key);
@@ -73,7 +74,15 @@ static void *SSAFrame_search (struct SSAFrame *frame, uint64_t key)
         return NULL;
 }
 
-static struct Array Find_Allocas (struct Function *function)
+static struct BasicBlock *SSAFrameGetParentBlock (struct SSAFrame *frame)
+{
+        if (!frame->prev)
+                return NULL;
+
+        return frame->prev->block;
+}
+
+static struct Array FindAllocas (struct Function *function)
 {
         struct Array postorder_traversal = postorder (function->entry_basic_block);
 
@@ -88,7 +97,7 @@ static struct Array Find_Allocas (struct Function *function)
                 size_t inst_iter = 0;
                 struct Instruction *inst;
 
-                while ((inst = BasicBlock_Instruction_iter (block, &inst_iter)) != NULL) {
+                while ((inst = BasicBlockInstructionIter (block, &inst_iter)) != NULL) {
                         if (!INST_ISA (inst, OPCODE_ALLOCA)) {
                                 continue;
                         }
@@ -102,22 +111,21 @@ static struct Array Find_Allocas (struct Function *function)
         return allocas;
 }
 
-static struct Instruction *Insert_Phi_Node (struct BasicBlock *basic_block)
+static struct Instruction *InsertPhiNode (struct BasicBlock *basic_block)
 {
         struct Instruction *phi_node = Instruction_create (OPCODE_PHI, Token (NIL, -1));
 
-        BasicBlock_prepend_Instruction (basic_block, phi_node);
+        BasicBlockPrependInstruction (basic_block, phi_node);
 
         return phi_node;
 }
 
-static bool
-Block_has_Phi_Node_for_Alloca (struct BasicBlock *block, struct Instruction *alloca_inst, HashTable *phi_map)
+static bool BlockHasPhiNodeForAlloca (struct BasicBlock *block, struct Instruction *alloca_inst, HashTable *phi_map)
 {
         struct Instruction *curr_inst;
         size_t iter_count = 0;
 
-        while ((curr_inst = BasicBlock_Instruction_iter (block, &iter_count)) != NULL) {
+        while ((curr_inst = BasicBlockInstructionIter (block, &iter_count)) != NULL) {
                 if (!INST_ISA (curr_inst, OPCODE_PHI))
                         continue;
 
@@ -130,12 +138,12 @@ Block_has_Phi_Node_for_Alloca (struct BasicBlock *block, struct Instruction *all
         return false;
 }
 
-static HashTable Insert_Phi_Into_Blocks (struct Function *function, struct Array *allocas)
+static HashTable InsertPhiIntoBlocks (struct Function *function, struct Array *allocas)
 {
         struct Instruction *alloca_inst;
         size_t alloca_iter = 0;
         struct BitMap visited_blocks;
-        BitMap_init (&visited_blocks, MAX_BASIC_BLOCK_COUNT);
+        BitMapInit (&visited_blocks, MAX_BASIC_BLOCK_COUNT);
 
         HashTable dominance_frontier = ComputeDominanceFrontier (function);
 
@@ -187,10 +195,10 @@ static HashTable Insert_Phi_Into_Blocks (struct Function *function, struct Array
                         // TODO: insert a Phi node for each block in IDF list
                         while ((curr_frontier_node = Array_iter (&IDF, &frontier_iter)) != NULL) {
                                 // check if block already as phi node for current alloca instruction, if so, skip
-                                if (Block_has_Phi_Node_for_Alloca (curr_frontier_node, alloca_inst, &phi_node_mapping))
+                                if (BlockHasPhiNodeForAlloca (curr_frontier_node, alloca_inst, &phi_node_mapping))
                                         continue;
 
-                                struct Instruction *phi_inst = Insert_Phi_Node (curr_frontier_node);
+                                struct Instruction *phi_inst = InsertPhiNode (curr_frontier_node);
                                 hash_table_insert (&phi_node_mapping, AS_VALUE (phi_inst)->value_no, alloca_inst);
                         }
 
@@ -211,14 +219,14 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
 
         struct Instruction *curr_inst;
         size_t iter_count = 0;
-        while ((curr_inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
+        while ((curr_inst = BasicBlockInstructionIter (basic_block, &iter_count)) != NULL) {
                 if (!INST_ISA (curr_inst, OPCODE_PHI)) {
                         continue;
                 }
 
                 struct Value *alloca_inst = hash_table_search (phi_node_mapping, AS_VALUE (curr_inst)->value_no);
 
-                struct Value *top_value = SSAFrame_search (frame, alloca_inst->value_no);
+                struct Value *top_value = SSAFrameSearch (frame, alloca_inst->value_no);
 
                 if (!top_value) {
                         error (alloca_inst->token,
@@ -226,19 +234,19 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                         exit (EXIT_FAILURE);
                 }
 
-                Instruction_push_phi_operand_list (curr_inst, top_value);
-                SSAFrame_insert (frame, alloca_inst->value_no, curr_inst);
+                Instruction_push_phi_operand_list (curr_inst, top_value, SSAFrameGetParentBlock (frame));
+                SSAFrameInsert (frame, alloca_inst->value_no, curr_inst);
         }
 
         // we may need to revisit a block to insert Phi operands, so we only perform the visited check after inserting
         // the phi operands.
-        if (BitMap_BitIsSet (visited, basic_block->block_no)) {
+        if (BitMapIsSet (visited, basic_block->block_no)) {
                 return;
         } else {
-                BitMap_setbit (visited, basic_block->block_no);
+                BitMapSetBit (visited, basic_block->block_no);
         }
 
-        while ((curr_inst = BasicBlock_Instruction_iter (basic_block, &iter_count)) != NULL) {
+        while ((curr_inst = BasicBlockInstructionIter (basic_block, &iter_count)) != NULL) {
                 if (INST_ISA (curr_inst, OPCODE_LOAD)) {
                         struct Value *load_from = Instruction_Load_From_Operand (curr_inst);
 
@@ -247,25 +255,24 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                                 exit (EXIT_FAILURE);
                         }
 
-                        Value_Replace_All_Uses_With (AS_VALUE (curr_inst),
-                                                     SSAFrame_search (frame, load_from->value_no));
+                        Value_Replace_All_Uses_With (AS_VALUE (curr_inst), SSAFrameSearch (frame, load_from->value_no));
                 } else if (INST_ISA (curr_inst, OPCODE_STORE)) {
                         struct Value *store_to = Instruction_Store_To_Operand (curr_inst);
                         struct Value *store_from = Instruction_Store_From_Operand (curr_inst);
-                        SSAFrame_insert (frame, store_to->value_no, store_from);
+                        SSAFrameInsert (frame, store_to->value_no, store_from);
                 }
         }
 
         if (basic_block->left) {
-                frame = SSAFrame_push (frame);
+                frame = SSAFramePush (frame, basic_block->left);
                 Rename (basic_block->left, phi_node_mapping, frame, visited);
-                frame = SSAFrame_pop (frame);
+                frame = SSAFramePop (frame);
         }
 
         if (basic_block->right) {
-                frame = SSAFrame_push (frame);
+                frame = SSAFramePush (frame, basic_block->right);
                 Rename (basic_block->right, phi_node_mapping, frame, visited);
-                frame = SSAFrame_pop (frame);
+                frame = SSAFramePop (frame);
         }
 }
 
@@ -282,7 +289,7 @@ static void RemoveMemoryInstructions (struct Function *function)
                 struct Instruction *inst;
                 size_t inst_count = 0;
 
-                while ((inst = BasicBlock_Instruction_iter (block, &inst_count)) != NULL) {
+                while ((inst = BasicBlockInstructionIter (block, &inst_count)) != NULL) {
                         if (!INST_ISA (inst, OPCODE_STORE) && !INST_ISA (inst, OPCODE_LOAD) &&
                             !INST_ISA (inst, OPCODE_ALLOCA))
                                 continue;
@@ -297,9 +304,8 @@ static void RemoveMemoryInstructions (struct Function *function)
 
         while ((curr_mem_inst = Array_iter (&mem_inst, &iter_count)) != NULL) {
                 Instruction_Remove_From_Parent (curr_mem_inst);
-                
-                Instruction_free(curr_mem_inst);
-                ir_free(curr_mem_inst);
+
+                Instruction_destroy (curr_mem_inst);
         }
 
         Array_free (&mem_inst);
@@ -307,15 +313,15 @@ static void RemoveMemoryInstructions (struct Function *function)
 
 void SSATranslation (struct Function *function)
 {
-        struct Array allocas = Find_Allocas (function);
+        struct Array allocas = FindAllocas (function);
 
-        struct HashTable phi_node_mapping = Insert_Phi_Into_Blocks (function, &allocas);
+        struct HashTable phi_node_mapping = InsertPhiIntoBlocks (function, &allocas);
 
-        struct SSAFrame *frame = SSAFrame_create ();
+        struct SSAFrame *frame = SSAFrameCreate (function->entry_basic_block);
 
         struct BitMap visited;
 
-        BitMap_init (&visited, MAX_BASIC_BLOCK_COUNT);
+        BitMapInit (&visited, MAX_BASIC_BLOCK_COUNT);
 
         Rename (function->entry_basic_block, &phi_node_mapping, frame, &visited);
 

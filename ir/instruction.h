@@ -35,6 +35,11 @@ struct Instruction {
         };
 };
 
+struct SSAOperand {
+        struct Value *operand;
+        struct BasicBlock *pred_block;
+};
+
 #define INST_IS_BINARY_OP(inst) ((inst)->inst_type == INST_BINARY)
 #define INST_IS_BRANCH(inst)    ((inst)->inst_type == INST_BRANCH)
 #define INST_ISA(inst, opcode)  ((inst)->op_code == (opcode))
@@ -46,9 +51,12 @@ void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instructio
 struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token);
 struct Use *Instruction_create_use (struct Instruction *instruction);
 struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
-void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand);
+void Instruction_push_phi_operand_list (struct Instruction *instruction,
+                                        struct Value *operand,
+                                        struct BasicBlock *pred);
 struct Value *Instruction_Load_From_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_To_Operand (struct Instruction *instruction);
 struct Value *Instruction_Store_From_Operand (struct Instruction *instruction);
 bool Instruction_Remove_From_Parent (struct Instruction *instruction);
 void Instruction_free (struct Instruction *instruction);
+void Instruction_destroy (struct Instruction *instruction);

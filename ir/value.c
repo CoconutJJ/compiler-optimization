@@ -48,7 +48,7 @@ void Value_Replace_All_Uses_With (struct Value *target, struct Value *replacemen
                 Instruction_set_operand (inst, replacement, use->operand_no);
         }
         // free all uses of the target and clear out use array
-        Array_apply (&target->uses, (ArrayApplyFn)Use_free);
+        Array_apply (&target->uses, (ArrayApplyFn)Use_destroy);
         Array_empty (&target->uses);
 }
 
@@ -64,7 +64,7 @@ void Use_init (struct Use *use)
         use->user = NULL;
 }
 
-void Use_free (struct Use *use)
+void Use_destroy (struct Use *use)
 {
         ir_free (use);
 }

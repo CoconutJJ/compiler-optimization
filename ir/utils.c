@@ -42,12 +42,16 @@ char *Token_to_str (struct Token t)
         case INSTRUCTION_STORE: return "store";
         case INSTRUCTION_LOAD: return "load";
         case INSTRUCTION_JUMP: return "jump";
-        case INSTRUCTION_JUMPIF: return "jumpif"; break;
+        case INSTRUCTION_JUMPIF: return "jumpif"; 
+        case INSTRUCTION_XOR: return "xor"; 
         case INSTRUCTION_PHI: return "phi";
+        case LABEL_LITERAL: return "label";
         case COMMA: return ",";
         case FN: return "fn";
         case LPAREN: return "(";
         case RPAREN: return ")";
+        case LBRACKET: return "[";
+        case RBRACKET: return "]";
         case INTEGER: {
                 int len = snprintf (NULL, 0, "%d", t.value);
 
