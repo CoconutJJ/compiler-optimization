@@ -2,6 +2,7 @@
 #include "array.h"
 #include "global_constants.h"
 #include "instruction.h"
+#include "mem.h"
 #include "utils.h"
 #include <assert.h>
 #include <stddef.h>
@@ -17,7 +18,7 @@ void BasicBlockInit (struct BasicBlock *basic_block, enum BasicBlockType type)
         basic_block->block_no = CURRENT_BASIC_BLOCK_NO++;
         basic_block->left = NULL;
         basic_block->right = NULL;
-
+        basic_block->next = NULL;
         Array_init (&basic_block->preds);
         Array_init (&basic_block->values);
 }
@@ -72,6 +73,11 @@ bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruc
         return false;
 }
 
+struct Instruction *BasicBlockLastInstruction (struct BasicBlock *basic_block)
+{
+        return Array_get_index (&basic_block->values, Array_length (&basic_block->values) - 1);
+}
+
 struct BasicBlock *BasicBlockPredsIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         return Array_iter (&basic_block->preds, iter_count);
@@ -119,4 +125,13 @@ struct Instruction *BasicBlockInstructionReverseIter (struct BasicBlock *basic_b
         (*iter_count)++;
 
         return Array_get_index (&basic_block->values, index);
+}
+
+struct BasicBlock *BasicBlockCreate (enum BasicBlockType type)
+{
+        struct BasicBlock *basic_block = ir_malloc (sizeof (struct BasicBlock));
+
+        BasicBlockInit (basic_block, type);
+
+        return basic_block;
 }

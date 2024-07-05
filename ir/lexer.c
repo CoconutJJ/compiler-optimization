@@ -49,6 +49,7 @@ static bool match_str (char *s)
 {
         if (strncmp (s, ir_source + ir_source_index, strlen (s)) == 0) {
                 ir_source_index += strlen (s);
+                current_column_number += strlen (s);
                 return true;
         }
 
@@ -115,6 +116,12 @@ struct Token next_token ()
                 case '%': return Token (VARIABLE, parse_int (0));
                 case '[': return Token (LBRACKET, -1);
                 case ']': return Token (RBRACKET, -1);
+                case '#': {
+                        while (peek_char() != '\n')
+                                advance_char();
+                        
+                        continue;
+                }
                 case ' ':
                 case '\t':
                 case '\r': continue;
@@ -227,10 +234,9 @@ void error (struct Token target, char *message, ...)
 struct Token consume_token (enum TokenType t, char *error_message, ...)
 {
         struct Token curr = peek_token ();
-        if (TOKEN_TYPE (curr) == t) {
-                advance_token ();
+        
+        if (match_token (t))
                 return curr;
-        }
 
         va_list args;
         va_start (args, error_message);

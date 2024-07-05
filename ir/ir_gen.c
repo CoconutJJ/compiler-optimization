@@ -95,13 +95,13 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 }
                 case OPCODE_JUMP: {
-                        printf ("jump %d", FindBasicBlockLabel (basic_block->right));
+                        printf ("jump label %d", FindBasicBlockLabel (basic_block->right));
                         EmitNewLine ();
                         break;
                 }
                 case OPCODE_JUMPIF: {
                         struct Value *cond = Instruction_get_operand (inst, 1);
-                        printf ("jumpif %d", FindBasicBlockLabel (basic_block->right));
+                        printf ("jumpif label %d", FindBasicBlockLabel (basic_block->right));
                         EmitComma ();
                         EmitOperand (cond);
                         break;
@@ -169,22 +169,17 @@ void EmitIR (struct BasicBlock *basic_block)
 
 static void EmitBasicBlock (struct BasicBlock *block)
 {
-        if (BitMapIsSet (&visited, block->block_no))
-                return;
+        while (block != NULL) {
+                if (BitMapIsSet (&visited, block->block_no))
+                        return;
 
-        BitMapSetBit (&visited, block->block_no);
+                BitMapSetBit (&visited, block->block_no);
 
-        if (Array_length (&block->preds) > 0) {
-                printf ("\n%d:\n", FindBasicBlockLabel (block));
-                EmitIR (block);
-        }
-
-        if (block->left) {
-                EmitBasicBlock (block->left);
-        }
-
-        if (block->right) {
-                EmitBasicBlock (block->right);
+                if (Array_length (&block->preds) > 0) {
+                        printf ("\n%d:\n", FindBasicBlockLabel (block));
+                        EmitIR (block);
+                }
+                block = block->next;
         }
 }
 

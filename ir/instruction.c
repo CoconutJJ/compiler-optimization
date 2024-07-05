@@ -71,7 +71,10 @@ struct Value *Instruction_get_operand (struct Instruction *instruction, int oper
 
 void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index)
 {
-        Use_link (AS_VALUE (instruction), operand, operand_index);
+        // back patches will set operand to NULL at first during parsing, this will be called again
+        // in the patching step with a non null value
+        if (operand)
+                Use_link (AS_VALUE (instruction), operand, operand_index);
 
         if (INST_ISA (instruction, OPCODE_PHI)) {
                 struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);

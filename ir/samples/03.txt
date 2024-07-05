@@ -4,21 +4,22 @@ fn test5(%1, %2) {
     alloca %9, 5  
     alloca %10, 3 
     alloca %11, 4 
+
     add %3, %1, %2
     store %9, %3  
     store %10, %3  
     store %11, %3
     cmp %4, %1, %2
-    jumpif 1, %4  
+    jumpif label 1, %4  
 
     sub %5, %3, 1 
     store %10, %5 
-    jumpif 2, %5  
+    jumpif label 2, %5  
 
 1:
     add %6, %1, 20
     store %9, %6  
-    jump 3        
+    jump label 3        
 
 2:
     add %7, %2, 30
