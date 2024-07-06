@@ -31,7 +31,7 @@ void BasicBlockSetRightChild (struct BasicBlock *basic_block, struct BasicBlock 
 struct BasicBlock *BasicBlockPredsIter (struct BasicBlock *basic_block, size_t *iter_count);
 void BasicBlockAddInstruction (struct BasicBlock *basic_block, struct Instruction *instruction);
 size_t BasicBlockGetInstructionCount (struct BasicBlock *basic_block);
-struct Instruction *BasicBlockLastInstruction(struct BasicBlock *basic_block);
+struct Instruction *BasicBlockLastInstruction (struct BasicBlock *basic_block);
 struct Instruction *BasicBlockInstructionIter (struct BasicBlock *basic_block, size_t *iter_count);
 struct BasicBlock *BasicBlockSuccessorsIter (struct BasicBlock *basic_block, size_t *iter_count);
 struct Instruction *BasicBlockInstructionReverseIter (struct BasicBlock *basic_block, size_t *iter_count);

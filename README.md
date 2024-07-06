@@ -21,6 +21,12 @@ Algorithm for computing immediate dominators
 https://sbaziotis.com/compilers/visualizing-dominators.html
 
 
+## SSA Construction
+
+
+
+
+
 ## CSCD70 Assignment
 
 ### Assignment 1

@@ -18,7 +18,7 @@ void Function_init (struct Function *function)
         hash_table_init (&function->block_number_map);
 }
 
-void Function_update_block_number_mapping (struct Function *function)
+void FunctionComputeBlockNumberMapping (struct Function *function)
 {
         if (hash_table_count (&function->block_number_map) > 0) {
                 hash_table_free (&function->block_number_map);

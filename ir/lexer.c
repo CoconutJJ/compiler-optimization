@@ -117,9 +117,9 @@ struct Token next_token ()
                 case '[': return Token (LBRACKET, -1);
                 case ']': return Token (RBRACKET, -1);
                 case '#': {
-                        while (peek_char() != '\n')
-                                advance_char();
-                        
+                        while (peek_char () != '\n')
+                                advance_char ();
+
                         continue;
                 }
                 case ' ':
@@ -234,7 +234,7 @@ void error (struct Token target, char *message, ...)
 struct Token consume_token (enum TokenType t, char *error_message, ...)
 {
         struct Token curr = peek_token ();
-        
+
         if (match_token (t))
                 return curr;
 

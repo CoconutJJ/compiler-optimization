@@ -42,8 +42,8 @@ char *Token_to_str (struct Token t)
         case INSTRUCTION_STORE: return "store";
         case INSTRUCTION_LOAD: return "load";
         case INSTRUCTION_JUMP: return "jump";
-        case INSTRUCTION_JUMPIF: return "jumpif"; 
-        case INSTRUCTION_XOR: return "xor"; 
+        case INSTRUCTION_JUMPIF: return "jumpif";
+        case INSTRUCTION_XOR: return "xor";
         case INSTRUCTION_PHI: return "phi";
         case LABEL_LITERAL: return "label";
         case COMMA: return ",";

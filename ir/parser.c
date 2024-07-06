@@ -60,11 +60,21 @@ static struct BasicBlock *ParserGetBlockByLabel (struct Parser *parser, size_t l
         return block;
 }
 
-static struct Value *ParserFindValue (struct Parser *parser, uint64_t variable_no)
+static struct ValueRecord *ParserFindValue (struct Parser *parser, uint64_t variable_no)
 {
-        struct Value *val = hash_table_search (&parser->value_table, variable_no);
+        struct ValueRecord *record = hash_table_search (&parser->value_table, variable_no);
 
-        return val;
+        if (!record)
+                return NULL;
+
+        return record;
+}
+
+static void ParserFinalizeValue (struct Parser *parser, uint64_t variable_no)
+{
+        struct ValueRecord *record = hash_table_search (&parser->value_table, variable_no);
+
+        record->finalized = true;
 }
 
 static void ParserInstructionSetOperand (struct Parser *parser,
@@ -72,7 +82,7 @@ static void ParserInstructionSetOperand (struct Parser *parser,
                                          uint64_t variable_no,
                                          size_t operand_no)
 {
-        struct Value *op = ParserFindValue (parser, variable_no);
+        struct ValueRecord *op = ParserFindValue (parser, variable_no);
 
         if (!op) {
                 struct BackPatch *patch = ir_malloc (sizeof (struct BackPatch));
@@ -82,9 +92,19 @@ static void ParserInstructionSetOperand (struct Parser *parser,
                 patch->variable_no = variable_no;
 
                 Array_push (&parser->back_patches, patch);
+                Instruction_set_operand (instruction, NULL, operand_no);
+                return;
+
         }
 
-        Instruction_set_operand (instruction, op, operand_no);
+        if (!op->finalized) {
+                error (op->value->token,
+                       "Attempting to use partially defined variable %%%zu defined here",
+                       variable_no);
+                exit (EXIT_FAILURE);
+        }
+
+        Instruction_set_operand (instruction, op->value, operand_no);
 }
 
 static void ParserInstructionPushPhiOperand (struct Parser *parser,
@@ -92,9 +112,9 @@ static void ParserInstructionPushPhiOperand (struct Parser *parser,
                                              uint64_t variable_no,
                                              struct BasicBlock *pred)
 {
-        struct Value *op = ParserFindValue (parser, variable_no);
+        struct ValueRecord *op = ParserFindValue (parser, variable_no);
 
-        Instruction_push_phi_operand_list (instruction, op, pred);
+        Instruction_push_phi_operand_list (instruction, op->value, pred);
 
         if (!op) {
                 struct BackPatch *patch = ir_malloc (sizeof (struct BackPatch));
@@ -107,9 +127,19 @@ static void ParserInstructionPushPhiOperand (struct Parser *parser,
         }
 }
 
-static void ParserInsertValue (struct Parser *parser, size_t variable_no, struct Value *value)
+static bool ParserInsertValue (struct Parser *parser, size_t variable_no, struct Value *value)
 {
-        hash_table_insert (&parser->value_table, variable_no, value);
+        if (hash_table_search (&parser->value_table, variable_no)) {
+                return false;
+        }
+
+        struct ValueRecord *record = ir_malloc (sizeof (struct ValueRecord));
+        record->value = value;
+        record->finalized = false;
+
+        hash_table_insert (&parser->value_table, variable_no, record);
+
+        return true;
 }
 
 static void ParserInit (struct Parser *parser)
@@ -140,7 +170,7 @@ static void ParserCheckValidAssignmentTarget (struct Token dest_token, char *err
         va_end (args);
 
         if (VALUE_IS_INST (value)) {
-                error (value->token, "%%%d is already defined here", value->token.value);
+                error (value->token, "%%%d is already defined here", dest_token.value);
         }
 
         exit (EXIT_FAILURE);
@@ -196,15 +226,19 @@ static void ParseBinaryOperatorOperands (struct Instruction *instruction)
 
         ParserCheckValidAssignmentTarget (token, "Invalid assignment target %s", Token_to_str (token));
 
-        ParserInsertValue (&parser, token.value, AS_VALUE (instruction));
+        if (!ParserInsertValue (&parser, token.value, AS_VALUE (instruction))) {
+                error (token, "Redefinition of variable %%%llu", token.value);
+                struct ValueRecord *prev = ParserFindValue (&parser, token.value);
+                error (prev->value->token, "Previously was defined here");
+                exit (EXIT_FAILURE);
+        }
 
         consume_token (COMMA, "Expected ',' after destination operand\n");
-
         ParseOperand (instruction, 0);
-
         consume_token (COMMA, "Expected ',' after first operand\n");
-
         ParseOperand (instruction, 1);
+
+        ParserFinalizeValue (&parser, token.value);
 }
 
 static void ParseBranchOperand (struct Instruction *instruction)
@@ -268,6 +302,7 @@ static void ParsePhiInstruction (struct Instruction *phi_instruction)
                 }
 
         } while (match_token (COMMA));
+        ParserFinalizeValue (&parser, dest_token.value);
 }
 
 static void ParseAllocaInstruction (struct Instruction *instruction)
@@ -276,6 +311,7 @@ static void ParseAllocaInstruction (struct Instruction *instruction)
                                            "Expected target variable after `alloca` instruction, found %s instead",
                                            Token_to_str (peek_token ()));
 
+        ParserInsertValue (&parser, dest.value, AS_VALUE (instruction));
         consume_token (COMMA,
                        "Expected `,` after destination operand %s, found %s instead",
                        Token_to_str (dest),
@@ -284,9 +320,8 @@ static void ParseAllocaInstruction (struct Instruction *instruction)
         struct Token size = consume_token (
                 INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
 
-        ParserInsertValue (&parser, dest.value, AS_VALUE (instruction));
-
         Instruction_set_operand (instruction, AS_VALUE (ConstantCreateFromToken (size)), 0);
+        ParserFinalizeValue (&parser, dest.value);
 }
 
 static void ParseLoadInstruction (struct Instruction *instruction)
@@ -296,7 +331,6 @@ static void ParseLoadInstruction (struct Instruction *instruction)
                                            Token_to_str (peek_token ()));
 
         ParserCheckValidAssignmentTarget (dest, "Invalid assignment target %s", Token_to_str (dest));
-
         ParserInsertValue (&parser, dest.value, AS_VALUE (instruction));
 
         consume_token (COMMA,
@@ -308,6 +342,7 @@ static void ParseLoadInstruction (struct Instruction *instruction)
                 VARIABLE, "Expected alloca address target variable, found %s instead", Token_to_str (peek_token ()));
 
         ParserInstructionSetOperand (&parser, instruction, address.value, 0);
+        ParserFinalizeValue (&parser, dest.value);
 }
 
 static void ParseStoreInstruction (struct Instruction *instruction)
@@ -539,7 +574,7 @@ static void ResolveBackPatches (struct Parser *parser)
         size_t iter_count = 0;
 
         while ((patch = Array_iter (&parser->back_patches, &iter_count)) != NULL) {
-                struct Value *value = ParserFindValue (parser, patch->variable_no);
+                struct ValueRecord *value = ParserFindValue (parser, patch->variable_no);
 
                 if (!value) {
                         error (patch->instruction->value.token,
@@ -551,7 +586,7 @@ static void ResolveBackPatches (struct Parser *parser)
                 ASSERT (Instruction_get_operand (patch->instruction, patch->operand_no) == NULL,
                         "Invalid backpatch! Value has already been patched!");
 
-                Instruction_set_operand (patch->instruction, value, patch->operand_no);
+                Instruction_set_operand (patch->instruction, value->value, patch->operand_no);
         }
 }
 
@@ -579,7 +614,7 @@ static struct Function *ParseFunction ()
                         Function_add_argument (function, arg);
 
                         ParserInsertValue (&parser, var.value, AS_VALUE (arg));
-
+                        ParserFinalizeValue (&parser, var.value);
                         if (match_token (COMMA)) {
                                 continue;
                         } else {
@@ -597,7 +632,7 @@ static struct Function *ParseFunction ()
 
         function->entry_basic_block = AddEntryAndExitBlocks (root);
 
-        Function_update_block_number_mapping (function);
+        FunctionComputeBlockNumberMapping (function);
 
         return function;
 }
@@ -655,7 +690,7 @@ struct Function *ParseIR (char *ir_source)
         threeaddr_init_parser (ir_source);
 
         ParserInit (&parser);
-        
+
         struct Function *fn = ParseFunction ();
 
         ParserFree (&parser);

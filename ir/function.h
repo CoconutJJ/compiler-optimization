@@ -18,4 +18,4 @@ struct Function {
 void Function_init (struct Function *function);
 void Function_add_argument (struct Function *function, struct Argument *argument);
 void Argument_init (struct Argument *argument);
-void Function_update_block_number_mapping (struct Function *function);
+void FunctionComputeBlockNumberMapping (struct Function *function);
