@@ -39,7 +39,7 @@ static char advance_char ()
 static bool match_char (char c)
 {
         if (peek_char () == c) {
-                ir_source_index++;
+                advance_char ();
                 return true;
         }
         return false;
@@ -132,47 +132,71 @@ struct Token next_token ()
                         continue;
                 }
                 default:
-                        if (is_numeric (c)) {
-                                int value = parse_int (c - '0');
 
-                                return Token (match_char (':') ? LABEL : INTEGER, value);
-                        } else if (c == 'f' && match_str ("n")) {
-                                return Token (FN, -1);
-                        } else if (c == 'a') {
+                        switch (c) {
+                        case 'f':
+                                if (match_char ('n'))
+                                        return Token (FN, -1);
+                                break;
+                        case 'a':
                                 if (match_str ("lloca"))
                                         return Token (INSTRUCTION_ALLOCA, -1);
                                 else if (match_str ("dd"))
                                         return Token (INSTRUCTION_ADD, -1);
-
-                        } else if (c == 'c' && match_str ("mp")) {
-                                return Token (INSTRUCTION_CMP, -1);
-                        } else if (c == 'l') {
+                                break;
+                        case 'c':
+                                if (match_str ("mp"))
+                                        return Token (INSTRUCTION_CMP, -1);
+                                break;
+                        case 'l':
                                 if (match_str ("oad"))
                                         return Token (INSTRUCTION_LOAD, -1);
                                 else if (match_str ("abel"))
                                         return Token (LABEL_LITERAL, -1);
-                        } else if (c == 's') {
+
+                                break;
+                        case 's':
                                 if (match_str ("ub"))
                                         return Token (INSTRUCTION_SUB, -1);
                                 else if (match_str ("tore"))
                                         return Token (INSTRUCTION_STORE, -1);
-                        } else if (c == 'm' && match_str ("ul")) {
-                                return Token (INSTRUCTION_MUL, -1);
-                        } else if (c == 'd' && match_str ("iv")) {
-                                return Token (INSTRUCTION_DIV, -1);
-                        } else if (c == 'j') {
+                                break;
+                        case 'm':
+                                if (match_str ("ul"))
+                                        return Token (INSTRUCTION_MUL, -1);
+                                break;
+                        case 'd':
+                                if (match_str ("iv"))
+                                        return Token (INSTRUCTION_DIV, -1);
+                                break;
+                        case 'j':
                                 if (match_str ("umpif"))
                                         return Token (INSTRUCTION_JUMPIF, -1);
                                 else if (match_str ("ump"))
                                         return Token (INSTRUCTION_JUMP, -1);
-                        } else if (c == 'p' && match_str ("hi")) {
-                                return Token (INSTRUCTION_PHI, -1);
+                                break;
+                        case 'p':
+                                if (match_str ("hi"))
+                                        return Token (INSTRUCTION_PHI, -1);
+                                break;
+                        case 'r':
+                                if (match_str ("et"))
+                                        return Token (INSTRUCTION_RET, -1);
+                                break;
+                        default: break;
                         }
-                        struct Token str = Token (STR, 0);
 
-                        parse_str (c, str.str_value);
+                        if (is_numeric (c)) {
+                                int value = parse_int (c - '0');
+                                return Token (match_char (':') ? LABEL : INTEGER, value);
+                        } else {
+                                struct Token str = Token (STR, 0);
 
-                        return str;
+                                parse_str (c, str.str_value);
+
+                                return str;
+                        }
+                        break;
                 }
         }
 }

@@ -4,6 +4,7 @@
 #include "instruction.h"
 #include "lexer.h"
 #include "mem.h"
+#include "utils.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -45,11 +46,10 @@ void Value_Replace_All_Uses_With (struct Value *target, struct Value *replacemen
         size_t iter_count = 0;
         while ((use = Array_iter (&target->uses, &iter_count)) != NULL) {
                 struct Instruction *inst = AS_INST (use->user);
-                Instruction_set_operand (inst, replacement, use->operand_no);
+                InstructionSetOperand (inst, replacement, use->operand_no);
         }
-        // free all uses of the target and clear out use array
-        Array_apply (&target->uses, (ArrayApplyFn)Use_destroy);
-        Array_empty (&target->uses);
+
+        ASSERT (Value_Use_count (target) == 0, "Value use list is corrupted!");
 }
 
 size_t Value_Use_count (struct Value *value)
@@ -71,6 +71,9 @@ void Use_destroy (struct Use *use)
 
 void Use_link (struct Value *user, struct Value *usee, int usee_operand_no)
 {
+        if (VALUE_IS_CONST (usee))
+                return;
+
         struct Use *use = ir_malloc (sizeof (struct Use));
 
         use->operand_no = usee_operand_no;
@@ -78,4 +81,26 @@ void Use_link (struct Value *user, struct Value *usee, int usee_operand_no)
         use->user = user;
 
         Array_push (&usee->uses, use);
+}
+
+bool Use_unlink (struct Value *user, struct Value *usee, int usee_operand_no)
+{
+        if (VALUE_IS_CONST(usee))
+                return true;
+
+        struct Use *curr_use;
+        size_t iter_count = 0;
+
+        size_t index = 0;
+        while ((curr_use = Array_iter (&usee->uses, &iter_count)) != NULL) {
+                if (curr_use->user == user && curr_use->operand_no == usee_operand_no) {
+                        Array_delete (&usee->uses, index);
+                        return true;
+                }
+                index++;
+        }
+
+        fprintf (stderr, "No use found!\n");
+
+        return false;
 }

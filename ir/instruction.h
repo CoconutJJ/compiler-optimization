@@ -15,6 +15,7 @@ enum OpCode {
         OPCODE_JUMPIF,
         OPCODE_NIL,
         OPCODE_PHI,
+        OPCODE_RET,
         OPCODE_STORE,
         OPCODE_LOAD,
         OPCODE_ALLOCA
@@ -45,12 +46,13 @@ struct SSAOperand {
 #define INST_ISA(inst, opcode)  ((inst)->op_code == (opcode))
 
 void Instruction_init (struct Instruction *instruction);
-void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index);
+void InstructionSetOperand (struct Instruction *instruction, struct Value *operand, int operand_index);
+struct Value *InstructionGetOperand (struct Instruction *instruction, int operand_index);
 bool Instruction_contains (struct Instruction *instruction, struct Value *value);
 void Instruction_InsertBefore (struct BasicBlock *basic_block, struct Instruction *before);
 struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token);
 struct Use *Instruction_create_use (struct Instruction *instruction);
-struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index);
+struct Value *InstructionGetOperand (struct Instruction *instruction, int operand_index);
 void Instruction_push_phi_operand_list (struct Instruction *instruction,
                                         struct Value *operand,
                                         struct BasicBlock *pred);
@@ -60,3 +62,4 @@ struct Value *Instruction_Store_From_Operand (struct Instruction *instruction);
 bool Instruction_Remove_From_Parent (struct Instruction *instruction);
 void Instruction_free (struct Instruction *instruction);
 void Instruction_destroy (struct Instruction *instruction);
+size_t InstructionGetOperandCount (struct Instruction *instruction);

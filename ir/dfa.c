@@ -54,6 +54,43 @@ struct BitMap *BitMap_BasicBlock_successor_iter (struct DFAConfiguration *config
         return hash_table_search (&config->in_sets, succ->block_no);
 }
 
+struct Array preorder (struct BasicBlock *entry)
+{
+        struct Array basic_block_order, stack;
+        Array_init (&stack);
+        Array_push (&stack, entry);
+
+        struct BitMap visited;
+        BitMapInit (&visited, MAX_BASIC_BLOCK_COUNT);
+        BitMapSetBit (&visited, entry->block_no);
+
+        Array_init (&basic_block_order);
+        while (Array_length (&stack) > 0) {
+                struct BasicBlock *curr = Array_top (&stack);
+                Array_push (&basic_block_order, curr);
+
+                // check if left child has been visited
+                if (curr->left && !BitMapIsSet (&visited, curr->left->block_no)) {
+                        Array_push (&stack, curr->left);
+                        BitMapSetBit (&visited, curr->left->block_no);
+                        continue;
+                }
+
+                // check if right child has been visited
+                if (curr->right && !BitMapIsSet (&visited, curr->right->block_no)) {
+                        Array_push (&stack, curr->right);
+                        BitMapSetBit (&visited, curr->right->block_no);
+                        continue;
+                }
+
+                Array_pop (&stack);
+        }
+
+        Array_free (&stack);
+
+        return basic_block_order;
+}
+
 struct Array postorder (struct BasicBlock *entry)
 {
         struct Array basic_block_order, stack;

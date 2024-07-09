@@ -4,6 +4,7 @@
 #include "instruction.h"
 #include "mem.h"
 #include "utils.h"
+#include "value.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -61,6 +62,14 @@ void BasicBlockAddInstruction (struct BasicBlock *basic_block, struct Instructio
 
 bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruction *inst)
 {
+
+        // TODO: remove uses from operands
+        size_t n = InstructionGetOperandCount (inst);
+        for (size_t i = 0; i < n; i++) {
+                struct Value *operand = InstructionGetOperand (inst, i);
+                Use_unlink (AS_VALUE (inst), operand, i);
+        }
+
         for (size_t i = 0; i < Array_length (&basic_block->values); i++) {
                 struct Instruction *curr = Array_get_index (&basic_block->values, i);
 

@@ -92,9 +92,8 @@ static void ParserInstructionSetOperand (struct Parser *parser,
                 patch->variable_no = variable_no;
 
                 Array_push (&parser->back_patches, patch);
-                Instruction_set_operand (instruction, NULL, operand_no);
+                InstructionSetOperand (instruction, NULL, operand_no);
                 return;
-
         }
 
         if (!op->finalized) {
@@ -104,7 +103,7 @@ static void ParserInstructionSetOperand (struct Parser *parser,
                 exit (EXIT_FAILURE);
         }
 
-        Instruction_set_operand (instruction, op->value, operand_no);
+        InstructionSetOperand (instruction, op->value, operand_no);
 }
 
 static void ParserInstructionPushPhiOperand (struct Parser *parser,
@@ -180,7 +179,7 @@ static struct Function *FunctionCreate ()
 {
         struct Function *function = ir_malloc (sizeof (struct Function));
 
-        Function_init (function);
+        FunctionInit (function);
 
         return function;
 }
@@ -189,7 +188,7 @@ static struct Argument *ArgumentCreate ()
 {
         struct Argument *argument = ir_malloc (sizeof (struct Argument));
 
-        Argument_init (argument);
+        ArgumentInit (argument);
 
         return argument;
 }
@@ -211,7 +210,7 @@ static void ParseOperand (struct Instruction *instruction, int operand_index)
         struct Token token = peek_token ();
         if (match_token (INTEGER)) {
                 struct Constant *op = ConstantCreateFromToken (token);
-                Instruction_set_operand (instruction, AS_VALUE (op), operand_index);
+                InstructionSetOperand (instruction, AS_VALUE (op), operand_index);
         } else {
                 struct Token fst_op =
                         consume_token (VARIABLE, "Expected variable or constant as %d operand!", operand_index + 1);
@@ -249,7 +248,7 @@ static void ParseBranchOperand (struct Instruction *instruction)
 
         struct Token token = consume_token (INTEGER, "Expected label value for branch instruction argument!\n");
 
-        Instruction_set_operand (instruction, AS_VALUE (ConstantCreateFromToken (token)), 0);
+        InstructionSetOperand (instruction, AS_VALUE (ConstantCreateFromToken (token)), 0);
 
         if (instruction->op_code == OPCODE_JUMPIF) {
                 consume_token (COMMA, "Expected `, <condition>` after jumpif target label\n");
@@ -320,7 +319,7 @@ static void ParseAllocaInstruction (struct Instruction *instruction)
         struct Token size = consume_token (
                 INTEGER, "Expected `alloca` integer size argument, found %s instead", Token_to_str (peek_token ()));
 
-        Instruction_set_operand (instruction, AS_VALUE (ConstantCreateFromToken (size)), 0);
+        InstructionSetOperand (instruction, AS_VALUE (ConstantCreateFromToken (size)), 0);
         ParserFinalizeValue (&parser, dest.value);
 }
 
@@ -366,7 +365,7 @@ static void ParseStoreInstruction (struct Instruction *instruction)
         } else if (match_token (INTEGER)) {
                 struct Value *const_src = AS_VALUE (ConstantCreateFromToken (src));
 
-                Instruction_set_operand (instruction, const_src, 1);
+                InstructionSetOperand (instruction, const_src, 1);
 
         } else {
                 error (src,
@@ -374,6 +373,22 @@ static void ParseStoreInstruction (struct Instruction *instruction)
                        Token_to_str (peek_token ()));
                 exit (EXIT_FAILURE);
         }
+}
+
+static void ParseRetInstruction (struct Instruction *instruction)
+{
+        struct Token arg = peek_token ();
+        struct Value *value;
+        if (match_token (VARIABLE)) {
+                ParserInstructionSetOperand (&parser, instruction, arg.value, 0);
+        } else if (match_token (INTEGER)) {
+                value = AS_VALUE (ConstantCreate (arg.value));
+                InstructionSetOperand (instruction, value, 0);
+        }
+
+        // return value is optional.
+
+        return;
 }
 
 static struct Instruction *ParseInstruction ()
@@ -463,6 +478,13 @@ static struct Instruction *ParseInstruction ()
                 ParseStoreInstruction (new_instruction);
                 break;
         }
+        case INSTRUCTION_RET: {
+                new_instruction = Instruction_create (OPCODE_RET, inst_token);
+                advance_token ();
+                ParseRetInstruction (new_instruction);
+                break;
+        }
+
         default: return NULL;
         }
 
@@ -489,7 +511,7 @@ static struct BasicBlock *ParseBasicBlock ()
                 BasicBlockAddInstruction (basic_block, inst);
 
                 if (INST_IS_BRANCH (inst)) {
-                        struct Constant *jump_location = AS_CONST (Instruction_get_operand (inst, 0));
+                        struct Constant *jump_location = AS_CONST (InstructionGetOperand (inst, 0));
                         BasicBlockSetRightChild (basic_block, ParserGetBlockByLabel (&parser, jump_location->constant));
                         return basic_block;
                 }
@@ -583,10 +605,10 @@ static void ResolveBackPatches (struct Parser *parser)
                         exit (EXIT_FAILURE);
                 }
 
-                ASSERT (Instruction_get_operand (patch->instruction, patch->operand_no) == NULL,
+                ASSERT (InstructionGetOperand (patch->instruction, patch->operand_no) == NULL,
                         "Invalid backpatch! Value has already been patched!");
 
-                Instruction_set_operand (patch->instruction, value->value, patch->operand_no);
+                InstructionSetOperand (patch->instruction, value->value, patch->operand_no);
         }
 }
 
@@ -611,7 +633,7 @@ static struct Function *ParseFunction ()
 
                         struct Argument *arg = ArgumentCreate ();
 
-                        Function_add_argument (function, arg);
+                        FunctionAddArgument (function, arg);
 
                         ParserInsertValue (&parser, var.value, AS_VALUE (arg));
                         ParserFinalizeValue (&parser, var.value);

@@ -17,10 +17,8 @@ struct BackPatch {
 };
 
 struct ValueRecord {
-
         bool finalized;
         struct Value *value;
-
 };
 
 struct Parser {

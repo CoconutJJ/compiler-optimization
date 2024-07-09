@@ -45,6 +45,9 @@ void Instruction_free (struct Instruction *instruction)
         }
 
         Value_free (&instruction->value);
+
+        instruction->operands.first = NULL;
+        instruction->operands.second = NULL;
 }
 
 void Instruction_destroy (struct Instruction *instruction)
@@ -53,7 +56,7 @@ void Instruction_destroy (struct Instruction *instruction)
         ir_free (instruction);
 }
 
-struct Value *Instruction_get_operand (struct Instruction *instruction, int operand_index)
+struct Value *InstructionGetOperand (struct Instruction *instruction, int operand_index)
 {
         if (INST_ISA (instruction, OPCODE_PHI)) {
                 struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);
@@ -69,24 +72,44 @@ struct Value *Instruction_get_operand (struct Instruction *instruction, int oper
         }
 }
 
-void Instruction_set_operand (struct Instruction *instruction, struct Value *operand, int operand_index)
+void InstructionSetOperand (struct Instruction *instruction, struct Value *operand, int operand_index)
 {
+        if (INST_ISA (instruction, OPCODE_PHI)) {
+                struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);
+
+                if (op->operand)
+                        ASSERT (Use_unlink (AS_VALUE (instruction), op->operand, operand_index), "No use found!");
+
+                op->operand = operand;
+
+        } else {
+                switch (operand_index) {
+                case 0: {
+                        if (instruction->operands.first)
+                                ASSERT (Use_unlink (AS_VALUE (instruction), instruction->operands.first, operand_index),
+                                        "No use found!");
+
+                        instruction->operands.first = operand;
+                        break;
+                }
+                case 1: {
+                        if (instruction->operands.second)
+                                ASSERT (Use_unlink (AS_VALUE (instruction), instruction->operands.second, operand_index),
+                                        "No use found!");
+
+                        instruction->operands.second = operand;
+                        break;
+                }
+                default: UNREACHABLE ("Invalid operand index!");
+                }
+        }
+
         // back patches will set operand to NULL at first during parsing, this will be called again
         // in the patching step with a non null value
         if (operand)
                 Use_link (AS_VALUE (instruction), operand, operand_index);
 
-        if (INST_ISA (instruction, OPCODE_PHI)) {
-                struct SSAOperand *op = Array_get_index (&instruction->operand_list, operand_index);
-                op->operand = operand;
-                return;
-        }
-
-        switch (operand_index) {
-        case 0: instruction->operands.first = operand; break;
-        case 1: instruction->operands.second = operand; break;
-        default: UNREACHABLE ("Invalid operand index!");
-        }
+        return;
 }
 
 bool Instruction_Remove_From_Parent (struct Instruction *instruction)
@@ -96,24 +119,40 @@ bool Instruction_Remove_From_Parent (struct Instruction *instruction)
         return BasicBlockRemoveInstruction (parent, instruction);
 }
 
+size_t InstructionGetOperandCount (struct Instruction *instruction)
+{
+        if (INST_ISA (instruction, OPCODE_ALLOCA))
+                return Array_length (&instruction->operand_list);
+
+        size_t count = 0;
+
+        if (instruction->operands.first)
+                count++;
+
+        if (instruction->operands.second)
+                count++;
+
+        return count;
+}
+
 struct Value *Instruction_Load_From_Operand (struct Instruction *instruction)
 {
         ASSERT (INST_ISA (instruction, OPCODE_LOAD), "Must be a load instruction!");
 
-        return Instruction_get_operand (instruction, 0);
+        return InstructionGetOperand (instruction, 0);
 }
 
 struct Value *Instruction_Store_To_Operand (struct Instruction *instruction)
 {
         ASSERT (INST_ISA (instruction, OPCODE_STORE), "Must be a store instruction!");
 
-        return Instruction_get_operand (instruction, 0);
+        return InstructionGetOperand (instruction, 0);
 }
 
 struct Value *Instruction_Store_From_Operand (struct Instruction *instruction)
 {
         ASSERT (INST_ISA (instruction, OPCODE_STORE), "Must be a store instruction!");
-        return Instruction_get_operand (instruction, 1);
+        return InstructionGetOperand (instruction, 1);
 }
 
 void Instruction_push_phi_operand_list (struct Instruction *instruction, struct Value *operand, struct BasicBlock *pred)
@@ -125,7 +164,7 @@ void Instruction_push_phi_operand_list (struct Instruction *instruction, struct 
 
 bool Instruction_contains (struct Instruction *instruction, struct Value *value)
 {
-        struct Value *op = Instruction_get_operand (instruction, 0);
+        struct Value *op = InstructionGetOperand (instruction, 0);
 
         if (op == value)
                 return true;
@@ -133,7 +172,7 @@ bool Instruction_contains (struct Instruction *instruction, struct Value *value)
         if (!INST_IS_BINARY_OP (instruction))
                 return false;
 
-        op = Instruction_get_operand (instruction, 1);
+        op = InstructionGetOperand (instruction, 1);
 
         return op == value;
 }

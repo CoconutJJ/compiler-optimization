@@ -15,7 +15,7 @@ struct Function {
         struct Array arguments;
 };
 
-void Function_init (struct Function *function);
-void Function_add_argument (struct Function *function, struct Argument *argument);
-void Argument_init (struct Argument *argument);
+void FunctionInit (struct Function *function);
+void FunctionAddArgument (struct Function *function, struct Argument *argument);
+void ArgumentInit (struct Argument *argument);
 void FunctionComputeBlockNumberMapping (struct Function *function);

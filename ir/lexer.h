@@ -20,6 +20,7 @@ enum TokenType {
         INSTRUCTION_JUMP,
         INSTRUCTION_JUMPIF,
         INSTRUCTION_PHI,
+        INSTRUCTION_RET,
         COMMA,
         FN,
         LPAREN,

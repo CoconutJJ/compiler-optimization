@@ -33,7 +33,7 @@ struct DFAConfiguration {
         HashTable in_sets;
         HashTable out_sets;
 };
-
+struct Array preorder (struct BasicBlock *entry);
 struct Array postorder (struct BasicBlock *entry);
 struct Array reverse_postorder (struct BasicBlock *entry);
 void run_DFA (struct DFAConfiguration *config, struct Function *function);

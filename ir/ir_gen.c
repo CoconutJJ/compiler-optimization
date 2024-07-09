@@ -58,8 +58,8 @@ void EmitIR (struct BasicBlock *basic_block)
 {
 #define EMIT_BINARY_OP(inst_name)                                                                                      \
         {                                                                                                              \
-                struct Value *fst = Instruction_get_operand (inst, 0);                                                 \
-                struct Value *snd = Instruction_get_operand (inst, 1);                                                 \
+                struct Value *fst = InstructionGetOperand (inst, 0);                                                   \
+                struct Value *snd = InstructionGetOperand (inst, 1);                                                   \
                 printf (inst_name);                                                                                    \
                 EmitOperand (AS_VALUE (inst));                                                                         \
                 EmitComma ();                                                                                          \
@@ -96,11 +96,10 @@ void EmitIR (struct BasicBlock *basic_block)
                 }
                 case OPCODE_JUMP: {
                         printf ("jump label %d", FindBasicBlockLabel (basic_block->right));
-                        EmitNewLine ();
                         break;
                 }
                 case OPCODE_JUMPIF: {
-                        struct Value *cond = Instruction_get_operand (inst, 1);
+                        struct Value *cond = InstructionGetOperand (inst, 1);
                         printf ("jumpif label %d", FindBasicBlockLabel (basic_block->right));
                         EmitComma ();
                         EmitOperand (cond);
@@ -125,8 +124,8 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 };
                 case OPCODE_STORE: {
-                        struct Value *alloca_inst = Instruction_get_operand (inst, 0);
-                        struct Value *store_value = Instruction_get_operand (inst, 1);
+                        struct Value *alloca_inst = InstructionGetOperand (inst, 0);
+                        struct Value *store_value = InstructionGetOperand (inst, 1);
 
                         printf ("store ");
                         EmitOperand (AS_VALUE (alloca_inst));
@@ -136,7 +135,7 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 };
                 case OPCODE_LOAD: {
-                        struct Value *source = Instruction_get_operand (inst, 0);
+                        struct Value *source = InstructionGetOperand (inst, 0);
 
                         printf ("load ");
                         EmitOperand (AS_VALUE (inst));
@@ -147,7 +146,7 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 };
                 case OPCODE_ALLOCA: {
-                        struct Value *size = Instruction_get_operand (inst, 0);
+                        struct Value *size = InstructionGetOperand (inst, 0);
 
                         printf ("alloca ");
 
@@ -162,6 +161,7 @@ void EmitIR (struct BasicBlock *basic_block)
                         break;
                 }
                 }
+                printf ("    # uses: %lu", Value_Use_count (AS_VALUE (inst)));
 
                 EmitNewLine ();
         }

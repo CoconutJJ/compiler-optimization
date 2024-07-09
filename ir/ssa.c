@@ -304,7 +304,8 @@ static void RemoveMemoryInstructions (struct Function *function)
 
         while ((curr_mem_inst = Array_iter (&mem_inst, &iter_count)) != NULL) {
                 Instruction_Remove_From_Parent (curr_mem_inst);
-
+        }
+        while ((curr_mem_inst = Array_iter (&mem_inst, &iter_count)) != NULL) {
                 Instruction_destroy (curr_mem_inst);
         }
 

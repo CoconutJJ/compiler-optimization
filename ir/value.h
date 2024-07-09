@@ -26,3 +26,4 @@ struct Value *Value_Use_iter (struct Value *value, size_t *iter_count);
 size_t Value_Use_count (struct Value *value);
 void Value_Replace_All_Uses_With (struct Value *target, struct Value *replacement);
 void Use_destroy (struct Use *use);
+bool Use_unlink (struct Value *user, struct Value *usee, int usee_operand_no);
