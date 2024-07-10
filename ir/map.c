@@ -57,6 +57,11 @@ static void _hash_table_insert (HashTable *table, uint64_t key, void *value)
                         entry->isDeleted = false;
                         table->count++;
                         return;
+                } else if (entry->key == key) {
+                        // replace entry if entry already exists
+                        entry->value = value;
+                        return;
+
                 }
 
                 index = (index + 1) % table->size;
