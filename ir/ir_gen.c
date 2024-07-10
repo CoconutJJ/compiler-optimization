@@ -156,6 +156,16 @@ void EmitIR (struct BasicBlock *basic_block)
 
                         break;
                 }
+                case OPCODE_RET: {
+                        struct Value *ret_value = InstructionGetOperand (inst, 0);
+
+                        printf ("ret ");
+
+                        if (ret_value)
+                                EmitOperand (ret_value);
+
+                        break;
+                }
                 case OPCODE_NIL: {
                         printf ("nil");
                         break;

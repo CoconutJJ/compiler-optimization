@@ -576,7 +576,7 @@ static struct BasicBlock *ParseBlock (struct Token function_name)
                 if (curr_block) {
                         struct Instruction *last_inst = BasicBlockLastInstruction (curr_block);
 
-                        if (!INST_ISA (last_inst, OPCODE_JUMP))
+                        if (!INST_ISA (last_inst, OPCODE_JUMP) && !INST_ISA(last_inst, OPCODE_RET))
                                 BasicBlockSetLeftChild (curr_block, target_block);
 
                         curr_block->next = target_block;

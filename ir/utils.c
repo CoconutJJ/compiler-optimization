@@ -45,6 +45,7 @@ char *Token_to_str (struct Token t)
         case INSTRUCTION_JUMPIF: return "jumpif";
         case INSTRUCTION_XOR: return "xor";
         case INSTRUCTION_PHI: return "phi";
+        case INSTRUCTION_RET: return "ret";
         case LABEL_LITERAL: return "label";
         case COMMA: return ",";
         case FN: return "fn";

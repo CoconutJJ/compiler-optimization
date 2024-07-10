@@ -5,11 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 static char *ir_source = NULL;
+static char *current_line = NULL;
 static size_t ir_source_index = 0;
 static size_t current_line_number = 1;
 static size_t current_column_number = 1;
-static char *current_line = NULL;
 static struct Token curr_token;
 
 struct Token Token (enum TokenType type, int value)

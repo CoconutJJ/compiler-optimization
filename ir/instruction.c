@@ -210,6 +210,7 @@ struct Instruction *Instruction_create (enum OpCode op, struct Token dest_token)
         case OPCODE_SUB:
         case OPCODE_MUL:
         case OPCODE_DIV: instruction->inst_type = INST_BINARY; break;
+        case OPCODE_RET: instruction->inst_type = INST_UNARY; break;
         case OPCODE_JUMP:
         case OPCODE_JUMPIF: instruction->inst_type = INST_BRANCH; break;
         case OPCODE_LOAD:
