@@ -61,7 +61,6 @@ static void _hash_table_insert (HashTable *table, uint64_t key, void *value)
                         // replace entry if entry already exists
                         entry->value = value;
                         return;
-
                 }
 
                 index = (index + 1) % table->size;
@@ -116,7 +115,7 @@ static struct HashTableEntry *hash_table_find_entry (HashTable *table, uint64_t 
                 struct HashTableEntry *entry = &table->buckets[index];
 
                 if (entry->isDeleted) {
-                        index++;
+                        index = (index + 1) % table->size;
                         continue;
                 }
 

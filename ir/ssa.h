@@ -2,6 +2,7 @@
 
 #include "function.h"
 #include "map.h"
+
 struct SSAFrame {
         HashTable variable_map;
         struct BasicBlock *block;

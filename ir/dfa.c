@@ -66,7 +66,8 @@ struct Array preorder (struct BasicBlock *entry)
 
         Array_init (&basic_block_order);
         while (Array_length (&stack) > 0) {
-                struct BasicBlock *curr = Array_top (&stack);
+                struct BasicBlock *curr = Array_pop (&stack);
+
                 Array_push (&basic_block_order, curr);
 
                 // check if left child has been visited
@@ -83,7 +84,6 @@ struct Array preorder (struct BasicBlock *entry)
                         continue;
                 }
 
-                Array_pop (&stack);
         }
 
         Array_free (&stack);

@@ -2,6 +2,7 @@
 #include "array.h"
 #include "basicblock.h"
 #include "constant.h"
+#include "dfa.h"
 #include "function.h"
 #include "global_constants.h"
 #include "instruction.h"
@@ -530,30 +531,26 @@ static struct BasicBlock *AddEntryAndExitBlocks (struct BasicBlock *root)
         struct BasicBlock *entry = BasicBlockCreate (BASICBLOCK_ENTRY);
         struct BasicBlock *exit = BasicBlockCreate (BASICBLOCK_EXIT);
 
-        struct Array stack;
-        Array_init (&stack);
-        Array_push (&stack, root);
+        struct Array postorder_traversal = postorder (root);
 
-        while (Array_length (&stack) > 0) {
-                struct BasicBlock *curr = Array_pop (&stack);
-
-                // add the left and right child
-                if (!curr->left) {
-                        BasicBlockSetLeftChild (curr, exit);
-
-                        Array_push (&stack, curr->right);
-                }
-
-                if (!curr->right) {
-                        BasicBlockSetRightChild (curr, exit);
-
-                        Array_push (&stack, curr->left);
-                }
-        }
-
-        BasicBlockSetLeftChild (entry, root);
         entry->next = root;
-        Array_free (&stack);
+        BasicBlockSetLeftChild (entry, root);
+
+        struct BasicBlock *block;
+        size_t iter_count = 0;
+
+        while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
+                if (!block->left) {
+                        BasicBlockSetLeftChild (block, exit);
+                }
+
+                if (!block->right) {
+                        BasicBlockSetRightChild (block, exit);
+                }
+
+                if (!block->next)
+                        block->next = exit;
+        }
 
         return entry;
 }
@@ -576,7 +573,7 @@ static struct BasicBlock *ParseBlock (struct Token function_name)
                 if (curr_block) {
                         struct Instruction *last_inst = BasicBlockLastInstruction (curr_block);
 
-                        if (!INST_ISA (last_inst, OPCODE_JUMP) && !INST_ISA(last_inst, OPCODE_RET))
+                        if (!INST_ISA (last_inst, OPCODE_JUMP) && !INST_ISA (last_inst, OPCODE_RET))
                                 BasicBlockSetLeftChild (curr_block, target_block);
 
                         curr_block->next = target_block;
@@ -659,52 +656,48 @@ static struct Function *ParseFunction ()
         return function;
 }
 
-static void PrintBasicBlock (struct BasicBlock *basic_block, struct HashTable *visited)
+static void PrintBasicBlock (struct BasicBlock *basic_block)
 {
-        if (hash_table_search (visited, basic_block->block_no) != NULL)
-                return;
-        else
-                hash_table_insert (visited, basic_block->block_no, basic_block);
+        while (basic_block) {
+                size_t instruction_count = BasicBlockGetInstructionCount (basic_block);
 
-        size_t instruction_count = BasicBlockGetInstructionCount (basic_block);
+                int left_child_no = -1, right_child_no = -1, next_child_no = -1;
 
-        int left_child_no = -1, right_child_no = -1;
+                if (basic_block->left)
+                        left_child_no = basic_block->left->block_no;
 
-        if (basic_block->left)
-                left_child_no = basic_block->left->block_no;
+                if (basic_block->right)
+                        right_child_no = basic_block->right->block_no;
+                
+                if (basic_block->next)
+                        next_child_no = basic_block->next->block_no;
 
-        if (basic_block->right)
-                right_child_no = basic_block->right->block_no;
+                if (BASICBLOCK_IS_ENTRY (basic_block))
+                        printf ("ENTRY\n");
+                else if (BASICBLOCK_IS_EXIT (basic_block))
+                        printf ("EXIT\n");
 
-        if (BASICBLOCK_IS_ENTRY (basic_block))
-                printf ("ENTRY\n");
-        else if (BASICBLOCK_IS_EXIT (basic_block))
-                printf ("EXIT\n");
-
-        printf ("+------------------+\n"
-                "| Basic Block: %4ld|\n"
-                "+------------------+\n"
-                "| Inst. Count: %4ld|\n"
-                "| Left Child:  %4d|\n"
-                "| Right Child: %4d|\n"
-                "+------------------+\n\n",
-                basic_block->block_no,
-                instruction_count,
-                left_child_no,
-                right_child_no);
-
-        if (basic_block->left)
-                PrintBasicBlock (basic_block->left, visited);
-
-        if (basic_block->right)
-                PrintBasicBlock (basic_block->right, visited);
+                printf ("+------------------+\n"
+                        "| Basic Block: %4ld|\n"
+                        "+------------------+\n"
+                        "| Inst. Count: %4ld|\n"
+                        "| Left Child:  %4d|\n"
+                        "| Right Child: %4d|\n"
+                        "| Next:        %4d|\n"
+                        "+------------------+\n\n",
+                        basic_block->block_no,
+                        instruction_count,
+                        left_child_no,
+                        right_child_no,
+                        next_child_no);
+                
+                basic_block = basic_block->next;
+        }
 }
 
 void PrintFunction (struct Function *function)
 {
-        struct HashTable visited;
-        hash_table_init (&visited);
-        PrintBasicBlock (function->entry_basic_block, &visited);
+        PrintBasicBlock (function->entry_basic_block);
 }
 
 struct Function *ParseIR (char *ir_source)

@@ -2,6 +2,7 @@
 #include "array.h"
 #include "basicblock.h"
 #include "bitmap.h"
+#include "deadcode_elimination.h"
 #include "dfa.h"
 #include "dominators.h"
 #include "function.h"
@@ -194,9 +195,15 @@ static HashTable InsertPhiIntoBlocks (struct Function *function, struct Array *a
 
                         // TODO: insert a Phi node for each block in IDF list
                         while ((curr_frontier_node = Array_iter (&IDF, &frontier_iter)) != NULL) {
-                                // check if block already as phi node for current alloca instruction, if so, skip
+                                // check if block already as phi node for
+                                // current alloca instruction, if so, skip
                                 if (BlockHasPhiNodeForAlloca (curr_frontier_node, alloca_inst, &phi_node_mapping))
                                         continue;
+                                
+                                // do not insert phi node into entry and exit blocks;
+                                if (BASICBLOCK_IS_ENTRY(curr_frontier_node) || BASICBLOCK_IS_EXIT(curr_frontier_node)) {
+                                        continue;
+                                }
 
                                 struct Instruction *phi_inst = InsertPhiNode (curr_frontier_node);
                                 hash_table_insert (&phi_node_mapping, AS_VALUE (phi_inst)->value_no, alloca_inst);
@@ -219,6 +226,7 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
 
         struct Instruction *curr_inst;
         size_t iter_count = 0;
+
         while ((curr_inst = BasicBlockInstructionIter (basic_block, &iter_count)) != NULL) {
                 if (!INST_ISA (curr_inst, OPCODE_PHI)) {
                         continue;
@@ -238,8 +246,8 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                 SSAFrameInsert (frame, alloca_inst->value_no, curr_inst);
         }
 
-        // we may need to revisit a block to insert Phi operands, so we only perform the visited check after inserting
-        // the phi operands.
+        // we may need to revisit a block to insert Phi operands, so we only
+        // perform the visited check after inserting the phi operands.
         if (BitMapIsSet (visited, basic_block->block_no)) {
                 return;
         } else {

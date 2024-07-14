@@ -1,4 +1,5 @@
 #include "array.h"
+#include "deadcode_elimination.h"
 #include "dfa.h"
 #include "dominators.h"
 #include "function.h"
@@ -70,6 +71,8 @@ int main (int argc, char **argv)
         while (pass) {
                 if (strcmp (pass, "ssa") == 0) {
                         SSATranslation (function);
+                } else if (strcmp (pass, "dce") == 0) {
+                        RemoveDeadCode (function);
                 } else if (strcmp (pass, "cfg") == 0) {
                         PrintFunction (function);
                 } else if (strcmp (pass, "disp") == 0) {

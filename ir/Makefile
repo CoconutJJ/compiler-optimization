@@ -16,7 +16,8 @@ OBJECTS =   parser.o \
 			dominators.o \
 			bitmap.o \
 			ssa.o \
-			ir_gen.o
+			ir_gen.o \
+			deadcode_elimination.o 
 
 
 ifdef DEBUG
