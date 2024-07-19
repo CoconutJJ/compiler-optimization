@@ -12,7 +12,6 @@
 
 static unsigned long uint64_t_hash_function (uint64_t key)
 {
-        // Simple hash function for demonstration
         return key;
 }
 

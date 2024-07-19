@@ -27,7 +27,7 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
                                            .direction = DFA_FORWARD,
                                            .domain_value_type = DOMAIN_BASIC_BLOCK };
 
-        assert (BASICBLOCK_IS_ENTRY (function->entry_basic_block));
+        assert (BASICBLOCK_IS_ENTRY (function->entry_block));
 
         hash_table_init (&config.in_sets);
         hash_table_init (&config.out_sets);
@@ -37,7 +37,7 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         for (size_t block_no = 0; block_no < MAX_BASIC_BLOCK_COUNT; block_no++) {
                 struct BitMap *out_map = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
 
-                if (block_no == function->entry_basic_block->block_no) {
+                if (block_no == function->entry_block->block_no) {
                         BitMapSetBit (out_map, block_no);
                 } else {
                         BitMapFill (out_map);
@@ -52,9 +52,95 @@ struct DFAConfiguration DominatorDFAConfiguration (struct Function *function)
         return config;
 }
 
+struct DFAConfiguration PostDominatorDFAConfiguration (struct Function *function)
+{
+        struct DFAConfiguration config = { .Meet = DominatorMeet,
+                                           .Transfer = DominatorTransfer,
+                                           .direction = DFA_BACKWARD,
+                                           .domain_value_type = DOMAIN_BASIC_BLOCK };
+
+        assert (BASICBLOCK_IS_ENTRY (function->entry_block));
+
+        hash_table_init (&config.in_sets);
+        hash_table_init (&config.out_sets);
+        BitMapInit (&config.top, MAX_BASIC_BLOCK_COUNT);
+        BitMapFill (&config.top);
+
+        for (size_t block_no = 0; block_no < MAX_BASIC_BLOCK_COUNT; block_no++) {
+                struct BitMap *in_map = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
+
+                if (block_no == function->exit_block->block_no) {
+                        BitMapSetBit (in_map, block_no);
+                } else {
+                        BitMapFill (in_map);
+                }
+
+                hash_table_insert (&config.in_sets, block_no, in_map);
+
+                struct BitMap *out_map = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
+                hash_table_insert (&config.out_sets, block_no, out_map);
+        }
+
+        return config;
+}
+
+struct HashTable ComputePostDominatorTree (struct Function *function, struct DFAConfiguration *result)
+{
+        struct Array traversal_order = reverse_postorder (function->entry_block);
+        struct BasicBlock *curr_block;
+        HashTable dom_tree_adjacency_list;
+        hash_table_init (&dom_tree_adjacency_list);
+        size_t iter_count = 0;
+
+        while ((curr_block = Array_iter (&traversal_order, &iter_count)) != NULL) {
+                if (BASICBLOCK_IS_ENTRY (curr_block) || BASICBLOCK_IS_EXIT (curr_block))
+                        continue;
+
+                struct BitMap *out_map = hash_table_search (&result->out_sets, curr_block->block_no);
+
+                size_t block_count = 0;
+
+                struct BasicBlock *dom_block = NULL, *immediate_dom = NULL;
+
+                // Dominators have a total ordering, meaning for any two
+                // dominators a and b, either a dominates b (a > b) or b
+                // dominates a (a < b). The immediate dominator is the "least"
+                // element in this sequence (z): a > b > c > d ... > z
+                while ((dom_block = BitMap_BasicBlock_iter (function, out_map, &block_count)) != NULL) {
+                        if (!immediate_dom) {
+                                immediate_dom = dom_block;
+                                continue;
+                        }
+
+                        struct BitMap *dom_block_map = hash_table_search (&result->out_sets, dom_block->block_no);
+
+                        // check if current immediate dominator dominates the
+                        // dom_block candidate
+                        if (BitMapIsSet (dom_block_map, immediate_dom->block_no)) {
+                                immediate_dom = dom_block;
+                        }
+                }
+
+                // we go through each block only once, create respective
+                // adjacency list for this block in the hashtable
+                struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
+
+                if (!array) {
+                        array = Array_create ();
+                        hash_table_insert (&dom_tree_adjacency_list, immediate_dom->block_no, array);
+                }
+
+                Array_push (array, curr_block);
+        }
+
+        Array_free (&traversal_order);
+
+        return dom_tree_adjacency_list;
+}
+
 static HashTable ComputeDominatorTree (struct Function *function, struct DFAConfiguration *result)
 {
-        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
+        struct Array traversal_order = reverse_postorder (function->entry_block);
         struct BasicBlock *curr_block;
         HashTable dom_tree_adjacency_list;
         hash_table_init (&dom_tree_adjacency_list);
@@ -106,9 +192,16 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
         return dom_tree_adjacency_list;
 }
 
+HashTable ComputePostDominanceFrontier (struct Function *function)
+{
+        struct DFAConfiguration config = PostDominatorDFAConfiguration (function);
+
+        run_DFA (&config, function);
+}
+
 HashTable ComputeDominanceFrontier (struct Function *function)
 {
-        struct Array postorder_traversal = postorder (function->entry_basic_block);
+        struct Array postorder_traversal = postorder (function->entry_block);
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
 
         run_DFA (&config, function);

@@ -90,6 +90,9 @@ int main (int argc, char **argv)
                         }
 
                         SSCP (function);
+                } else if (strcmp (pass, "pdom") == 0) {
+                        ComputePostDominanceFrontier (function);
+
                 } else if (strcmp (pass, "cfg") == 0) {
                         PrintFunction (function);
                 } else if (strcmp (pass, "disp") == 0) {

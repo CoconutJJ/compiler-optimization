@@ -171,28 +171,21 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         // depending on flow direction
         struct BitMap *curr_out_set, *curr_in_set;
 
+        struct BitMap *return_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
+
         if (config->direction == DFA_FORWARD) {
-                curr_out_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
                 curr_in_set = hash_table_search (&config->in_sets, curr_basic_block->block_no);
-                BitMapCopy (curr_in_set, curr_out_set);
+                BitMapCopy (curr_in_set, return_set);
         } else if (config->direction == DFA_BACKWARD) {
-                curr_in_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
                 curr_out_set = hash_table_search (&config->out_sets, curr_basic_block->block_no);
-                BitMapCopy (curr_out_set, curr_in_set);
+                BitMapCopy (curr_out_set, return_set);
         } else {
                 UNREACHABLE ("Invalid dataflow direction!");
         }
 
         switch (config->domain_value_type) {
         case DOMAIN_BASIC_BLOCK: {
-                if (config->direction == DFA_FORWARD) {
-                        config->Transfer (curr_out_set, curr_basic_block);
-                } else if (config->direction == DFA_BACKWARD) {
-                        config->Transfer (curr_in_set, curr_basic_block);
-                } else {
-                        UNREACHABLE ("Invalid dataflow direction!");
-                }
-
+                config->Transfer (return_set, curr_basic_block);
                 break;
         }
         case DOMAIN_INSTRUCTION: {
@@ -207,11 +200,11 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
                 size_t iter_count = 0;
                 struct Instruction *instruction;
                 while ((instruction = InstIter (curr_basic_block, &iter_count)) != NULL)
-                        config->Transfer (curr_out_set, instruction);
+                        config->Transfer (return_set, instruction);
         }
         }
 
-        return curr_out_set;
+        return return_set;
 }
 
 void run_DFA (struct DFAConfiguration *config, struct Function *function)
