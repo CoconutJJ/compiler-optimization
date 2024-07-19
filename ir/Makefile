@@ -17,7 +17,8 @@ OBJECTS =   parser.o \
 			bitmap.o \
 			ssa.o \
 			ir_gen.o \
-			deadcode_elimination.o 
+			deadcode_elimination.o \
+			constant_prop.o
 
 
 ifdef DEBUG

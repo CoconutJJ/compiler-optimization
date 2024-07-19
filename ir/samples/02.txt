@@ -4,15 +4,15 @@ fn test4(%1, %2) {
     add %3, %1, %2 
     store %9, %3
     cmp %4, %1, %2 
-    jumpif 1, %4
+    jumpif label 1, %4
 
 
     sub %5, %3, 1  
-    jumpif 2, %5   
+    jumpif label 2, %5   
 
 1:
     add %6, %1, 20 
-    jump 3    
+    jump label 3    
 
 
 2:
@@ -21,4 +21,5 @@ fn test4(%1, %2) {
     
 3:
     sub %8, %3, %3 
+    ret %8
 }

@@ -85,7 +85,7 @@ static struct BasicBlock *SSAFrameGetParentBlock (struct SSAFrame *frame)
 
 static struct Array FindAllocas (struct Function *function)
 {
-        struct Array postorder_traversal = postorder (function->entry_basic_block);
+        struct Array postorder_traversal = postorder (function->entry_block);
 
         struct Array allocas;
 
@@ -199,9 +199,10 @@ static HashTable InsertPhiIntoBlocks (struct Function *function, struct Array *a
                                 // current alloca instruction, if so, skip
                                 if (BlockHasPhiNodeForAlloca (curr_frontier_node, alloca_inst, &phi_node_mapping))
                                         continue;
-                                
+
                                 // do not insert phi node into entry and exit blocks;
-                                if (BASICBLOCK_IS_ENTRY(curr_frontier_node) || BASICBLOCK_IS_EXIT(curr_frontier_node)) {
+                                if (BASICBLOCK_IS_ENTRY (curr_frontier_node) ||
+                                    BASICBLOCK_IS_EXIT (curr_frontier_node)) {
                                         continue;
                                 }
 
@@ -289,7 +290,7 @@ static void RemoveMemoryInstructions (struct Function *function)
         struct Array mem_inst;
         Array_init (&mem_inst);
 
-        struct Array traversal = postorder (function->entry_basic_block);
+        struct Array traversal = postorder (function->entry_block);
 
         struct BasicBlock *block;
         size_t iter_count = 0;
@@ -326,13 +327,15 @@ void SSATranslation (struct Function *function)
 
         struct HashTable phi_node_mapping = InsertPhiIntoBlocks (function, &allocas);
 
-        struct SSAFrame *frame = SSAFrameCreate (function->entry_basic_block);
+        struct SSAFrame *frame = SSAFrameCreate (function->entry_block);
 
         struct BitMap visited;
 
         BitMapInit (&visited, MAX_BASIC_BLOCK_COUNT);
 
-        Rename (function->entry_basic_block, &phi_node_mapping, frame, &visited);
+        Rename (function->entry_block, &phi_node_mapping, frame, &visited);
 
         RemoveMemoryInstructions (function);
+
+        function->is_ssa_form = true;
 }

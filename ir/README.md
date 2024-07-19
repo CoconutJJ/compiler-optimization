@@ -11,8 +11,5 @@ of anything. Just trying to prove to myself I understand the concepts
 - [ ] Out of SSA translation
 
 GVN-PRE: https://hosking.github.io/links/VanDrunen+2004CC.pdf
-
 LLVM mem2reg Algorithm: https://longfangsong.github.io/en/mem2reg-made-simple/
-
-
-
+Simple and Efficient Construction of Single Static Assignment Form: https://c9x.me/compile/bib/braun13cc.pdf

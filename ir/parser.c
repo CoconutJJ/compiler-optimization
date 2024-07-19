@@ -526,7 +526,7 @@ static struct BasicBlock *ParseBasicBlock ()
         return basic_block;
 }
 
-static struct BasicBlock *AddEntryAndExitBlocks (struct BasicBlock *root)
+static void AddEntryAndExitBlocks (struct Function *function, struct BasicBlock *root)
 {
         struct BasicBlock *entry = BasicBlockCreate (BASICBLOCK_ENTRY);
         struct BasicBlock *exit = BasicBlockCreate (BASICBLOCK_EXIT);
@@ -552,7 +552,8 @@ static struct BasicBlock *AddEntryAndExitBlocks (struct BasicBlock *root)
                         block->next = exit;
         }
 
-        return entry;
+        function->entry_block = entry;
+        function->exit_block = exit;
 }
 
 static struct BasicBlock *ParseBlock (struct Token function_name)
@@ -649,7 +650,7 @@ static struct Function *ParseFunction ()
 
         ResolveBackPatches (&parser);
 
-        function->entry_basic_block = AddEntryAndExitBlocks (root);
+        AddEntryAndExitBlocks (function, root);
 
         FunctionComputeBlockNumberMapping (function);
 
@@ -668,7 +669,7 @@ static void PrintBasicBlock (struct BasicBlock *basic_block)
 
                 if (basic_block->right)
                         right_child_no = basic_block->right->block_no;
-                
+
                 if (basic_block->next)
                         next_child_no = basic_block->next->block_no;
 
@@ -690,14 +691,14 @@ static void PrintBasicBlock (struct BasicBlock *basic_block)
                         left_child_no,
                         right_child_no,
                         next_child_no);
-                
+
                 basic_block = basic_block->next;
         }
 }
 
 void PrintFunction (struct Function *function)
 {
-        PrintBasicBlock (function->entry_basic_block);
+        PrintBasicBlock (function->entry_block);
 }
 
 struct Function *ParseIR (char *ir_source)

@@ -12,8 +12,9 @@ void ArgumentInit (struct Argument *argument)
 
 void FunctionInit (struct Function *function)
 {
-        function->entry_basic_block = NULL;
-
+        function->entry_block = NULL;
+        function->exit_block = NULL;
+        function->is_ssa_form = false;
         Array_init (&function->arguments);
         hash_table_init (&function->block_number_map);
 }
@@ -25,7 +26,7 @@ void FunctionComputeBlockNumberMapping (struct Function *function)
                 hash_table_init (&function->block_number_map);
         }
 
-        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
+        struct Array traversal_order = reverse_postorder (function->entry_block);
 
         struct BasicBlock *block;
         size_t iter_count = 0;

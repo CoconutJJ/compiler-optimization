@@ -51,7 +51,7 @@ void Value_Replace_All_Uses_With (struct Value *target, struct Value *replacemen
                 struct Instruction *inst = AS_INST (use->user);
                 InstructionSetOperand (inst, replacement, use->operand_no);
         }
-        Array_free(&target_uses);
+        Array_free (&target_uses);
         ASSERT (Value_Use_count (target) == 0, "Value use list is corrupted!");
 }
 
@@ -97,7 +97,7 @@ bool Use_unlink (struct Value *user, struct Value *usee, int usee_operand_no)
         size_t index = 0;
         while ((curr_use = Array_iter (&usee->uses, &iter_count)) != NULL) {
                 if (curr_use->user == user && curr_use->operand_no == usee_operand_no) {
-                        Use_destroy(curr_use);
+                        Use_destroy (curr_use);
                         Array_delete (&usee->uses, index);
                         return true;
                 }

@@ -1,0 +1,25 @@
+fn test6(%1, %2) {
+
+1:
+    alloca %9, 1     
+    store %9, %1             
+    jumpif label 3, %1
+
+2:
+    load %12, %9
+    sub %13, %12, %12
+    store %9, %13 
+    jump label 4
+
+3:
+    load %14, %9
+    add %15, %14, 2
+    store %9, %15
+
+4:
+    load %16, %9
+    cmp %17, %16, 0
+    jumpif label 3, %17
+
+    ret %16
+}

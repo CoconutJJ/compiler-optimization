@@ -1,4 +1,5 @@
 #include "constant.h"
+#include "map.h"
 #include "mem.h"
 #include "value.h"
 #include <stdint.h>

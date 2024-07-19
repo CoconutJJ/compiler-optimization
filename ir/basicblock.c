@@ -62,7 +62,6 @@ void BasicBlockAddInstruction (struct BasicBlock *basic_block, struct Instructio
 
 bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruction *inst)
 {
-
         // TODO: remove uses from operands
         size_t n = InstructionGetOperandCount (inst);
         for (size_t i = 0; i < n; i++) {
@@ -96,14 +95,21 @@ struct BasicBlock *BasicBlockSuccessorsIter (struct BasicBlock *basic_block, siz
 {
         if (*iter_count == 0) {
                 (*iter_count)++;
-                return basic_block->left;
-        } else if (*iter_count == 1) {
-                (*iter_count)++;
-                return basic_block->right;
-        } else {
-                *iter_count = 0;
-                return NULL;
+
+                if (basic_block->left)
+                        return basic_block->left;
         }
+
+        if (*iter_count == 1) {
+                (*iter_count)++;
+
+                if (basic_block->right)
+                        return basic_block->right;
+        }
+
+        *iter_count = 0;
+
+        return NULL;
 }
 
 struct Instruction *BasicBlockInstructionIter (struct BasicBlock *basic_block, size_t *iter_count)

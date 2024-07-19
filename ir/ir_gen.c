@@ -213,6 +213,6 @@ void EmitFunction (struct Function *function)
         }
 
         printf (") {\n");
-        EmitBasicBlock (function->entry_basic_block);
+        EmitBasicBlock (function->entry_block);
         printf ("}\n");
 }

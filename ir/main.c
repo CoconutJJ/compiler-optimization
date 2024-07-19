@@ -1,4 +1,5 @@
 #include "array.h"
+#include "constant_prop.h"
 #include "deadcode_elimination.h"
 #include "dfa.h"
 #include "dominators.h"
@@ -72,7 +73,23 @@ int main (int argc, char **argv)
                 if (strcmp (pass, "ssa") == 0) {
                         SSATranslation (function);
                 } else if (strcmp (pass, "dce") == 0) {
+                        if (!function->is_ssa_form) {
+                                fprintf (
+                                        stderr,
+                                        "error: Deadcode Elimination pass (dce) requires IR to be in SSA form first. Ensure `ssa` is in your pass list and before `dce`");
+                                exit (EXIT_FAILURE);
+                        }
+
                         RemoveDeadCode (function);
+                } else if (strcmp (pass, "sscp") == 0) {
+                        if (!function->is_ssa_form) {
+                                fprintf (
+                                        stderr,
+                                        "error: Sparse Simple Constant Propagation pass (sscp) requires IR to be in SSA form first. Ensure `ssa` is in your pass list and before `sscp`");
+                                exit (EXIT_FAILURE);
+                        }
+
+                        SSCP (function);
                 } else if (strcmp (pass, "cfg") == 0) {
                         PrintFunction (function);
                 } else if (strcmp (pass, "disp") == 0) {

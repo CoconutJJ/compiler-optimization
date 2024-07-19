@@ -1,5 +1,5 @@
 fn test6(%1, %2) {
-# allow for comments!
+
     jump label 1
 2:
     sub %4, %3, %3

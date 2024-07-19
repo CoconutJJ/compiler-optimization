@@ -9,7 +9,9 @@ struct Argument {
 };
 
 struct Function {
-        struct BasicBlock *entry_basic_block;
+        bool is_ssa_form;
+        struct BasicBlock *entry_block;
+        struct BasicBlock *exit_block;
         char fn_name[MAX_IDENTIFIER_LEN + 1];
         HashTable block_number_map;
         struct Array arguments;

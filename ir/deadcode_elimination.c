@@ -12,7 +12,7 @@
 
 void RemoveDeadCode (struct Function *function)
 {
-        struct Array preorder_traversal = postorder (function->entry_basic_block);
+        struct Array preorder_traversal = postorder (function->entry_block);
         bool has_changes;
         struct Array unused_instructions;
         Array_init (&unused_instructions);

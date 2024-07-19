@@ -83,7 +83,6 @@ struct Array preorder (struct BasicBlock *entry)
                         BitMapSetBit (&visited, curr->right->block_no);
                         continue;
                 }
-
         }
 
         Array_free (&stack);
@@ -217,7 +216,7 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
 
 void run_DFA (struct DFAConfiguration *config, struct Function *function)
 {
-        struct Array traversal_order = reverse_postorder (function->entry_basic_block);
+        struct Array traversal_order = reverse_postorder (function->entry_block);
 
         bool has_changes;
 
