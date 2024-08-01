@@ -38,3 +38,4 @@ struct Instruction *BasicBlockInstructionReverseIter (struct BasicBlock *basic_b
 void BasicBlockFree (struct BasicBlock *basic_block);
 void BasicBlockPrependInstruction (struct BasicBlock *basic_block, struct Instruction *instruction);
 bool BasicBlockRemoveInstruction (struct BasicBlock *basic_block, struct Instruction *inst);
+size_t BasicBlockSuccessorCount (struct BasicBlock *basic_block);

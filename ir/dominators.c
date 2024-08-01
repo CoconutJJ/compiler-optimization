@@ -192,11 +192,89 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
         return dom_tree_adjacency_list;
 }
 
+static HashTable ComputeTranspose (struct Function *function, HashTable *graph)
+{
+        // Compute the transpose graph from the dominator tree adjacency list
+        // Each node is guaranteed to have only one direct predecessor, since
+        // each node can only have one immediate dominator. We will need this in
+        // the DF algorithm below
+        HashTable transpose;
+        hash_table_init (&transpose);
+
+        struct HashTableEntry *entry;
+        size_t entry_iter = 0;
+
+        while ((entry = hash_table_entry_iter (graph, &entry_iter)) != NULL) {
+                struct Array *doms = entry->value;
+                size_t doms_iter = 0;
+                struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);
+                while ((block = Array_iter (doms, &doms_iter)) != NULL) {
+                        assert (hash_table_search (&transpose, block->block_no) == NULL);
+
+                        hash_table_insert (&transpose, block->block_no, parent);
+                }
+        }
+
+        return transpose;
+}
+
 HashTable ComputePostDominanceFrontier (struct Function *function)
 {
+        struct Array postorder_traversal = postorder (function->entry_block);
+        size_t iter_count = 0;
+
+        struct BasicBlock *block;
         struct DFAConfiguration config = PostDominatorDFAConfiguration (function);
 
         run_DFA (&config, function);
+
+        HashTable dominator_tree_adj = ComputePostDominatorTree (function, &config);
+
+        HashTable dominator_tree_transpose = ComputeTranspose (function, &dominator_tree_adj);
+        
+        // Table to store the dominance frontier of every node
+        HashTable dominance_frontier;
+        hash_table_init (&dominance_frontier);
+
+        while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
+                // Dominance frontier blocks can only appear at join points in
+                // the graph, disregard any block that has less than two
+                // predecessors.
+                if (BasicBlockSuccessorCount(block) < 2)
+                        continue;
+
+                struct BasicBlock *immediate_dom = hash_table_search (&dominator_tree_transpose, block->block_no);
+                // The dominance frontier sets of the direct predecessors of
+                // this block contain this block, unless it is the immediate
+                // dominator of this block
+                size_t succs_iter = 0;
+                struct BasicBlock *succ;
+                while ((succ = BasicBlockSuccessorsIter (block, &succs_iter)) != NULL) {
+                        // The dominators of each predecessor also contain this
+                        // block in their dominance frontier sets, unless such
+                        // block also dominates this block. Walk up the
+                        // dominator tree adding the current block to the
+                        // dominance frontier sets of each node until we reach
+                        // the first node that also dominates the current block.
+                        while (succ != immediate_dom) {
+                                struct Array *df = hash_table_search (&dominance_frontier, succ->block_no);
+
+                                if (!df) {
+                                        df = Array_create ();
+                                        hash_table_insert (&dominance_frontier, succ->block_no, df);
+                                }
+
+                                if (!Array_contains (df, block))
+                                        Array_push (df, block);
+
+                                succ = hash_table_search (&dominator_tree_transpose, succ->block_no);
+                        }
+                }
+        }
+        hash_table_free (&dominator_tree_adj);
+        hash_table_free (&dominator_tree_transpose);
+        Array_free (&postorder_traversal);
+        return dominator_tree_transpose;
 }
 
 HashTable ComputeDominanceFrontier (struct Function *function)
@@ -212,22 +290,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         // Each node is guaranteed to have only one direct predecessor, since
         // each node can only have one immediate dominator. We will need this in
         // the DF algorithm below
-        HashTable dominator_tree_transpose;
-        hash_table_init (&dominator_tree_transpose);
-
-        struct HashTableEntry *entry;
-        size_t entry_iter = 0;
-
-        while ((entry = hash_table_entry_iter (&dominator_tree_adj, &entry_iter)) != NULL) {
-                struct Array *doms = entry->value;
-                size_t doms_iter = 0;
-                struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);
-                while ((block = Array_iter (doms, &doms_iter)) != NULL) {
-                        assert (hash_table_search (&dominator_tree_transpose, block->block_no) == NULL);
-
-                        hash_table_insert (&dominator_tree_transpose, block->block_no, parent);
-                }
-        }
+        HashTable dominator_tree_transpose = ComputeTranspose (function, &dominator_tree_adj);
 
         struct BasicBlock *block;
         size_t iter_count = 0;

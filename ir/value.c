@@ -17,6 +17,8 @@ void Value_init (struct Value *value)
         value->token = Token (NIL, -1);
 
         Array_init (&value->uses);
+
+        ASSERT(CURRENT_VALUE_NO < MAX_VALUE_NO, "Value number exceeds maximum value number");
 }
 
 void Value_free (struct Value *value)

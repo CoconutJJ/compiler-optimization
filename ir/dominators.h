@@ -7,3 +7,4 @@ void DominatorTransfer (struct BitMap *in, void *basic_block);
 HashTable ComputeDominanceFrontier (struct Function *function);
 struct DFAConfiguration DominatorDFAConfiguration (struct Function *function);
 HashTable ComputePostDominanceFrontier (struct Function *function);
+struct HashTable ComputePostDominatorTree (struct Function *function, struct DFAConfiguration *result);

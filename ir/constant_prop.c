@@ -1,5 +1,3 @@
-
-
 #include "constant_prop.h"
 #include "basicblock.h"
 #include "constant.h"
@@ -13,7 +11,10 @@
 #include <stddef.h>
 
 /**
-        Sparse Simple Constant Propagation
+        Sparse Simple Constant Propagation and Algebraic Identity Optimization
+
+        We do not remove unused instructions as a result of the SSCP pass, instead
+        we can just rely on the Deadcode Elimination pass to do this for us. 
 */
 void SSCP (struct Function *function)
 {

@@ -2,6 +2,9 @@
 #include "array.h"
 #include "lexer.h"
 #include <stdlib.h>
+
+#define MAX_VALUE_NO 1024
+
 enum ValueType { VALUE_ARGUMENT, VALUE_INST, VALUE_CONST };
 
 struct Value {

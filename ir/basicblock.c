@@ -112,6 +112,19 @@ struct BasicBlock *BasicBlockSuccessorsIter (struct BasicBlock *basic_block, siz
         return NULL;
 }
 
+size_t BasicBlockSuccessorCount (struct BasicBlock *basic_block)
+{
+        size_t count = 0;
+
+        if (basic_block->left)
+                count++;
+
+        if (basic_block->right)
+                count++;
+
+        return count;
+}
+
 struct Instruction *BasicBlockInstructionIter (struct BasicBlock *basic_block, size_t *iter_count)
 {
         if (Array_length (&basic_block->values) == *iter_count) {
