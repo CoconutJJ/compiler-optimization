@@ -33,7 +33,7 @@ https://sbaziotis.com/compilers/visualizing-dominators.html
 
 ## SSA Construction
 
-
+Still wondering if this algorithm is correct: https://langdev.stackexchange.com/questions/3992/ssa-construction-dfs-of-cfg-vs-traversal-of-dominator-tree
 
 
 
