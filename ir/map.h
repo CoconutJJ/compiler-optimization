@@ -12,7 +12,11 @@
 // Define a structure for a hash table entry
 typedef struct HashTableEntry {
         uint64_t key;
-        void *value;
+        union {
+                void *value;
+
+                int64_t ivalue;
+        };
         bool isDeleted;
         bool isOccupied;
 } HashTableEntry;
@@ -31,7 +35,8 @@ size_t hash_table_count (HashTable *table);
 void hash_table_insert (HashTable *table, uint64_t key, void *value);
 
 // Search for an item in the hash table
-void *hash_table_search (HashTable *table, uint64_t key);
+void *hash_table_search_ptr (HashTable *table, uint64_t key);
+int64_t hash_table_search_int (HashTable *table, uint64_t key);
 struct HashTableEntry *hash_table_entry_iter (HashTable *table, size_t *iter_count);
 void *hash_table_find_and_delete (HashTable *table, uint64_t key);
 // Free the hash table

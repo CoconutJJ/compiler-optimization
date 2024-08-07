@@ -96,7 +96,7 @@ struct HashTable ComputePostDominatorTree (struct Function *function, struct DFA
                 if (BASICBLOCK_IS_ENTRY (curr_block) || BASICBLOCK_IS_EXIT (curr_block))
                         continue;
 
-                struct BitMap *out_map = hash_table_search (&result->out_sets, curr_block->block_no);
+                struct BitMap *out_map = hash_table_search_ptr (&result->out_sets, curr_block->block_no);
 
                 size_t block_count = 0;
 
@@ -112,7 +112,7 @@ struct HashTable ComputePostDominatorTree (struct Function *function, struct DFA
                                 continue;
                         }
 
-                        struct BitMap *dom_block_map = hash_table_search (&result->out_sets, dom_block->block_no);
+                        struct BitMap *dom_block_map = hash_table_search_ptr (&result->out_sets, dom_block->block_no);
 
                         // check if current immediate dominator dominates the
                         // dom_block candidate
@@ -123,7 +123,7 @@ struct HashTable ComputePostDominatorTree (struct Function *function, struct DFA
 
                 // we go through each block only once, create respective
                 // adjacency list for this block in the hashtable
-                struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
+                struct Array *array = hash_table_search_ptr (&dom_tree_adjacency_list, immediate_dom->block_no);
 
                 if (!array) {
                         array = Array_create ();
@@ -150,7 +150,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
                 if (BASICBLOCK_IS_ENTRY (curr_block) || BASICBLOCK_IS_EXIT (curr_block))
                         continue;
 
-                struct BitMap *in_map = hash_table_search (&result->in_sets, curr_block->block_no);
+                struct BitMap *in_map = hash_table_search_ptr (&result->in_sets, curr_block->block_no);
 
                 size_t block_count = 0;
 
@@ -166,7 +166,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
                                 continue;
                         }
 
-                        struct BitMap *dom_block_map = hash_table_search (&result->in_sets, dom_block->block_no);
+                        struct BitMap *dom_block_map = hash_table_search_ptr (&result->in_sets, dom_block->block_no);
 
                         // check if current immediate dominator dominates the
                         // dom_block candidate
@@ -177,7 +177,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
 
                 // we go through each block only once, create respective
                 // adjacency list for this block in the hashtable
-                struct Array *array = hash_table_search (&dom_tree_adjacency_list, immediate_dom->block_no);
+                struct Array *array = hash_table_search_ptr (&dom_tree_adjacency_list, immediate_dom->block_no);
 
                 if (!array) {
                         array = Array_create ();
@@ -192,7 +192,7 @@ static HashTable ComputeDominatorTree (struct Function *function, struct DFAConf
         return dom_tree_adjacency_list;
 }
 
-static HashTable ComputeTranspose (struct Function *function, HashTable *graph)
+HashTable ComputeTranspose (struct Function *function, HashTable *graph)
 {
         // Compute the transpose graph from the dominator tree adjacency list
         // Each node is guaranteed to have only one direct predecessor, since
@@ -207,9 +207,9 @@ static HashTable ComputeTranspose (struct Function *function, HashTable *graph)
         while ((entry = hash_table_entry_iter (graph, &entry_iter)) != NULL) {
                 struct Array *doms = entry->value;
                 size_t doms_iter = 0;
-                struct BasicBlock *block, *parent = hash_table_search (&function->block_number_map, entry->key);
+                struct BasicBlock *block, *parent = hash_table_search_ptr (&function->block_number_map, entry->key);
                 while ((block = Array_iter (doms, &doms_iter)) != NULL) {
-                        assert (hash_table_search (&transpose, block->block_no) == NULL);
+                        assert (hash_table_search_ptr (&transpose, block->block_no) == NULL);
 
                         hash_table_insert (&transpose, block->block_no, parent);
                 }
@@ -218,19 +218,16 @@ static HashTable ComputeTranspose (struct Function *function, HashTable *graph)
         return transpose;
 }
 
-HashTable ComputePostDominanceFrontier (struct Function *function)
+HashTable ComputePostDominanceFrontier (struct Function *function, struct HashTable *postdominator_tree)
 {
+        // This is the same as ComputePostDominaceFrontier but without using 
         struct Array postorder_traversal = postorder (function->entry_block);
         size_t iter_count = 0;
 
         struct BasicBlock *block;
-        struct DFAConfiguration config = PostDominatorDFAConfiguration (function);
 
-        run_DFA (&config, function);
 
-        HashTable dominator_tree_adj = ComputePostDominatorTree (function, &config);
-
-        HashTable dominator_tree_transpose = ComputeTranspose (function, &dominator_tree_adj);
+        HashTable dominator_tree_transpose = ComputeTranspose (function, postdominator_tree);
         
         // Table to store the dominance frontier of every node
         HashTable dominance_frontier;
@@ -243,7 +240,7 @@ HashTable ComputePostDominanceFrontier (struct Function *function)
                 if (BasicBlockSuccessorCount(block) < 2)
                         continue;
 
-                struct BasicBlock *immediate_dom = hash_table_search (&dominator_tree_transpose, block->block_no);
+                struct BasicBlock *immediate_dom = hash_table_search_ptr (&dominator_tree_transpose, block->block_no);
                 // The dominance frontier sets of the direct predecessors of
                 // this block contain this block, unless it is the immediate
                 // dominator of this block
@@ -257,7 +254,7 @@ HashTable ComputePostDominanceFrontier (struct Function *function)
                         // dominance frontier sets of each node until we reach
                         // the first node that also dominates the current block.
                         while (succ != immediate_dom) {
-                                struct Array *df = hash_table_search (&dominance_frontier, succ->block_no);
+                                struct Array *df = hash_table_search_ptr (&dominance_frontier, succ->block_no);
 
                                 if (!df) {
                                         df = Array_create ();
@@ -267,14 +264,13 @@ HashTable ComputePostDominanceFrontier (struct Function *function)
                                 if (!Array_contains (df, block))
                                         Array_push (df, block);
 
-                                succ = hash_table_search (&dominator_tree_transpose, succ->block_no);
+                                succ = hash_table_search_ptr (&dominator_tree_transpose, succ->block_no);
                         }
                 }
         }
-        hash_table_free (&dominator_tree_adj);
         hash_table_free (&dominator_tree_transpose);
         Array_free (&postorder_traversal);
-        return dominator_tree_transpose;
+        return dominance_frontier;
 }
 
 HashTable ComputeDominanceFrontier (struct Function *function)
@@ -282,7 +278,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         struct Array postorder_traversal = postorder (function->entry_block);
         struct DFAConfiguration config = DominatorDFAConfiguration (function);
 
-        run_DFA (&config, function);
+        RunDFA (&config, function);
 
         HashTable dominator_tree_adj = ComputeDominatorTree (function, &config);
 
@@ -305,7 +301,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                 if (Array_length (&block->preds) < 2)
                         continue;
 
-                struct BasicBlock *immediate_dom = hash_table_search (&dominator_tree_transpose, block->block_no);
+                struct BasicBlock *immediate_dom = hash_table_search_ptr (&dominator_tree_transpose, block->block_no);
                 // The dominance frontier sets of the direct predecessors of
                 // this block contain this block, unless it is the immediate
                 // dominator of this block
@@ -320,7 +316,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                         // the first node that also dominates the current block.
 
                         while (pred != immediate_dom) {
-                                struct Array *df = hash_table_search (&dominance_frontier, pred->block_no);
+                                struct Array *df = hash_table_search_ptr (&dominance_frontier, pred->block_no);
 
                                 if (!df) {
                                         df = Array_create ();
@@ -330,7 +326,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                                 if (!Array_contains (df, block))
                                         Array_push (df, block);
 
-                                pred = hash_table_search (&dominator_tree_transpose, pred->block_no);
+                                pred = hash_table_search_ptr (&dominator_tree_transpose, pred->block_no);
                         }
                 }
         }

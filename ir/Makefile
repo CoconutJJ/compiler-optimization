@@ -18,8 +18,7 @@ OBJECTS =   parser.o \
 			ssa.o \
 			ir_gen.o \
 			deadcode_elimination.o \
-			constant_prop.o
-
+			constant_prop.o 
 
 ifdef DEBUG
 	FLAGS := -g $(FLAGS)

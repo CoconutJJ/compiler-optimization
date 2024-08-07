@@ -23,7 +23,7 @@ BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config, struct BasicBlock 
         if (!pred)
                 return NULL;
 
-        return hash_table_search (&config->out_sets, pred->block_no);
+        return hash_table_search_ptr (&config->out_sets, pred->block_no);
 }
 
 struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct BitMap *map, size_t *iter_count)
@@ -35,7 +35,7 @@ struct BasicBlock *BitMap_BasicBlock_iter (struct Function *function, struct Bit
                 return NULL;
         }
 
-        struct BasicBlock *block = hash_table_search (&function->block_number_map, bit_no);
+        struct BasicBlock *block = hash_table_search_ptr (&function->block_number_map, bit_no);
 
         assert (block != NULL);
 
@@ -51,7 +51,7 @@ struct BitMap *BitMap_BasicBlock_successor_iter (struct DFAConfiguration *config
         if (!succ)
                 return NULL;
 
-        return hash_table_search (&config->in_sets, succ->block_no);
+        return hash_table_search_ptr (&config->in_sets, succ->block_no);
 }
 
 struct Array preorder (struct BasicBlock *entry)
@@ -174,10 +174,10 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         struct BitMap *return_set = BitMapCreate (MAX_BASIC_BLOCK_COUNT);
 
         if (config->direction == DFA_FORWARD) {
-                curr_in_set = hash_table_search (&config->in_sets, curr_basic_block->block_no);
+                curr_in_set = hash_table_search_ptr (&config->in_sets, curr_basic_block->block_no);
                 BitMapCopy (curr_in_set, return_set);
         } else if (config->direction == DFA_BACKWARD) {
-                curr_out_set = hash_table_search (&config->out_sets, curr_basic_block->block_no);
+                curr_out_set = hash_table_search_ptr (&config->out_sets, curr_basic_block->block_no);
                 BitMapCopy (curr_out_set, return_set);
         } else {
                 UNREACHABLE ("Invalid dataflow direction!");
@@ -207,7 +207,7 @@ static struct BitMap *compute_Transfer (struct DFAConfiguration *config, struct 
         return return_set;
 }
 
-void run_DFA (struct DFAConfiguration *config, struct Function *function)
+void RunDFA (struct DFAConfiguration *config, struct Function *function)
 {
         struct Array traversal_order = reverse_postorder (function->entry_block);
 

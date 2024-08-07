@@ -64,7 +64,7 @@ static void SSAFrameInsert (struct SSAFrame *frame, uint64_t key, void *value)
 static void *SSAFrameSearch (struct SSAFrame *frame, uint64_t key)
 {
         while (frame != NULL) {
-                void *value = hash_table_search (&frame->variable_map, key);
+                void *value = hash_table_search_ptr (&frame->variable_map, key);
 
                 if (value)
                         return value;
@@ -130,7 +130,7 @@ static bool BlockHasPhiNodeForAlloca (struct BasicBlock *block, struct Instructi
                 if (!INST_ISA (curr_inst, OPCODE_PHI))
                         continue;
 
-                struct Instruction *alloca_candidate = hash_table_search (phi_map, AS_VALUE (curr_inst)->value_no);
+                struct Instruction *alloca_candidate = hash_table_search_ptr (phi_map, AS_VALUE (curr_inst)->value_no);
 
                 if (alloca_candidate == alloca_inst)
                         return true;
@@ -165,7 +165,7 @@ static HashTable InsertPhiIntoBlocks (struct Function *function, struct Array *a
                         // Compute the Iterated Dominance Frontier, first find
                         // the dominance frontier of the current block
                         struct Array *parent_frontier_nodes =
-                                hash_table_search (&dominance_frontier, parent_block->block_no);
+                                hash_table_search_ptr (&dominance_frontier, parent_block->block_no);
 
                         if (!parent_frontier_nodes)
                                 continue;
@@ -174,12 +174,12 @@ static HashTable InsertPhiIntoBlocks (struct Function *function, struct Array *a
                         // nodes, initialized to current dominance frontier
                         struct Array IDF = Array_copy (parent_frontier_nodes);
 
-                        // loop through IDF,
+                        // loop through IDF
                         struct BasicBlock *curr_frontier_node;
                         size_t frontier_iter = 0;
                         while ((curr_frontier_node = Array_iter (&IDF, &frontier_iter)) != NULL) {
                                 struct Array *child_frontier_nodes =
-                                        hash_table_search (&dominance_frontier, curr_frontier_node->block_no);
+                                        hash_table_search_ptr (&dominance_frontier, curr_frontier_node->block_no);
 
                                 if (!child_frontier_nodes)
                                         continue;
@@ -233,7 +233,7 @@ Rename (struct BasicBlock *basic_block, HashTable *phi_node_mapping, struct SSAF
                         continue;
                 }
 
-                struct Value *alloca_inst = hash_table_search (phi_node_mapping, AS_VALUE (curr_inst)->value_no);
+                struct Value *alloca_inst = hash_table_search_ptr (phi_node_mapping, AS_VALUE (curr_inst)->value_no);
 
                 struct Value *top_value = SSAFrameSearch (frame, alloca_inst->value_no);
 

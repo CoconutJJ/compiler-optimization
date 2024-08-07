@@ -132,7 +132,7 @@ static struct HashTableEntry *hash_table_find_entry (HashTable *table, uint64_t 
         return NULL;
 }
 
-void *hash_table_search (HashTable *table, uint64_t key)
+void *hash_table_search_ptr (HashTable *table, uint64_t key)
 {
         struct HashTableEntry *entry = hash_table_find_entry (table, key);
 
@@ -140,6 +140,16 @@ void *hash_table_search (HashTable *table, uint64_t key)
                 return NULL;
 
         return entry->value;
+}
+
+int64_t hash_table_search_int (HashTable *table, uint64_t key)
+{
+        struct HashTableEntry *entry = hash_table_find_entry (table, key);
+
+        if (!entry)
+                return INT64_MIN;
+
+        return entry->ivalue;
 }
 
 void *hash_table_find_and_delete (HashTable *table, uint64_t key)

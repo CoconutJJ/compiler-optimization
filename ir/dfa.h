@@ -36,7 +36,7 @@ struct DFAConfiguration {
 struct Array preorder (struct BasicBlock *entry);
 struct Array postorder (struct BasicBlock *entry);
 struct Array reverse_postorder (struct BasicBlock *entry);
-void run_DFA (struct DFAConfiguration *config, struct Function *function);
+void RunDFA (struct DFAConfiguration *config, struct Function *function);
 struct BitMap *
 BitMap_BasicBlock_pred_iter (struct DFAConfiguration *config, struct BasicBlock *curr_basic_block, size_t *iter_count);
 

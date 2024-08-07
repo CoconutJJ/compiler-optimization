@@ -51,7 +51,7 @@ static void BackPatchDestroy (struct BackPatch *patch)
 
 static struct BasicBlock *ParserGetBlockByLabel (struct Parser *parser, size_t label)
 {
-        struct BasicBlock *block = hash_table_search (&parser->label_table, label);
+        struct BasicBlock *block = hash_table_search_ptr (&parser->label_table, label);
 
         if (!block) {
                 block = BasicBlockCreate (BASICBLOCK_NORMAL);
@@ -63,7 +63,7 @@ static struct BasicBlock *ParserGetBlockByLabel (struct Parser *parser, size_t l
 
 static struct ValueRecord *ParserFindValue (struct Parser *parser, uint64_t variable_no)
 {
-        struct ValueRecord *record = hash_table_search (&parser->value_table, variable_no);
+        struct ValueRecord *record = hash_table_search_ptr (&parser->value_table, variable_no);
 
         if (!record)
                 return NULL;
@@ -73,7 +73,7 @@ static struct ValueRecord *ParserFindValue (struct Parser *parser, uint64_t vari
 
 static void ParserFinalizeValue (struct Parser *parser, uint64_t variable_no)
 {
-        struct ValueRecord *record = hash_table_search (&parser->value_table, variable_no);
+        struct ValueRecord *record = hash_table_search_ptr (&parser->value_table, variable_no);
 
         record->finalized = true;
 }
@@ -129,7 +129,7 @@ static void ParserInstructionPushPhiOperand (struct Parser *parser,
 
 static bool ParserInsertValue (struct Parser *parser, size_t variable_no, struct Value *value)
 {
-        if (hash_table_search (&parser->value_table, variable_no)) {
+        if (hash_table_search_ptr (&parser->value_table, variable_no)) {
                 return false;
         }
 
@@ -159,7 +159,7 @@ static void ParserFree (struct Parser *parser)
 
 static void ParserCheckValidAssignmentTarget (struct Token dest_token, char *error_message, ...)
 {
-        struct Value *value = hash_table_search (&parser.value_table, dest_token.value);
+        struct Value *value = hash_table_search_ptr (&parser.value_table, dest_token.value);
 
         if (!value)
                 return;
