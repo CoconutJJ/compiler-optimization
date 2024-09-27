@@ -3,7 +3,7 @@
 #include "basicblock.h"
 #include "dfa.h"
 #include "map.h"
-#include <assert.h>
+
 void ArgumentInit (struct Argument *argument)
 {
         argument->value.value_type = VALUE_ARGUMENT;

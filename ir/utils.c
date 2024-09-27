@@ -1,7 +1,6 @@
 #include "utils.h"
 #include "global_constants.h"
 #include "lexer.h"
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

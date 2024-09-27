@@ -1,19 +1,19 @@
 #include "deadcode_elimination.h"
 #include "array.h"
 #include "basicblock.h"
+#include "bitmap.h"
 #include "dfa.h"
 #include "dominators.h"
 #include "function.h"
 #include "global_constants.h"
 #include "instruction.h"
-#include "lexer.h"
 #include "map.h"
 #include "value.h"
-#include <stdatomic.h>
 #include <stdbool.h>
 
-static void
-MarkCriticalInstructions (struct Function *function, struct HashTable *postdom_frontiers, bool critical_instructions[])
+static void MarkCriticalInstructions (struct Function *function,
+                                      struct HashTable *postdom_frontiers,
+                                      struct BitMap *critical_instructions)
 {
         struct Array worklist;
         Array_init (&worklist);
@@ -29,7 +29,8 @@ MarkCriticalInstructions (struct Function *function, struct HashTable *postdom_f
 
                 while ((inst = BasicBlockInstructionIter (curr_block, &inst_count)) != NULL) {
                         if (INST_ISA (inst, OPCODE_RET)) {
-                                critical_instructions[VALUE_NO (AS_VALUE (inst))] = true;
+                                BitMapSetBit (critical_instructions, VALUE_NO (AS_VALUE (inst)));
+
                                 Array_push (&worklist, inst);
                         }
                 }
@@ -48,10 +49,10 @@ MarkCriticalInstructions (struct Function *function, struct HashTable *postdom_f
                         if (VALUE_IS_ARG (operand) || VALUE_IS_CONST (operand))
                                 continue;
 
-                        if (critical_instructions[VALUE_NO (operand)])
+                        if (BitMapIsSet (critical_instructions, VALUE_NO (operand)))
                                 continue;
 
-                        critical_instructions[VALUE_NO (operand)] = true;
+                        BitMapSetBit (critical_instructions, VALUE_NO (operand));
                         Array_push (&worklist, operand);
                 }
 
@@ -70,10 +71,10 @@ MarkCriticalInstructions (struct Function *function, struct HashTable *postdom_f
                         struct Instruction *last_instruction = BasicBlockLastInstruction (curr_frontier_block);
 
                         if (INST_ISA (last_instruction, OPCODE_JUMP) || INST_ISA (last_instruction, OPCODE_JUMPIF)) {
-                                if (critical_instructions[VALUE_NO (AS_VALUE (last_instruction))])
+                                if (BitMapIsSet (critical_instructions, VALUE_NO (AS_VALUE (last_instruction))))
                                         continue;
 
-                                critical_instructions[VALUE_NO (AS_VALUE (last_instruction))] = true;
+                                BitMapSetBit (critical_instructions, VALUE_NO (AS_VALUE (last_instruction)));
                                 Array_push (&worklist, last_instruction);
                         }
                 }
@@ -82,7 +83,8 @@ MarkCriticalInstructions (struct Function *function, struct HashTable *postdom_f
         Array_free (&preorder_traversal);
 }
 
-static void Sweep (struct Function *function, struct HashTable *postdom_tree_transpose, bool critical_instructions[])
+static void
+Sweep (struct Function *function, struct HashTable *postdom_tree_transpose, struct BitMap *critical_instructions)
 {
         struct Array postorder_traversal = postorder (function->entry_block);
 
@@ -96,7 +98,7 @@ static void Sweep (struct Function *function, struct HashTable *postdom_tree_tra
                 struct Instruction *inst;
                 size_t inst_iter = 0;
                 while ((inst = BasicBlockInstructionIter (curr_block, &inst_iter)) != NULL) {
-                        if (critical_instructions[VALUE_NO (AS_VALUE (inst))])
+                        if (BitMapIsSet(critical_instructions, VALUE_NO (AS_VALUE (inst))))
                                 continue;
 
                         if (INST_ISA (inst, OPCODE_JUMP) || INST_ISA (inst, OPCODE_JUMPIF)) {
@@ -125,10 +127,18 @@ void RemoveDeadCode (struct Function *function)
 
         struct HashTable postdom_tree = ComputePostDominatorTree (function, &config);
         struct HashTable postdom_frontiers = ComputePostDominanceFrontier (function, &postdom_tree);
-
         struct HashTable postdom_tree_transpose = ComputeTranspose (function, &postdom_tree);
 
-        bool critical_instructions[MAX_VALUE_NO] = { 0 };
-        MarkCriticalInstructions (function, &postdom_frontiers, critical_instructions);
-        Sweep (function, &postdom_tree_transpose, critical_instructions);
+        // bool critical_instructions[MAX_VALUE_NO] = { 0 };
+
+        struct BitMap critical_instructions;
+
+        BitMapInit (&critical_instructions, MAX_VALUE_NO);
+
+        MarkCriticalInstructions (function, &postdom_frontiers, &critical_instructions);
+        Sweep (function, &postdom_tree_transpose, &critical_instructions);
+
+        hash_table_free_map (&postdom_tree, (HashTableFreeFn)&Array_destroy);
+        hash_table_free_map (&postdom_frontiers, (HashTableFreeFn)&Array_destroy);
+        hash_table_free (&postdom_tree_transpose);
 }

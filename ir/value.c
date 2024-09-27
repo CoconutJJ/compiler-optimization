@@ -5,7 +5,6 @@
 #include "lexer.h"
 #include "mem.h"
 #include "utils.h"
-#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +17,7 @@ void Value_init (struct Value *value)
 
         Array_init (&value->uses);
 
-        ASSERT(CURRENT_VALUE_NO < MAX_VALUE_NO, "Value number exceeds maximum value number");
+        ASSERT (CURRENT_VALUE_NO < MAX_VALUE_NO, "Value number exceeds maximum value number");
 }
 
 void Value_free (struct Value *value)

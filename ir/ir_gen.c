@@ -6,7 +6,6 @@
 #include "function.h"
 #include "global_constants.h"
 #include "instruction.h"
-#include "map.h"
 #include "value.h"
 #include <assert.h>
 #include <stddef.h>

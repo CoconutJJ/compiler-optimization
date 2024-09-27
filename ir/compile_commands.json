@@ -1,274 +1,274 @@
 [
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "parser.o",
-      "parser.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/parser.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/parser.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "main.o",
-      "main.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/main.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/main.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "lexer.o",
-      "lexer.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/lexer.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/lexer.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "instruction.o",
-      "instruction.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/instruction.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/instruction.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "function.o",
-      "function.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/function.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/function.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "basicblock.o",
-      "basicblock.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/basicblock.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/basicblock.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "constant.o",
-      "constant.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/constant.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/constant.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "utils.o",
-      "utils.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/utils.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/utils.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "value.o",
-      "value.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/value.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/value.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "array.o",
-      "array.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/array.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/array.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "mem.o",
-      "mem.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/mem.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/mem.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "map.o",
-      "map.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/map.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/map.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "dfa.o",
-      "dfa.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dfa.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dfa.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "dominators.o",
-      "dominators.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dominators.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dominators.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "bitmap.o",
-      "bitmap.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "ssa.o",
-      "ssa.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-O3",
-      "-Wall",
-      "-Wextra",
-      "-Wmissing-prototypes",
-      "-c",
-      "-o",
-      "ir_gen.o",
-      "ir_gen.c"
-    ],
-    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
-    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.c",
-    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.o"
-  }
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "parser.o",
+                        "parser.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/parser.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/parser.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "main.o",
+                        "main.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/main.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/main.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "lexer.o",
+                        "lexer.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/lexer.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/lexer.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "instruction.o",
+                        "instruction.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/instruction.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/instruction.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "function.o",
+                        "function.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/function.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/function.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "basicblock.o",
+                        "basicblock.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/basicblock.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/basicblock.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "constant.o",
+                        "constant.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/constant.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/constant.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "utils.o",
+                        "utils.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/utils.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/utils.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "value.o",
+                        "value.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/value.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/value.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "array.o",
+                        "array.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/array.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/array.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "mem.o",
+                        "mem.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/mem.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/mem.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "map.o",
+                        "map.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/map.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/map.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "dfa.o",
+                        "dfa.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dfa.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dfa.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "dominators.o",
+                        "dominators.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dominators.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/dominators.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "bitmap.o",
+                        "bitmap.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/bitmap.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "ssa.o",
+                        "ssa.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ssa.o"
+        },
+        {
+                "arguments": [
+                        "/usr/bin/gcc",
+                        "-O3",
+                        "-Wall",
+                        "-Wextra",
+                        "-Wmissing-prototypes",
+                        "-c",
+                        "-o",
+                        "ir_gen.o",
+                        "ir_gen.c"
+                ],
+                "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir",
+                "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.c",
+                "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/ir/ir_gen.o"
+        }
 ]

@@ -1,8 +1,6 @@
 #include "array.h"
 #include "global_constants.h"
-#include "map.h"
 #include "mem.h"
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -84,6 +82,20 @@ void Array_delete (struct Array *array, size_t index)
         Array_resize_if_required (array);
 }
 
+bool Array_find_and_delete (struct Array *array, void *item)
+{
+        for (size_t i = 0; i < Array_length (array); i++) {
+                void *curr = Array_get_index (array, i);
+
+                if (item == curr) {
+                        Array_delete (array, i);
+                        return true;
+                }
+        }
+
+        return false;
+}
+
 void Array_set_index (struct Array *array, size_t index, void *item)
 {
         array->array[index] = item;
@@ -159,4 +171,10 @@ void Array_apply (struct Array *array, ArrayApplyFn map)
 void Array_free (struct Array *array)
 {
         ir_free (array->array);
+}
+
+void Array_destroy (struct Array *array)
+{
+        Array_free (array);
+        ir_free (array);
 }

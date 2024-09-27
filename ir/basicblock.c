@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+
 static size_t CURRENT_BASIC_BLOCK_NO = 0;
 
 void BasicBlockInit (struct BasicBlock *basic_block, enum BasicBlockType type)
@@ -35,15 +36,25 @@ size_t BasicBlockGetInstructionCount (struct BasicBlock *basic_block)
         return Array_length (&basic_block->values);
 }
 
+void BasicBlockRemovePred (struct BasicBlock *basic_block, struct BasicBlock *pred)
+{
+        ASSERT (Array_find_and_delete (&basic_block->preds, pred), "Cannot remove non existent predecessor!");
+}
+
 void BasicBlockSetLeftChild (struct BasicBlock *basic_block, struct BasicBlock *left_child)
 {
-        basic_block->left = left_child;
+        if (basic_block->left)
+                BasicBlockRemovePred (basic_block->left, basic_block);
 
+        basic_block->left = left_child;
         Array_push (&left_child->preds, basic_block);
 }
 
 void BasicBlockSetRightChild (struct BasicBlock *basic_block, struct BasicBlock *right_child)
 {
+        if (basic_block->right)
+                BasicBlockRemovePred (basic_block->right, basic_block);
+
         basic_block->right = right_child;
         Array_push (&right_child->preds, basic_block);
 }

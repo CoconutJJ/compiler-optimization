@@ -1,19 +1,27 @@
-#include "array.h"
 #include "constant_prop.h"
 #include "deadcode_elimination.h"
-#include "dfa.h"
-#include "dominators.h"
 #include "function.h"
 #include "ir_gen.h"
-#include "map.h"
 #include "mem.h"
 #include "parser.h"
 #include "ssa.h"
-#include "utils.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void print_usage ()
+{
+        printf ("usage: ./ir --ir_file|-f IR_FILE --pass|-p PASSES \n"
+                "Flag Arguments:\n"
+                "       IR_FILE: path to IR file\n"
+                "       PASSES: Comma seperated list of passes\n"
+                "               ssa - SSA tranformation\n"
+                "               dce - Deadcode elimination\n"
+                "               sscp - Sparse Simple Constant Propagation\n"
+                "               cfg - Output Control Flow Graph ASCII art\n"
+                "               disp - Output IR\n");
+}
 
 int main (int argc, char **argv)
 {
@@ -26,17 +34,21 @@ int main (int argc, char **argv)
         char *ir_file_name = NULL, *passes = NULL;
         int opt_index = 0, c;
 
-        while ((c = getopt_long (argc, argv, "f:p:", long_opts, &opt_index)) != EOF) {
+        while ((c = getopt_long (argc, argv, "f:p:h", long_opts, &opt_index)) != EOF) {
                 switch (c) {
                 case 'f': ir_file_name = optarg; break;
                 case 'p': passes = optarg; break;
+                case 'h':
+                        print_usage ();
+                        exit (EXIT_SUCCESS);
+                        break;
                 case '?': exit (EXIT_FAILURE); break;
                 default: fprintf (stderr, "error: unknown argument %c", c); exit (EXIT_FAILURE);
                 }
         }
 
         if (!ir_file_name) {
-                fprintf (stderr, "Must specify IR file with -f or --ir_file flag\n");
+                print_usage ();
                 exit (EXIT_FAILURE);
         }
 

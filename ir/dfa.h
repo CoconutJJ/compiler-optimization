@@ -14,8 +14,8 @@
 struct DFAConfiguration;
 
 enum DomainValueType { DOMAIN_INSTRUCTION, DOMAIN_BASIC_BLOCK };
-
 enum DFAFlowDirection { DFA_FORWARD, DFA_BACKWARD };
+enum TopValue { TOP_EMPTY_SET, TOP_UNIVERSAL_SET };
 
 typedef void (*MeetOp) (struct BitMap *accum, struct BitMap *item);
 typedef void (*TransferFunction) (struct BitMap *in, void *domain_value);

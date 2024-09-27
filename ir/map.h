@@ -28,6 +28,8 @@ typedef struct HashTable {
         size_t count;
 } HashTable;
 
+typedef void (*HashTableFreeFn) (void *);
+
 void hash_table_init (HashTable *table);
 HashTable *hash_table_create (size_t size);
 void hash_table_empty (HashTable *table);
@@ -41,3 +43,4 @@ struct HashTableEntry *hash_table_entry_iter (HashTable *table, size_t *iter_cou
 void *hash_table_find_and_delete (HashTable *table, uint64_t key);
 // Free the hash table
 void hash_table_free (HashTable *table);
+void hash_table_free_map (HashTable *table, HashTableFreeFn free_fn);

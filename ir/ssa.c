@@ -2,7 +2,6 @@
 #include "array.h"
 #include "basicblock.h"
 #include "bitmap.h"
-#include "deadcode_elimination.h"
 #include "dfa.h"
 #include "dominators.h"
 #include "function.h"
@@ -11,7 +10,6 @@
 #include "lexer.h"
 #include "map.h"
 #include "mem.h"
-#include "utils.h"
 #include "value.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -95,13 +93,11 @@ static struct Array FindAllocas (struct Function *function)
         size_t iter_count = 0;
 
         while ((block = Array_iter (&postorder_traversal, &iter_count)) != NULL) {
-                size_t inst_iter = 0;
                 struct Instruction *inst;
-
+                size_t inst_iter = 0;
                 while ((inst = BasicBlockInstructionIter (block, &inst_iter)) != NULL) {
-                        if (!INST_ISA (inst, OPCODE_ALLOCA)) {
+                        if (!INST_ISA (inst, OPCODE_ALLOCA))
                                 continue;
-                        }
 
                         Array_push (&allocas, inst);
                 }
@@ -324,6 +320,11 @@ static void RemoveMemoryInstructions (struct Function *function)
 void SSATranslation (struct Function *function)
 {
         struct Array allocas = FindAllocas (function);
+
+        if (Array_length (&allocas) == 0) {
+                function->is_ssa_form = true;
+                return;
+        }
 
         struct HashTable phi_node_mapping = InsertPhiIntoBlocks (function, &allocas);
 

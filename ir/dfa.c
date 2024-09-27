@@ -6,7 +6,6 @@
 #include "global_constants.h"
 #include "instruction.h"
 #include "map.h"
-#include "mem.h"
 #include "utils.h"
 #include <stdbool.h>
 #include <stddef.h>

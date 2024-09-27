@@ -192,6 +192,17 @@ size_t hash_table_count (HashTable *table)
         return table->count;
 }
 
+void hash_table_free_map (HashTable *table, HashTableFreeFn free_fn)
+{
+        struct HashTableEntry *entry;
+        size_t iter_count = 0;
+        while ((entry = hash_table_entry_iter (table, &iter_count)) != NULL) {
+                free_fn (entry->value);
+        }
+
+        ir_free (table->buckets);
+}
+
 // Free the hash table
 void hash_table_free (HashTable *table)
 {

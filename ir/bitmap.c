@@ -1,11 +1,7 @@
 #include "bitmap.h"
-#include "basicblock.h"
-#include "map.h"
 #include "mem.h"
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 void BitMapInit (struct BitMap *map, size_t num_bits)
 {

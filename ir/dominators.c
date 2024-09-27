@@ -5,9 +5,7 @@
 #include "function.h"
 #include "global_constants.h"
 #include "map.h"
-#include "mem.h"
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 
 void DominatorTransfer (struct BitMap *in, void *basic_block)
@@ -220,15 +218,14 @@ HashTable ComputeTranspose (struct Function *function, HashTable *graph)
 
 HashTable ComputePostDominanceFrontier (struct Function *function, struct HashTable *postdominator_tree)
 {
-        // This is the same as ComputePostDominaceFrontier but without using 
+        // This is the same as ComputePostDominaceFrontier but without using
         struct Array postorder_traversal = postorder (function->entry_block);
         size_t iter_count = 0;
 
         struct BasicBlock *block;
 
-
         HashTable dominator_tree_transpose = ComputeTranspose (function, postdominator_tree);
-        
+
         // Table to store the dominance frontier of every node
         HashTable dominance_frontier;
         hash_table_init (&dominance_frontier);
@@ -237,7 +234,7 @@ HashTable ComputePostDominanceFrontier (struct Function *function, struct HashTa
                 // Dominance frontier blocks can only appear at join points in
                 // the graph, disregard any block that has less than two
                 // predecessors.
-                if (BasicBlockSuccessorCount(block) < 2)
+                if (BasicBlockSuccessorCount (block) < 2)
                         continue;
 
                 struct BasicBlock *immediate_dom = hash_table_search_ptr (&dominator_tree_transpose, block->block_no);
@@ -288,6 +285,8 @@ HashTable ComputeDominanceFrontier (struct Function *function)
         // the DF algorithm below
         HashTable dominator_tree_transpose = ComputeTranspose (function, &dominator_tree_adj);
 
+        hash_table_free_map (&dominator_tree_adj, (HashTableFreeFn)&Array_destroy);
+
         struct BasicBlock *block;
         size_t iter_count = 0;
 
@@ -330,7 +329,7 @@ HashTable ComputeDominanceFrontier (struct Function *function)
                         }
                 }
         }
-        hash_table_free (&dominator_tree_adj);
+
         hash_table_free (&dominator_tree_transpose);
         Array_free (&postorder_traversal);
         return dominance_frontier;
