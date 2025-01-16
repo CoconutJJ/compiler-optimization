@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Implementing the into-SSA Transformation with LLVM Semantics</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Implementing the into-SSA Transformation with LLVM
+Semantics</h1>
+</header>
+<p>In LLVM IR, the representation of three-address variables differs
+from the form commonly introduced in many compiler textbooks. LLVM uses
+the store, load, and alloca instructions to manage variables. The
+mem2reg pass is then applied to this IR to remove references to these
+instructions and convert the code to proper SSA (Static Single
+Assignment) form. In contrast, many compiler textbooks use a simplified
+syntax that does not include store, load, and alloca constructs. For
+example:</p>
+<p><span class="math display">\[\begin{split}
+    x = y + z \\
+    y = z + 3 \\
+    x = y + z \\
+  \end{split}\]</span></p>
+<p>To transform this to SSA form, the variables are given numerical
+subscripts to denote different versions:</p>
+<p><span class="math display">\[\begin{split}
+    x_1 = y_1 + z_1 \\
+    y_2 = z_1 + 3   \\
+    x_2 = y_2 + z_1 \\
+  \end{split}\]</span></p>
+<p>However, LLVM IR does not use numerical subscripts nor allow variable
+reassignment. Even before the mem2reg pass, each variable definition
+must dominate its uses, adhering to LLVM’s rules for well-formedness.
+These differences pose challenges when adapting textbook algorithms to
+work with LLVM’s variable handling. In this article, I discuss my
+experiences and insights gained while trying to apply traditional
+algorithms to my own IR using LLVM’s approach to variable
+management.<br />
+ <br />
+The introduction of store and load instructions can be compared to
+definitions and uses in the classic SSA form. That leaves us with the
+alloca instruction. It is easy to see the alloca instruction declares a
+variable in the IR. This allows us to determine which variables in the
+IR can span across basic blocks and which variables are temporaries
+generated for the purpose of computation. We will see that managing
+variables with store, load and alloca actually simplifies the
+bookkeeping required to translate into SSA form.<br />
+ <br />
+Recall that in the LLVM IR, alloca instructions appear in the form:</p>
+<pre><code>    %1 = alloca SIZE</code></pre>
+<p>If we imagine that <code>alloca</code> allocates memory for a
+variable, we can consider <code>%1</code> the address returned by
+<code>alloca</code>. For our purposes let us call <code>%1</code> the
+alloca variable or alloca target depending on context. Further recall
+that <code>load</code> and <code>store</code> instructions accept an
+<code>alloca</code> variable as an argument along with a temporary whose
+value we wish to store or define.</p>
+<pre><code>    load %2, %1
+    store %1, %2</code></pre>
+<p>The <code>load</code> instruction above defines the new variable,
+<code>%2</code>, to contain the value stored in the alloca target,
+<code>%1</code>. The <code>store</code> instruction states that the
+value contained inside the alloca target, <code>%1</code>, is now
+defined to be the value defined by <code>%2</code>. SSA requires that we
+"promote" the <code>alloca</code> instruction to a register instead, we
+can do this by keeping track of the loads and stores for each alloca
+variable using a hashmap. Our map maps each alloca variable to the
+current temporary that defines it’s value. For every <code>store</code>
+instruction we encounter, we update the map to point to the new
+definition. For every <code>load</code> instruction that we encounter,
+we replace all uses of the temporary that load defines with the
+temporary the alloca target maps to.<br />
+ <br />
+Another point of confusion is the placement of <span
+class="math inline">\(\phi\)</span> nodes, recall that when determining
+which blocks to place <span class="math inline">\(\phi\)</span> nodes
+one must first determine which blocks create new definitions of
+variables. After all, the purpose of <span
+class="math inline">\(\phi\)</span> nodes is to merge competing
+definitions into one definition. This happens to be the blocks that
+contain <code>store</code> instructions. But when we insert a <span
+class="math inline">\(\phi\)</span> node, it must also be treated as a
+<code>store</code> instruction, it redefines the value stored inside the
+alloca target. So every time we encounter a <span
+class="math inline">\(\phi\)</span> node, we must update our map such
+that the corresponding alloca variable maps to the <span
+class="math inline">\(\phi\)</span> node target variable. This also
+implies we must know which alloca variable each <span
+class="math inline">\(\phi\)</span> node maps to, we can create this map
+during our <span class="math inline">\(\phi\)</span> node insertion
+phase. We can summarize our algorithm as follows:</p>
+<pre><code>
+InsertPhiNodes(G):
+    let P be a map that maps phi nodes to alloca variables.
+    for each basic block B in G
+        for each instruction I in B
+
+            if I is a store [alloca A], [source variable V] instruction
+                Insert phi node for A for each block in IDF(B)
+                P[phi] = A for all phi nodes
+
+Let H be a map that maps each alloca to the variable that holds its current value
+Rename(Basic Block B, H):
+
+    for each Phi Instruction P in B:
+        Find the alloca instruction, I, that P corresponds to
+        Use H to get the current variable, V, for alloca, I.
+        Insert V into the operand list of P if V is not already in the operand list
+        Update H such that H maps I to target variable of P.
+    
+    If basic block B has been visited: 
+        Return
+    Else:
+        Mark B as visited  
+        
+    For each instruction I in B: 
+        
+        if I is a (store [alloca A], [source variable V]) instruction: 
+            H[A] = V 
+        else if I is a (load [target variable V], [alloca A]) instruction:
+            Replace all uses of V with H[A]
+    
+        
+    For each successor, S, of B:
+        Save state of H, H&#39;
+        Rename (S, H)
+        Restore H back to H&#39;</code></pre>
+<p>Engineering a Compiler (Cooper &amp; Torczon) suggests to perform a
+DFS walk of the dominator tree in the Rename phase. However, I found
+this to be quite inconvenient, <a
+href="https://www.reddit.com/r/Compilers/comments/1dzp766/ssa_construction_dfs_of_cfg_vs_traversal_of/">DFS
+of the control flow graph</a> will work just as well provided we allow
+for revisiting of nodes only for the purposes of updating Phi
+operands.</p>
+</body>
+</html>

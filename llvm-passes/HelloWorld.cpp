@@ -1,16 +1,9 @@
-
-
 #include "llvm/IR/Analysis.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/PassPlugin.h>
 
@@ -22,24 +15,24 @@ class HelloWorldPass : public llvm::PassInfoMixin<HelloWorldPass> {
         {
                 for (auto &BB : F) {
                         for (auto &I : BB) {
-                                if (!llvm::isa<llvm::Argument> (I))
-                                        continue;
                                 
-                                errs() << I;
-                                // I.setOperand (0, llvm::ConstantInt::getSigned (I.getOperand (0)->getType (), 0));
                         }
                 }
 
-                return llvm::PreservedAnalyses::none();
-        };
+                return llvm::PreservedAnalyses::none ();
+        }
+
+        static bool isRequired ()
+        {
+                return true;
+        }
 };
 
-
-PassPluginLibraryInfo getFunctionInfoPassPluginInfo ()
+PassPluginLibraryInfo getHelloWorldPassPluginInfo ()
 {
         const auto callback = [] (PassBuilder &PB) {
                 PB.registerPipelineParsingCallback ([&] (StringRef Name, FunctionPassManager &FPM, auto) {
-                        if (Name == "hello-world") {
+                        if (Name == "hello-world-pass") {
                                 FPM.addPass (HelloWorldPass ());
                                 return true;
                         }
@@ -47,10 +40,10 @@ PassPluginLibraryInfo getFunctionInfoPassPluginInfo ()
                 });
         };
 
-        return { LLVM_PLUGIN_API_VERSION, "FunctionInfoPass", "0.0.1", callback };
+        return { LLVM_PLUGIN_API_VERSION, "HelloWorldPass", "0.0.1", callback };
 };
 
 extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo ()
 {
-        return getFunctionInfoPassPluginInfo ();
+        return getHelloWorldPassPluginInfo ();
 }

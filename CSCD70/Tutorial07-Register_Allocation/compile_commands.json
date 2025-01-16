@@ -1,0 +1,25 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-g",
+      "-dynamiclib",
+      "-I/opt/homebrew/Cellar/zstd/1.5.6/include",
+      "-I/Users/david/Documents/Programming/research/compilers/llvm/include",
+      "-std=c++17",
+      "-fno-exceptions",
+      "-funwind-tables",
+      "-fno-rtti",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-o",
+      "libRegAlloc.dylib",
+      "lib/RegAllocMinimal.cpp"
+    ],
+    "directory": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/CSCD70/Tutorial07-Register_Allocation",
+    "file": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/CSCD70/Tutorial07-Register_Allocation/lib/RegAllocMinimal.cpp",
+    "output": "/Users/david/Documents/Programming/research/compilers/compiler-optimization/CSCD70/Tutorial07-Register_Allocation/libRegAlloc.dylib"
+  }
+]
